@@ -1,0 +1,18 @@
+apiVersion: keda.sh/v1alpha1
+kind: ScaledObject
+metadata:
+  name: pophealth-scaledobject
+  namespace: healthcare
+spec:
+  scaleTargetRef:
+    name: pophealth-service
+  minReplicaCount: 0
+  maxReplicaCount: 4
+  cooldownPeriod: 900
+  triggers:
+    - type: cron
+      metadata:
+        timezone: America/New_York
+        start: 0 2 * * *
+        end: 0 6 * * *
+        desiredReplicas: "2"

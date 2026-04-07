@@ -1,0 +1,178 @@
+global:
+  namespace: healthcare
+  registry: healthcareai.azurecr.io
+  imagePullPolicy: Always
+  env: production
+
+services:
+  voice:
+    name: voice-service
+    port: 8080
+    replicas: 2
+    image:
+      repository: healthcare-ai/voice
+      tag: latest
+    resources:
+      requests:
+        cpu: 250m
+        memory: 512Mi
+      limits:
+        cpu: "1"
+        memory: 1Gi
+    nodeSelector:
+      workload: api
+    env:
+      ASPNETCORE_ENVIRONMENT: Production
+      ASPNETCORE_URLS: http://+:8080
+
+  ai-agent:
+    name: ai-agent-service
+    port: 8080
+    replicas: 2
+    image:
+      repository: healthcare-ai/ai-agent
+      tag: latest
+    resources:
+      requests:
+        cpu: 500m
+        memory: 1Gi
+      limits:
+        cpu: "2"
+        memory: 2Gi
+    nodeSelector:
+      workload: ai
+    tolerations:
+      - key: workload
+        value: ai
+        effect: NoSchedule
+    env:
+      ASPNETCORE_ENVIRONMENT: Production
+      ASPNETCORE_URLS: http://+:8080
+
+  fhir:
+    name: fhir-service
+    port: 8080
+    replicas: 2
+    image:
+      repository: healthcare-ai/fhir
+      tag: latest
+    resources:
+      requests:
+        cpu: 250m
+        memory: 512Mi
+      limits:
+        cpu: "1"
+        memory: 1Gi
+    nodeSelector:
+      workload: api
+    env:
+      ASPNETCORE_ENVIRONMENT: Production
+      ASPNETCORE_URLS: http://+:8080
+
+  identity:
+    name: identity-service
+    port: 8080
+    replicas: 2
+    image:
+      repository: healthcare-ai/identity
+      tag: latest
+    resources:
+      requests:
+        cpu: 250m
+        memory: 256Mi
+      limits:
+        cpu: 500m
+        memory: 512Mi
+    nodeSelector:
+      workload: api
+    env:
+      ASPNETCORE_ENVIRONMENT: Production
+      ASPNETCORE_URLS: http://+:8080
+
+  ocr:
+    name: ocr-service
+    port: 8080
+    replicas: 1
+    image:
+      repository: healthcare-ai/ocr
+      tag: latest
+    resources:
+      requests:
+        cpu: 500m
+        memory: 1Gi
+      limits:
+        cpu: "2"
+        memory: 2Gi
+    nodeSelector:
+      workload: batch
+    tolerations:
+      - key: kubernetes.azure.com/scalesetpriority
+        value: spot
+        effect: NoSchedule
+    env:
+      ASPNETCORE_ENVIRONMENT: Production
+      ASPNETCORE_URLS: http://+:8080
+
+  scheduling:
+    name: scheduling-service
+    port: 8080
+    replicas: 2
+    image:
+      repository: healthcare-ai/scheduling
+      tag: latest
+    resources:
+      requests:
+        cpu: 250m
+        memory: 512Mi
+      limits:
+        cpu: "1"
+        memory: 1Gi
+    nodeSelector:
+      workload: api
+    env:
+      ASPNETCORE_ENVIRONMENT: Production
+      ASPNETCORE_URLS: http://+:8080
+
+  notification:
+    name: notification-service
+    port: 8080
+    replicas: 1
+    image:
+      repository: healthcare-ai/notification
+      tag: latest
+    resources:
+      requests:
+        cpu: 250m
+        memory: 256Mi
+      limits:
+        cpu: 500m
+        memory: 512Mi
+    nodeSelector:
+      workload: api
+    env:
+      ASPNETCORE_ENVIRONMENT: Production
+      ASPNETCORE_URLS: http://+:8080
+
+  pophealth:
+    name: pophealth-service
+    port: 8080
+    replicas: 1
+    image:
+      repository: healthcare-ai/pophealth
+      tag: latest
+    resources:
+      requests:
+        cpu: 500m
+        memory: 1Gi
+      limits:
+        cpu: "2"
+        memory: 2Gi
+    nodeSelector:
+      workload: batch
+    tolerations:
+      - key: kubernetes.azure.com/scalesetpriority
+        value: spot
+        effect: NoSchedule
+    env:
+      ASPNETCORE_ENVIRONMENT: Production
+      ASPNETCORE_URLS: http://+:8080

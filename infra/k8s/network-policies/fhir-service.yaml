@@ -1,0 +1,33 @@
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: fhir-service-policy
+  namespace: healthcare
+spec:
+  podSelector:
+    matchLabels:
+      app: fhir-service
+  policyTypes:
+    - Ingress
+    - Egress
+  ingress:
+    - from:
+        - podSelector:
+            matchLabels:
+              app: ai-agent-service
+        - podSelector:
+            matchLabels:
+              app: ocr-service
+        - podSelector:
+            matchLabels:
+              app: scheduling-service
+        - podSelector:
+            matchLabels:
+              app: pophealth-service
+        - namespaceSelector:
+            matchLabels:
+              name: ingress-nginx
+      ports:
+        - protocol: TCP
+          port: 8080
+  egress: []

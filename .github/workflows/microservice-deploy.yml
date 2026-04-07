@@ -1,0 +1,138 @@
+name: Microservice CI/CD
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main, develop]
+
+permissions:
+  id-token: write
+  contents: write
+
+env:
+  ACR_REGISTRY: healthcareai.azurecr.io
+
+jobs:
+  detect-changes:
+    runs-on: ubuntu-latest
+    outputs:
+      voice: ${{ steps.filter.outputs.voice }}
+      ai-agent: ${{ steps.filter.outputs.ai-agent }}
+      fhir: ${{ steps.filter.outputs.fhir }}
+      identity: ${{ steps.filter.outputs.identity }}
+      ocr: ${{ steps.filter.outputs.ocr }}
+      scheduling: ${{ steps.filter.outputs.scheduling }}
+      notification: ${{ steps.filter.outputs.notification }}
+      pop-health: ${{ steps.filter.outputs.pop-health }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dorny/paths-filter@v3
+        id: filter
+        with:
+          filters: |
+            voice:        ['src/HealthcareAI.Voice/**', 'src/HealthcareAI.Domain/**', 'src/HealthcareAI.Infrastructure/**']
+            ai-agent:     ['src/HealthcareAI.Agents/**', 'src/HealthcareAI.Domain/**', 'src/HealthcareAI.Infrastructure/**']
+            fhir:         ['src/HealthcareAI.Fhir/**', 'src/HealthcareAI.Domain/**', 'src/HealthcareAI.Infrastructure/**']
+            identity:     ['src/HealthcareAI.Identity/**', 'src/HealthcareAI.Domain/**', 'src/HealthcareAI.Infrastructure/**']
+            ocr:          ['src/HealthcareAI.Ocr/**', 'src/HealthcareAI.Domain/**', 'src/HealthcareAI.Infrastructure/**']
+            scheduling:   ['src/HealthcareAI.Scheduling/**', 'src/HealthcareAI.Domain/**', 'src/HealthcareAI.Infrastructure/**']
+            notification: ['src/HealthcareAI.Notifications/**', 'src/HealthcareAI.Domain/**', 'src/HealthcareAI.Infrastructure/**']
+            pop-health:   ['src/HealthcareAI.PopulationHealth/**', 'src/HealthcareAI.Domain/**', 'src/HealthcareAI.Infrastructure/**']
+
+  test-and-build:
+    needs: detect-changes
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - service: voice
+            project: HealthcareAI.Voice
+            changed: ${{ needs.detect-changes.outputs.voice }}
+          - service: ai-agent
+            project: HealthcareAI.Agents
+            changed: ${{ needs.detect-changes.outputs.ai-agent }}
+          - service: fhir
+            project: HealthcareAI.Fhir
+            changed: ${{ needs.detect-changes.outputs.fhir }}
+          - service: identity
+            project: HealthcareAI.Identity
+            changed: ${{ needs.detect-changes.outputs.identity }}
+          - service: ocr
+            project: HealthcareAI.Ocr
+            changed: ${{ needs.detect-changes.outputs.ocr }}
+          - service: scheduling
+            project: HealthcareAI.Scheduling
+            changed: ${{ needs.detect-changes.outputs.scheduling }}
+          - service: notification
+            project: HealthcareAI.Notifications
+            changed: ${{ needs.detect-changes.outputs.notification }}
+          - service: pop-health
+            project: HealthcareAI.PopulationHealth
+            changed: ${{ needs.detect-changes.outputs.pop-health }}
+    if: always()
+    steps:
+      - uses: actions/checkout@v4
+        if: matrix.changed == 'true'
+      - uses: actions/setup-dotnet@v4
+        if: matrix.changed == 'true'
+        with:
+          dotnet-version: '9.0.x'
+
+      - name: Build + format check
+        if: matrix.changed == 'true'
+        run: |
+          dotnet build src/${{ matrix.project }} --configuration Release
+          dotnet format src/${{ matrix.project }} --verify-no-changes
+
+      - name: Unit tests
+        if: matrix.changed == 'true'
+        run: |
+          dotnet test tests/HealthcareAI.Tests.Unit \
+            --configuration Release \
+            --collect:"XPlat Code Coverage" \
+            --results-directory ./coverage \
+            -- DataCollectionRunSettings.DataCollectors.DataCollector.Configuration.Format=cobertura
+
+      - name: Integration tests
+        if: matrix.changed == 'true' && github.event_name == 'push'
+        run: dotnet test tests/HealthcareAI.Tests.Integration --configuration Release
+
+      - name: Trivy vulnerability scan
+        if: matrix.changed == 'true'
+        uses: aquasecurity/trivy-action@master
+        with:
+          scan-type: fs
+          scan-ref: src/${{ matrix.project }}
+          severity: CRITICAL,HIGH
+          exit-code: '1'
+
+      - name: Azure login (OIDC)
+        if: matrix.changed == 'true' && github.event_name == 'push' && github.ref == 'refs/heads/main'
+        uses: azure/login@v2
+        with:
+          client-id: ${{ secrets.AZURE_CLIENT_ID }}
+          tenant-id: ${{ secrets.AZURE_TENANT_ID }}
+          subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+
+      - name: Build and push to ACR
+        if: matrix.changed == 'true' && github.event_name == 'push' && github.ref == 'refs/heads/main'
+        run: |
+          az acr build \
+            --registry healthcareai \
+            --image healthcare-ai/${{ matrix.service }}:${{ github.sha }} \
+            --image healthcare-ai/${{ matrix.service }}:latest \
+            --file src/${{ matrix.project }}/Dockerfile .
+
+      - name: Update Helm values for ArgoCD
+        if: matrix.changed == 'true' && github.event_name == 'push' && github.ref == 'refs/heads/main'
+        run: |
+          SERVICE_KEY=$(echo "${{ matrix.service }}" | tr '-' '_')
+          yq eval ".services.${SERVICE_KEY}.image.tag = \"${{ github.sha }}\"" -i \
+            infra/helm/values.yaml
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add infra/helm/values.yaml
+          git commit -m "ci: update ${{ matrix.service }} image to ${{ github.sha }}" || true
+          git push || true

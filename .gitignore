@@ -1,0 +1,37 @@
+# .NET
+bin/
+obj/
+*.user
+*.suo
+*.cache
+*.vs/
+*.DotSettings.user
+TestResults/
+
+# Node / Frontend
+node_modules/
+.next/
+.turbo/
+dist/
+.env.local
+.env*.local
+.__mf__temp/
+*.tsbuildinfo
+
+# IDE
+.idea/
+.vscode/settings.json
+
+# OS
+Thumbs.db
+.DS_Store
+
+# Infrastructure
+*.tfstate
+*.tfstate.backup
+
+# Build outputs
+artifacts/
+publish/
+coverage/
+build-output*.txt

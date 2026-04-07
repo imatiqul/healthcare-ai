@@ -1,0 +1,32 @@
+/// <reference types="vite/client" />
+
+declare module 'voice/VoiceSessionController' {
+  export const VoiceSessionController: React.ComponentType;
+}
+declare module 'voice/LiveTranscriptFeed' {
+  export const LiveTranscriptFeed: React.ComponentType<{ sessionId: string; onTriageUpdate?: (level: string) => void }>;
+}
+declare module 'triage/TriageViewer' {
+  export const TriageViewer: React.ComponentType;
+}
+declare module 'triage/HitlEscalationModal' {
+  export const HitlEscalationModal: React.ComponentType<{ workflowId: string; onApprove: () => void; onClose: () => void }>;
+}
+declare module 'scheduling/SlotCalendar' {
+  export const SlotCalendar: React.ComponentType;
+}
+declare module 'scheduling/BookingForm' {
+  export const BookingForm: React.ComponentType;
+}
+declare module 'pophealth/RiskPanel' {
+  export const RiskPanel: React.ComponentType;
+}
+declare module 'pophealth/CareGapList' {
+  export const CareGapList: React.ComponentType;
+}
+declare module 'revenue/CodingQueue' {
+  export const CodingQueue: React.ComponentType;
+}
+declare module 'revenue/PriorAuthTracker' {
+  export const PriorAuthTracker: React.ComponentType;
+}

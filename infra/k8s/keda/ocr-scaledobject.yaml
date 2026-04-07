@@ -1,0 +1,17 @@
+apiVersion: keda.sh/v1alpha1
+kind: ScaledObject
+metadata:
+  name: ocr-scaledobject
+  namespace: healthcare
+spec:
+  scaleTargetRef:
+    name: ocr-service
+  minReplicaCount: 0
+  maxReplicaCount: 10
+  cooldownPeriod: 600
+  triggers:
+    - type: azure-servicebus
+      metadata:
+        queueName: ocr-processing
+        namespace: healthcare-ai-servicebus
+        messageCount: "3"

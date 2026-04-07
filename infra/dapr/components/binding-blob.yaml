@@ -1,0 +1,20 @@
+apiVersion: dapr.io/v1alpha1
+kind: Component
+metadata:
+  name: blob-storage
+  namespace: healthcare
+spec:
+  type: bindings.azure.blobstorage
+  version: v1
+  metadata:
+    - name: accountName
+      value: "{STORAGE_ACCOUNT}"
+    - name: containerName
+      value: "clinical-documents"
+    - name: decodeBase64
+      value: "true"
+  auth:
+    secretStore: azure-keyvault
+scopes:
+  - ocr-service
+  - fhir-service

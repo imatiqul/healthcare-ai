@@ -1,0 +1,34 @@
+using HealthcareAI.Domain.Scheduling;
+using HealthcareAI.Infrastructure.Persistence;
+using Microsoft.EntityFrameworkCore;
+
+namespace HealthcareAI.Scheduling.Infrastructure;
+
+public class SchedulingDbContext : OutboxDbContext
+{
+    public DbSet<Slot> Slots => Set<Slot>();
+    public DbSet<Booking> Bookings => Set<Booking>();
+
+    public SchedulingDbContext(DbContextOptions<SchedulingDbContext> options) : base(options) { }
+
+    protected override void OnModelCreating(ModelBuilder modelBuilder)
+    {
+        base.OnModelCreating(modelBuilder);
+
+        modelBuilder.Entity<Slot>(b =>
+        {
+            b.ToTable("slots");
+            b.HasKey(e => e.Id);
+            b.Property(e => e.Status).HasConversion<string>();
+            b.Property(e => e.PractitionerId).HasMaxLength(128).IsRequired();
+            b.Property(e => e.Version).IsRowVersion();
+        });
+
+        modelBuilder.Entity<Booking>(b =>
+        {
+            b.ToTable("bookings");
+            b.HasKey(e => e.Id);
+            b.HasIndex(e => e.SlotId).IsUnique();
+        });
+    }
+}

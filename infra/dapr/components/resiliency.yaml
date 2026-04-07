@@ -1,0 +1,50 @@
+apiVersion: dapr.io/v1alpha1
+kind: Resiliency
+metadata:
+  name: healthcare-resiliency
+  namespace: healthcare
+spec:
+  policies:
+    retries:
+      defaultRetry:
+        policy: constant
+        duration: 1s
+        maxRetries: 3
+      criticalRetry:
+        policy: exponential
+        maxInterval: 30s
+        maxRetries: 5
+    timeouts:
+      defaultTimeout: 5s
+      longTimeout: 30s
+    circuitBreakers:
+      defaultBreaker:
+        maxRequests: 1
+        interval: 10s
+        timeout: 30s
+        trip: consecutiveFailures > 5
+      agentBreaker:
+        maxRequests: 1
+        interval: 15s
+        timeout: 60s
+        trip: consecutiveFailures > 3
+  targets:
+    apps:
+      fhir-service:
+        retry: criticalRetry
+        timeout: defaultTimeout
+        circuitBreaker: defaultBreaker
+      ai-agent-service:
+        retry: defaultRetry
+        timeout: longTimeout
+        circuitBreaker: agentBreaker
+    components:
+      pubsub:
+        outbound:
+          retry: criticalRetry
+          timeout: defaultTimeout
+      statestore:
+        outbound:
+          retry: defaultRetry
+          timeout: defaultTimeout
+          circuitBreaker: defaultBreaker

@@ -1,0 +1,146 @@
+targetScope = 'subscription'
+
+@description('Environment name prefix for all resources')
+param envName string
+
+@description('Azure region for all resources')
+param location string = 'eastus2'
+
+@description('Entra ID tenant ID for AKS AAD integration')
+param aadTenantId string
+
+@description('Log Analytics workspace retention in days')
+param logRetentionDays int = 90
+
+@description('APIM publisher email')
+param apimPublisherEmail string
+
+resource rg 'Microsoft.Resources/resourceGroups@2024-03-01' = {
+  name: '${envName}-rg'
+  location: location
+}
+
+module network 'modules/network.bicep' = {
+  name: 'network-deploy'
+  scope: rg
+  params: {
+    envName: envName
+    location: location
+  }
+}
+
+module logAnalytics 'modules/log-analytics.bicep' = {
+  name: 'log-analytics-deploy'
+  scope: rg
+  params: {
+    envName: envName
+    location: location
+    retentionDays: logRetentionDays
+  }
+}
+
+module keyVault 'modules/key-vault.bicep' = {
+  name: 'key-vault-deploy'
+  scope: rg
+  params: {
+    envName: envName
+    location: location
+  }
+}
+
+module acr 'modules/acr.bicep' = {
+  name: 'acr-deploy'
+  scope: rg
+  params: {
+    envName: envName
+    location: location
+  }
+}
+
+module aks 'modules/aks.bicep' = {
+  name: 'aks-deploy'
+  scope: rg
+  params: {
+    envName: envName
+    location: location
+    aadTenantId: aadTenantId
+    aksSubnetId: network.outputs.aksSubnetId
+    logAnalyticsWorkspaceId: logAnalytics.outputs.workspaceId
+  }
+}
+
+module dapr 'modules/dapr-extension.bicep' = {
+  name: 'dapr-deploy'
+  scope: rg
+  params: {
+    aksClusterName: aks.outputs.clusterName
+  }
+}
+
+module apim 'modules/apim.bicep' = {
+  name: 'apim-deploy'
+  scope: rg
+  params: {
+    envName: envName
+    location: location
+    apimSubnetId: network.outputs.apimSubnetId
+    publisherEmail: apimPublisherEmail
+  }
+}
+
+module serviceBus 'modules/service-bus.bicep' = {
+  name: 'servicebus-deploy'
+  scope: rg
+  params: {
+    envName: envName
+    location: location
+  }
+}
+
+module postgres 'modules/postgres.bicep' = {
+  name: 'postgres-deploy'
+  scope: rg
+  params: {
+    envName: envName
+    location: location
+    pgSubnetId: network.outputs.postgresSubnetId
+    privateDnsZoneId: network.outputs.postgresDnsZoneId
+  }
+}
+
+module redis 'modules/redis.bicep' = {
+  name: 'redis-deploy'
+  scope: rg
+  params: {
+    envName: envName
+    location: location
+    redisSubnetId: network.outputs.redisSubnetId
+  }
+}
+
+module identities 'modules/managed-identities.bicep' = {
+  name: 'identities-deploy'
+  scope: rg
+  params: {
+    envName: envName
+    location: location
+    aksOidcIssuer: aks.outputs.oidcIssuerUrl
+    keyVaultId: keyVault.outputs.keyVaultId
+    serviceBusNamespaceId: serviceBus.outputs.namespaceId
+  }
+}
+
+module appInsights 'modules/app-insights.bicep' = {
+  name: 'app-insights-deploy'
+  scope: rg
+  params: {
+    envName: envName
+    location: location
+    logAnalyticsWorkspaceId: logAnalytics.outputs.workspaceId
+  }
+}
+
+output aksClusterName string = aks.outputs.clusterName
+output acrLoginServer string = acr.outputs.loginServer
+output apimGatewayUrl string = apim.outputs.gatewayUrl
+output keyVaultName string = keyVault.outputs.keyVaultName

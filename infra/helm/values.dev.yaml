@@ -1,0 +1,35 @@
+global:
+  env: development
+  registry: healthcareaidev.azurecr.io
+
+services:
+  voice:
+    replicas: 1
+    resources:
+      requests:
+        cpu: 100m
+        memory: 256Mi
+      limits:
+        cpu: 500m
+        memory: 512Mi
+  ai-agent:
+    replicas: 1
+    resources:
+      requests:
+        cpu: 250m
+        memory: 512Mi
+      limits:
+        cpu: "1"
+        memory: 1Gi
+  fhir:
+    replicas: 1
+  identity:
+    replicas: 1
+  ocr:
+    replicas: 1
+  scheduling:
+    replicas: 1
+  notification:
+    replicas: 1
+  pophealth:
+    replicas: 1

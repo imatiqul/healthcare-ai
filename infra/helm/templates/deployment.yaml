@@ -1,0 +1,74 @@
+{{- range $key, $svc := .Values.services }}
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ $svc.name }}
+  namespace: {{ $.Values.global.namespace }}
+  labels:
+    app: {{ $svc.name }}
+    version: {{ $svc.image.tag }}
+spec:
+  replicas: {{ $svc.replicas }}
+  selector:
+    matchLabels:
+      app: {{ $svc.name }}
+  template:
+    metadata:
+      labels:
+        app: {{ $svc.name }}
+        azure.workload.identity/use: "true"
+      annotations:
+        dapr.io/enabled: "true"
+        dapr.io/app-id: {{ $svc.name }}
+        dapr.io/app-port: "{{ $svc.port }}"
+        dapr.io/log-level: "warn"
+        dapr.io/config: "healthcare-config"
+        dapr.io/enable-metrics: "true"
+        dapr.io/metrics-port: "9090"
+    spec:
+      serviceAccountName: {{ $svc.name }}-sa
+      {{- if $svc.nodeSelector }}
+      nodeSelector:
+        {{- toYaml $svc.nodeSelector | nindent 8 }}
+      {{- end }}
+      {{- if $svc.tolerations }}
+      tolerations:
+        {{- toYaml $svc.tolerations | nindent 8 }}
+      {{- end }}
+      containers:
+        - name: {{ $svc.name }}
+          image: {{ $.Values.global.registry }}/{{ $svc.image.repository }}:{{ $svc.image.tag }}
+          imagePullPolicy: {{ $.Values.global.imagePullPolicy }}
+          ports:
+            - containerPort: {{ $svc.port }}
+              protocol: TCP
+          env:
+            {{- range $envKey, $envVal := $svc.env }}
+            - name: {{ $envKey }}
+              value: "{{ $envVal }}"
+            {{- end }}
+          resources:
+            {{- toYaml $svc.resources | nindent 12 }}
+          livenessProbe:
+            httpGet:
+              path: /health/live
+              port: {{ $svc.port }}
+            initialDelaySeconds: 15
+            periodSeconds: 20
+            failureThreshold: 3
+          readinessProbe:
+            httpGet:
+              path: /health/ready
+              port: {{ $svc.port }}
+            initialDelaySeconds: 5
+            periodSeconds: 10
+            failureThreshold: 3
+          startupProbe:
+            httpGet:
+              path: /health/live
+              port: {{ $svc.port }}
+            initialDelaySeconds: 10
+            periodSeconds: 5
+            failureThreshold: 30
+{{- end }}

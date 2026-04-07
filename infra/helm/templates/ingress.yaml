@@ -1,0 +1,29 @@
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: healthcare-ingress
+  namespace: {{ .Values.global.namespace }}
+  annotations:
+    nginx.ingress.kubernetes.io/rewrite-target: /$2
+    nginx.ingress.kubernetes.io/ssl-redirect: "true"
+    nginx.ingress.kubernetes.io/use-regex: "true"
+    nginx.ingress.kubernetes.io/proxy-body-size: "50m"
+spec:
+  ingressClassName: nginx
+  tls:
+    - hosts:
+        - api.healthcare-ai.com
+      secretName: healthcare-tls
+  rules:
+    - host: api.healthcare-ai.com
+      http:
+        paths:
+          {{- range $key, $svc := .Values.services }}
+          - path: /api/v1/{{ $key }}(/|$)(.*)
+            pathType: ImplementationSpecific
+            backend:
+              service:
+                name: {{ $svc.name }}
+                port:
+                  number: 80
+          {{- end }}

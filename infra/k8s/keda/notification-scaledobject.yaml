@@ -1,0 +1,17 @@
+apiVersion: keda.sh/v1alpha1
+kind: ScaledObject
+metadata:
+  name: notification-scaledobject
+  namespace: healthcare
+spec:
+  scaleTargetRef:
+    name: notification-service
+  minReplicaCount: 1
+  maxReplicaCount: 8
+  cooldownPeriod: 300
+  triggers:
+    - type: azure-servicebus
+      metadata:
+        queueName: outreach-processing
+        namespace: healthcare-ai-servicebus
+        messageCount: "10"

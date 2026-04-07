@@ -1,0 +1,49 @@
+@description('Environment name prefix')
+param envName string
+
+@description('Azure region')
+param location string
+
+resource keyVault 'Microsoft.KeyVault/vaults@2023-07-01' = {
+  name: '${envName}-kv'
+  location: location
+  properties: {
+    tenantId: subscription().tenantId
+    sku: {
+      family: 'A'
+      name: 'standard'
+    }
+    enableRbacAuthorization: true
+    enableSoftDelete: true
+    softDeleteRetentionInDays: 90
+    enablePurgeProtection: true
+    networkAcls: {
+      defaultAction: 'Deny'
+      bypass: 'AzureServices'
+    }
+  }
+}
+
+// Diagnostic settings for HIPAA audit
+resource kvDiagnostics 'Microsoft.Insights/diagnosticSettings@2021-05-01-preview' = {
+  name: '${envName}-kv-diag'
+  scope: keyVault
+  properties: {
+    logs: [
+      {
+        categoryGroup: 'allLogs'
+        enabled: true
+      }
+    ]
+    metrics: [
+      {
+        category: 'AllMetrics'
+        enabled: true
+      }
+    ]
+  }
+}
+
+output keyVaultId string = keyVault.id
+output keyVaultName string = keyVault.name
+output keyVaultUri string = keyVault.properties.vaultUri

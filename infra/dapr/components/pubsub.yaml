@@ -1,0 +1,29 @@
+apiVersion: dapr.io/v1alpha1
+kind: Component
+metadata:
+  name: pubsub
+  namespace: healthcare
+spec:
+  type: pubsub.azure.servicebus.topics
+  version: v1
+  metadata:
+    - name: namespaceName
+      value: "{SERVICEBUS_NAMESPACE}.servicebus.windows.net"
+    - name: consumerID
+      value: "{APP_ID}"
+    - name: maxDeliveryCount
+      value: "10"
+    - name: lockDurationInSec
+      value: "60"
+    - name: maxConcurrentHandlers
+      value: "8"
+  auth:
+    secretStore: azure-keyvault
+scopes:
+  - voice-service
+  - ai-agent-service
+  - fhir-service
+  - ocr-service
+  - scheduling-service
+  - notification-service
+  - pophealth-service

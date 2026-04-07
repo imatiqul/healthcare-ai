@@ -1,0 +1,22 @@
+apiVersion: dapr.io/v1alpha1
+kind: Component
+metadata:
+  name: fhir-events
+  namespace: healthcare
+spec:
+  type: bindings.azure.eventgrid
+  version: v1
+  metadata:
+    - name: accessKey
+      secretKeyRef:
+        name: eventgrid-access-key
+        key: eventgrid-access-key
+    - name: topicEndpoint
+      value: "{EVENTGRID_TOPIC_ENDPOINT}"
+    - name: subscriberEndpoint
+      value: "/api/v1/fhir/events"
+  auth:
+    secretStore: azure-keyvault
+scopes:
+  - fhir-service
+  - scheduling-service

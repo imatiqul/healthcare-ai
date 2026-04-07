@@ -1,0 +1,13 @@
+<Project Sdk="Microsoft.NET.Sdk.Web">
+  <PropertyGroup>
+    <RootNamespace>HealthcareAI.Identity</RootNamespace>
+  </PropertyGroup>
+  <ItemGroup>
+    <PackageReference Include="Npgsql.EntityFrameworkCore.PostgreSQL" Version="9.0.3" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\HealthcareAI.Domain\HealthcareAI.Domain.csproj" />
+    <ProjectReference Include="..\HealthcareAI.Infrastructure\HealthcareAI.Infrastructure.csproj" />
+    <ProjectReference Include="..\HealthcareAI.ServiceDefaults\HealthcareAI.ServiceDefaults.csproj" />
+  </ItemGroup>
+</Project>

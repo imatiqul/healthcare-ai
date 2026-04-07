@@ -1,0 +1,20 @@
+apiVersion: argoproj.io/v1alpha1
+kind: AppProject
+metadata:
+  name: healthcare-ai
+  namespace: argocd
+spec:
+  description: Healthcare AI microservices project
+  sourceRepos:
+    - https://github.com/your-org/healthcare-ai.git
+  destinations:
+    - namespace: healthcare
+      server: https://kubernetes.default.svc
+    - namespace: healthcare-dev
+      server: https://kubernetes.default.svc
+  clusterResourceWhitelist:
+    - group: ''
+      kind: Namespace
+  namespaceResourceWhitelist:
+    - group: '*'
+      kind: '*'

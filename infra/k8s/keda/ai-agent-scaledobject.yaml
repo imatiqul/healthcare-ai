@@ -1,0 +1,23 @@
+apiVersion: keda.sh/v1alpha1
+kind: ScaledObject
+metadata:
+  name: ai-agent-scaledobject
+  namespace: healthcare
+spec:
+  scaleTargetRef:
+    name: ai-agent-service
+  minReplicaCount: 2
+  maxReplicaCount: 20
+  cooldownPeriod: 300
+  triggers:
+    - type: azure-servicebus
+      metadata:
+        queueName: transcript-processing
+        namespace: healthcare-ai-servicebus
+        messageCount: "5"
+    - type: prometheus
+      metadata:
+        serverAddress: http://prometheus.monitoring:9090
+        metricName: active_voice_sessions
+        threshold: "3"
+        query: sum(active_voice_sessions_total{namespace="healthcare"})
