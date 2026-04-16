@@ -99,15 +99,16 @@ declare -A SERVICE_PORTS=(
   [pop-health]=5008
 )
 
+PLACEHOLDER_IMAGE="mcr.microsoft.com/k8se/quickstart:latest"
+
 for SERVICE in "${SERVICES[@]}"; do
   PORT="${SERVICE_PORTS[$SERVICE]:-8080}"
-  IMAGE="${IMAGE_PREFIX}/${SERVICE}:latest"
   echo "→ Creating Container App: $SERVICE (port $PORT)"
   az containerapp create \
     --name "$SERVICE" \
     --resource-group "$RG" \
     --environment "$ACA_ENV" \
-    --image "$IMAGE" \
+    --image "$PLACEHOLDER_IMAGE" \
     --target-port "$PORT" \
     --ingress internal \
     --min-replicas 0 \
@@ -117,7 +118,6 @@ for SERVICE in "${SERVICES[@]}"; do
     --env-vars \
       "APPLICATIONINSIGHTS_CONNECTION_STRING=${APPINSIGHTS_CONN}" \
       "ASPNETCORE_ENVIRONMENT=Production" \
-    --registry-server "$REGISTRY" \
     --output none
 done
 
