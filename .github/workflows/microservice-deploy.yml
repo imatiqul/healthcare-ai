@@ -11,7 +11,10 @@ permissions:
   contents: write
 
 env:
-  ACR_REGISTRY: HealthQCopilot.azurecr.io
+  REGISTRY: ghcr.io
+  IMAGE_PREFIX: ghcr.io/${{ github.repository_owner }}/healthcare-ai/healthq-copilot
+  ACA_RESOURCE_GROUP: healthq-copilot-rg
+  ACA_ENVIRONMENT: healthq-copilot-env
 
 jobs:
   detect-changes:
@@ -116,23 +119,22 @@ jobs:
           tenant-id: ${{ secrets.AZURE_TENANT_ID }}
           subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
 
-      - name: Build and push to ACR
+      - name: Build and push to GHCR
         if: matrix.changed == 'true' && github.event_name == 'push' && github.ref == 'refs/heads/main'
         run: |
-          az acr build \
-            --registry HealthQCopilot \
-            --image healthq-copilot/${{ matrix.service }}:${{ github.sha }} \
-            --image healthq-copilot/${{ matrix.service }}:latest \
-            --file src/${{ matrix.project }}/Dockerfile .
+          echo "${{ secrets.GITHUB_TOKEN }}" | docker login ghcr.io -u ${{ github.actor }} --password-stdin
+          docker build \
+            --file src/${{ matrix.project }}/Dockerfile \
+            --tag ${{ env.IMAGE_PREFIX }}/${{ matrix.service }}:${{ github.sha }} \
+            --tag ${{ env.IMAGE_PREFIX }}/${{ matrix.service }}:latest \
+            .
+          docker push ${{ env.IMAGE_PREFIX }}/${{ matrix.service }}:${{ github.sha }}
+          docker push ${{ env.IMAGE_PREFIX }}/${{ matrix.service }}:latest
 
-      - name: Update Helm values for ArgoCD
+      - name: Deploy to Azure Container Apps
         if: matrix.changed == 'true' && github.event_name == 'push' && github.ref == 'refs/heads/main'
         run: |
-          SERVICE_KEY=$(echo "${{ matrix.service }}" | tr '-' '_')
-          yq eval ".services.${SERVICE_KEY}.image.tag = \"${{ github.sha }}\"" -i \
-            infra/helm/values.yaml
-          git config user.name "github-actions[bot]"
-          git config user.email "github-actions[bot]@users.noreply.github.com"
-          git add infra/helm/values.yaml
-          git commit -m "ci: update ${{ matrix.service }} image to ${{ github.sha }}" || true
-          git push || true
+          az containerapp update \
+            --name ${{ matrix.service }} \
+            --resource-group ${{ env.ACA_RESOURCE_GROUP }} \
+            --image ${{ env.IMAGE_PREFIX }}/${{ matrix.service }}:${{ github.sha }}

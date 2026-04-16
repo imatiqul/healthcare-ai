@@ -4,16 +4,16 @@ EXPOSE 8080
 
 FROM mcr.microsoft.com/dotnet/sdk:9.0 AS build
 WORKDIR /src
-COPY ["src/HealthcareAI.Domain/HealthcareAI.Domain.csproj", "src/HealthcareAI.Domain/"]
-COPY ["src/HealthcareAI.Infrastructure/HealthcareAI.Infrastructure.csproj", "src/HealthcareAI.Infrastructure/"]
-COPY ["src/HealthcareAI.Ocr/HealthcareAI.Ocr.csproj", "src/HealthcareAI.Ocr/"]
-RUN dotnet restore "src/HealthcareAI.Ocr/HealthcareAI.Ocr.csproj"
+COPY ["src/HealthQCopilot.Domain/HealthQCopilot.Domain.csproj", "src/HealthQCopilot.Domain/"]
+COPY ["src/HealthQCopilot.Infrastructure/HealthQCopilot.Infrastructure.csproj", "src/HealthQCopilot.Infrastructure/"]
+COPY ["src/HealthQCopilot.Ocr/HealthQCopilot.Ocr.csproj", "src/HealthQCopilot.Ocr/"]
+RUN dotnet restore "src/HealthQCopilot.Ocr/HealthQCopilot.Ocr.csproj"
 COPY . .
-WORKDIR "/src/src/HealthcareAI.Ocr"
+WORKDIR "/src/src/HealthQCopilot.Ocr"
 RUN dotnet publish -c Release -o /app/publish --no-restore
 
 FROM base AS final
 WORKDIR /app
 COPY --from=build /app/publish .
 USER $APP_UID
-ENTRYPOINT ["dotnet", "HealthcareAI.Ocr.dll"]
+ENTRYPOINT ["dotnet", "HealthQCopilot.Ocr.dll"]
