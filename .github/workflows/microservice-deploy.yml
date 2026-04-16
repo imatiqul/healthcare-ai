@@ -1,6 +1,7 @@
 name: Microservice CI/CD
 
 on:
+  workflow_dispatch:
   push:
     branches: [main]
   pull_request:
@@ -9,6 +10,7 @@ on:
 permissions:
   id-token: write
   contents: write
+  packages: write
 
 env:
   REGISTRY: ghcr.io
@@ -99,7 +101,7 @@ jobs:
             -- DataCollectionRunSettings.DataCollectors.DataCollector.Configuration.Format=cobertura
 
       - name: Integration tests
-        if: matrix.changed == 'true' && github.event_name == 'push'
+        if: matrix.changed == 'true' && (github.event_name == 'push' || github.event_name == 'workflow_dispatch')
         run: dotnet test tests/HealthQCopilot.Tests.Integration --configuration Release
 
       - name: Trivy vulnerability scan
@@ -112,7 +114,7 @@ jobs:
           exit-code: '1'
 
       - name: Azure login (OIDC)
-        if: matrix.changed == 'true' && github.event_name == 'push' && github.ref == 'refs/heads/main'
+        if: matrix.changed == 'true' && (github.event_name == 'push' || github.event_name == 'workflow_dispatch') && github.ref == 'refs/heads/main'
         uses: azure/login@v2
         with:
           client-id: ${{ secrets.AZURE_CLIENT_ID }}
@@ -120,7 +122,7 @@ jobs:
           subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
 
       - name: Build and push to GHCR
-        if: matrix.changed == 'true' && github.event_name == 'push' && github.ref == 'refs/heads/main'
+        if: matrix.changed == 'true' && (github.event_name == 'push' || github.event_name == 'workflow_dispatch') && github.ref == 'refs/heads/main'
         run: |
           echo "${{ secrets.GITHUB_TOKEN }}" | docker login ghcr.io -u ${{ github.actor }} --password-stdin
           docker build \
@@ -132,7 +134,7 @@ jobs:
           docker push ${{ env.IMAGE_PREFIX }}/${{ matrix.service }}:latest
 
       - name: Deploy to Azure Container Apps
-        if: matrix.changed == 'true' && github.event_name == 'push' && github.ref == 'refs/heads/main'
+        if: matrix.changed == 'true' && (github.event_name == 'push' || github.event_name == 'workflow_dispatch') && github.ref == 'refs/heads/main'
         run: |
           az containerapp update \
             --name ${{ matrix.service }} \
