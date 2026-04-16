@@ -99,6 +99,18 @@ jobs:
         run: pnpm --filter ${{ matrix.app }} build
         env:
           NEXT_PUBLIC_API_URL: ${{ vars.API_URL }}
+          VOICE_MFE_URL: https://happy-smoke-0ba02780f.7.azurestaticapps.net/mf-manifest.json
+          TRIAGE_MFE_URL: https://brave-hill-0d76ab10f.7.azurestaticapps.net/mf-manifest.json
+          SCHEDULING_MFE_URL: https://yellow-smoke-0e7b6b70f.7.azurestaticapps.net/mf-manifest.json
+          POPHEALTH_MFE_URL: https://orange-bay-00f28280f.7.azurestaticapps.net/mf-manifest.json
+          REVENUE_MFE_URL: https://lemon-pond-067d2f40f.7.azurestaticapps.net/mf-manifest.json
+
+      - name: Copy SWA config to dist
+        if: matrix.changed == 'true' || github.event_name == 'workflow_dispatch'
+        run: |
+          if [ -f "frontend/apps/${{ matrix.app }}/staticwebapp.config.json" ]; then
+            cp frontend/apps/${{ matrix.app }}/staticwebapp.config.json frontend/apps/${{ matrix.app }}/dist/
+          fi
 
       - name: Deploy to Azure Static Web Apps
         if: (matrix.changed == 'true' || github.event_name == 'workflow_dispatch') && (github.event_name == 'push' || github.event_name == 'workflow_dispatch') && github.ref == 'refs/heads/main'
