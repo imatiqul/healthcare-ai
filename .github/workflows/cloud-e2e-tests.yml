@@ -1,0 +1,64 @@
+name: Cloud E2E Tests
+
+on:
+  workflow_dispatch:
+  workflow_run:
+    workflows: ['Microservice CI/CD', 'Frontend MFE CI/CD']
+    types: [completed]
+    branches: [main]
+
+permissions:
+  contents: read
+
+defaults:
+  run:
+    working-directory: frontend
+
+jobs:
+  cloud-e2e:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    if: github.event_name == 'workflow_dispatch' || github.event.workflow_run.conclusion == 'success'
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 9
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: pnpm
+          cache-dependency-path: frontend/pnpm-lock.yaml
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Install Playwright browsers
+        run: npx playwright install --with-deps chromium
+
+      - name: Run cloud E2E tests
+        run: npx playwright test --config=playwright.cloud.config.ts
+        env:
+          SHELL_URL: https://gentle-tree-03115af0f.7.azurestaticapps.net
+          VOICE_URL: https://happy-smoke-0ba02780f.7.azurestaticapps.net
+          TRIAGE_URL: https://brave-hill-0d76ab10f.7.azurestaticapps.net
+          SCHEDULING_URL: https://yellow-smoke-0e7b6b70f.7.azurestaticapps.net
+          POPHEALTH_URL: https://orange-bay-00f28280f.7.azurestaticapps.net
+          REVENUE_URL: https://lemon-pond-067d2f40f.7.azurestaticapps.net
+          VOICE_ACA_URL: https://voice.gentletree-fe920881.eastus2.azurecontainerapps.io
+          AGENT_ACA_URL: https://ai-agent.gentletree-fe920881.eastus2.azurecontainerapps.io
+          FHIR_ACA_URL: https://fhir.gentletree-fe920881.eastus2.azurecontainerapps.io
+          IDENTITY_ACA_URL: https://identity.gentletree-fe920881.eastus2.azurecontainerapps.io
+          OCR_ACA_URL: https://ocr.gentletree-fe920881.eastus2.azurecontainerapps.io
+          SCHEDULING_ACA_URL: https://scheduling.gentletree-fe920881.eastus2.azurecontainerapps.io
+          NOTIFICATION_ACA_URL: https://notification.gentletree-fe920881.eastus2.azurecontainerapps.io
+          POPHEALTH_ACA_URL: https://pop-health.gentletree-fe920881.eastus2.azurecontainerapps.io
+
+      - uses: actions/upload-artifact@v4
+        if: ${{ !cancelled() }}
+        with:
+          name: cloud-e2e-report
+          path: frontend/playwright-report/
+          retention-days: 14

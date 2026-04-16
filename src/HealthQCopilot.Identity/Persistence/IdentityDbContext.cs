@@ -4,7 +4,7 @@ using Microsoft.EntityFrameworkCore;
 
 namespace HealthQCopilot.Identity.Persistence;
 
-public class IdentityDbContext(DbContextOptions<IdentityDbContext> options) 
+public class IdentityDbContext(DbContextOptions<IdentityDbContext> options)
     : OutboxDbContext(options)
 {
     public DbSet<UserAccount> UserAccounts => Set<UserAccount>();
@@ -12,7 +12,7 @@ public class IdentityDbContext(DbContextOptions<IdentityDbContext> options)
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         base.OnModelCreating(modelBuilder);
-        
+
         modelBuilder.Entity<UserAccount>(entity =>
         {
             entity.ToTable("user_accounts");

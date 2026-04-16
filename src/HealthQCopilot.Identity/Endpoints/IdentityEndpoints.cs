@@ -30,8 +30,13 @@ public static class IdentityEndpoints
             var user = await db.UserAccounts.FindAsync([id], ct);
             return user is null ? Results.NotFound() : Results.Ok(new
             {
-                user.Id, user.ExternalId, user.Email, user.DisplayName,
-                user.Role, user.IsActive, user.LastLoginAt
+                user.Id,
+                user.ExternalId,
+                user.Email,
+                user.DisplayName,
+                user.Role,
+                user.IsActive,
+                user.LastLoginAt
             });
         });
 
@@ -44,8 +49,12 @@ public static class IdentityEndpoints
                 .FirstOrDefaultAsync(u => u.ExternalId == externalId, ct);
             return user is null ? Results.NotFound() : Results.Ok(new
             {
-                user.Id, user.ExternalId, user.Email, user.DisplayName,
-                user.Role, user.IsActive
+                user.Id,
+                user.ExternalId,
+                user.Email,
+                user.DisplayName,
+                user.Role,
+                user.IsActive
             });
         });
 
