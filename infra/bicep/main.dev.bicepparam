@@ -1,6 +1,6 @@
 using 'main.bicep'
 
-param envName = 'healthcareai-dev'
+param envName = 'healthqcopilot-dev'
 param location = 'eastus2'
 param aadTenantId = '<TENANT_ID>'
 param apimPublisherEmail = '<PUBLISHER_EMAIL>'

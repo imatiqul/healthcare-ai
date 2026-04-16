@@ -26,6 +26,7 @@ spec:
         dapr.io/config: "healthcare-config"
         dapr.io/enable-metrics: "true"
         dapr.io/metrics-port: "9090"
+        sidecar.istio.io/inject: "true"
     spec:
       serviceAccountName: {{ $svc.name }}-sa
       {{- if $svc.nodeSelector }}
@@ -48,6 +49,13 @@ spec:
             - name: {{ $envKey }}
               value: "{{ $envVal }}"
             {{- end }}
+            # OpenTelemetry tracing environment variables
+            - name: OTEL_EXPORTER_OTLP_ENDPOINT
+              value: "http://otel-collector:4317"
+            - name: OTEL_SERVICE_NAME
+              value: "{{ $svc.name }}"
+            - name: OTEL_RESOURCE_ATTRIBUTES
+              value: "service.name={{ $svc.name }},service.namespace={{ $.Values.global.namespace }}"
           resources:
             {{- toYaml $svc.resources | nindent 12 }}
           livenessProbe:

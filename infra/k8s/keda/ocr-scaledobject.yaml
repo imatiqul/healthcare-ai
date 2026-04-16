@@ -2,7 +2,7 @@ apiVersion: keda.sh/v1alpha1
 kind: ScaledObject
 metadata:
   name: ocr-scaledobject
-  namespace: healthcare
+  namespace: healthq-copilot
 spec:
   scaleTargetRef:
     name: ocr-service
@@ -13,5 +13,5 @@ spec:
     - type: azure-servicebus
       metadata:
         queueName: ocr-processing
-        namespace: healthcare-ai-servicebus
+        namespace: healthq-copilot-servicebus
         messageCount: "3"

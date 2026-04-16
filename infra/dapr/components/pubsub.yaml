@@ -2,7 +2,7 @@ apiVersion: dapr.io/v1alpha1
 kind: Component
 metadata:
   name: pubsub
-  namespace: healthcare
+  namespace: healthq-copilot
 spec:
   type: pubsub.azure.servicebus.topics
   version: v1

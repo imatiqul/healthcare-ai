@@ -28,7 +28,7 @@ jobs:
 
       - name: Unit tests with coverage
         run: |
-          dotnet test tests/HealthcareAI.Tests.Unit \
+          dotnet test tests/HealthQCopilot.Tests.Unit \
             --no-build --configuration Release \
             --collect:"XPlat Code Coverage" \
             --results-directory ./coverage \

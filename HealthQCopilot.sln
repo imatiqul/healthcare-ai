@@ -1,0 +1,108 @@
+
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 17
+VisualStudioVersion = 17.0.31903.59
+MinimumVisualStudioVersion = 10.0.40219.1
+
+# Shared Domain
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "HealthQCopilot.Domain", "src\HealthQCopilot.Domain\HealthQCopilot.Domain.csproj", "{A1B2C3D4-0001-0001-0001-000000000001}"
+EndProject
+
+# Shared Infrastructure
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "HealthQCopilot.Infrastructure", "src\HealthQCopilot.Infrastructure\HealthQCopilot.Infrastructure.csproj", "{A1B2C3D4-0002-0002-0002-000000000002}"
+EndProject
+
+# Microservices
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "HealthQCopilot.Identity", "src\HealthQCopilot.Identity\HealthQCopilot.Identity.csproj", "{A1B2C3D4-0003-0003-0003-000000000003}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "HealthQCopilot.Voice", "src\HealthQCopilot.Voice\HealthQCopilot.Voice.csproj", "{A1B2C3D4-0004-0004-0004-000000000004}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "HealthQCopilot.Agents", "src\HealthQCopilot.Agents\HealthQCopilot.Agents.csproj", "{A1B2C3D4-0005-0005-0005-000000000005}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "HealthQCopilot.Fhir", "src\HealthQCopilot.Fhir\HealthQCopilot.Fhir.csproj", "{A1B2C3D4-0006-0006-0006-000000000006}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "HealthQCopilot.Ocr", "src\HealthQCopilot.Ocr\HealthQCopilot.Ocr.csproj", "{A1B2C3D4-0007-0007-0007-000000000007}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "HealthQCopilot.Scheduling", "src\HealthQCopilot.Scheduling\HealthQCopilot.Scheduling.csproj", "{A1B2C3D4-0008-0008-0008-000000000008}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "HealthQCopilot.Notifications", "src\HealthQCopilot.Notifications\HealthQCopilot.Notifications.csproj", "{A1B2C3D4-0009-0009-0009-000000000009}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "HealthQCopilot.PopulationHealth", "src\HealthQCopilot.PopulationHealth\HealthQCopilot.PopulationHealth.csproj", "{A1B2C3D4-000A-000A-000A-00000000000A}"
+EndProject
+
+# Tests
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "HealthQCopilot.Tests.Unit", "tests\HealthQCopilot.Tests.Unit\HealthQCopilot.Tests.Unit.csproj", "{A1B2C3D4-000B-000B-000B-00000000000B}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "HealthQCopilot.Tests.Integration", "tests\HealthQCopilot.Tests.Integration\HealthQCopilot.Tests.Integration.csproj", "{A1B2C3D4-000C-000C-000C-00000000000C}"
+EndProject
+
+# Aspire
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "HealthQCopilot.AppHost", "src\HealthQCopilot.AppHost\HealthQCopilot.AppHost.csproj", "{A1B2C3D4-000D-000D-000D-00000000000D}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "HealthQCopilot.ServiceDefaults", "src\HealthQCopilot.ServiceDefaults\HealthQCopilot.ServiceDefaults.csproj", "{A1B2C3D4-000E-000E-000E-00000000000E}"
+EndProject
+
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{A1B2C3D4-0001-0001-0001-000000000001}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{A1B2C3D4-0001-0001-0001-000000000001}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{A1B2C3D4-0001-0001-0001-000000000001}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{A1B2C3D4-0001-0001-0001-000000000001}.Release|Any CPU.Build.0 = Release|Any CPU
+		{A1B2C3D4-0002-0002-0002-000000000002}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{A1B2C3D4-0002-0002-0002-000000000002}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{A1B2C3D4-0002-0002-0002-000000000002}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{A1B2C3D4-0002-0002-0002-000000000002}.Release|Any CPU.Build.0 = Release|Any CPU
+		{A1B2C3D4-0003-0003-0003-000000000003}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{A1B2C3D4-0003-0003-0003-000000000003}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{A1B2C3D4-0003-0003-0003-000000000003}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{A1B2C3D4-0003-0003-0003-000000000003}.Release|Any CPU.Build.0 = Release|Any CPU
+		{A1B2C3D4-0004-0004-0004-000000000004}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{A1B2C3D4-0004-0004-0004-000000000004}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{A1B2C3D4-0004-0004-0004-000000000004}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{A1B2C3D4-0004-0004-0004-000000000004}.Release|Any CPU.Build.0 = Release|Any CPU
+		{A1B2C3D4-0005-0005-0005-000000000005}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{A1B2C3D4-0005-0005-0005-000000000005}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{A1B2C3D4-0005-0005-0005-000000000005}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{A1B2C3D4-0005-0005-0005-000000000005}.Release|Any CPU.Build.0 = Release|Any CPU
+		{A1B2C3D4-0006-0006-0006-000000000006}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{A1B2C3D4-0006-0006-0006-000000000006}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{A1B2C3D4-0006-0006-0006-000000000006}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{A1B2C3D4-0006-0006-0006-000000000006}.Release|Any CPU.Build.0 = Release|Any CPU
+		{A1B2C3D4-0007-0007-0007-000000000007}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{A1B2C3D4-0007-0007-0007-000000000007}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{A1B2C3D4-0007-0007-0007-000000000007}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{A1B2C3D4-0007-0007-0007-000000000007}.Release|Any CPU.Build.0 = Release|Any CPU
+		{A1B2C3D4-0008-0008-0008-000000000008}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{A1B2C3D4-0008-0008-0008-000000000008}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{A1B2C3D4-0008-0008-0008-000000000008}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{A1B2C3D4-0008-0008-0008-000000000008}.Release|Any CPU.Build.0 = Release|Any CPU
+		{A1B2C3D4-0009-0009-0009-000000000009}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{A1B2C3D4-0009-0009-0009-000000000009}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{A1B2C3D4-0009-0009-0009-000000000009}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{A1B2C3D4-0009-0009-0009-000000000009}.Release|Any CPU.Build.0 = Release|Any CPU
+		{A1B2C3D4-000A-000A-000A-00000000000A}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{A1B2C3D4-000A-000A-000A-00000000000A}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{A1B2C3D4-000A-000A-000A-00000000000A}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{A1B2C3D4-000A-000A-000A-00000000000A}.Release|Any CPU.Build.0 = Release|Any CPU
+		{A1B2C3D4-000B-000B-000B-00000000000B}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{A1B2C3D4-000B-000B-000B-00000000000B}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{A1B2C3D4-000B-000B-000B-00000000000B}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{A1B2C3D4-000B-000B-000B-00000000000B}.Release|Any CPU.Build.0 = Release|Any CPU
+		{A1B2C3D4-000C-000C-000C-00000000000C}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{A1B2C3D4-000C-000C-000C-00000000000C}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{A1B2C3D4-000C-000C-000C-00000000000C}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{A1B2C3D4-000C-000C-000C-00000000000C}.Release|Any CPU.Build.0 = Release|Any CPU
+		{A1B2C3D4-000D-000D-000D-00000000000D}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{A1B2C3D4-000D-000D-000D-00000000000D}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{A1B2C3D4-000D-000D-000D-00000000000D}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{A1B2C3D4-000D-000D-000D-00000000000D}.Release|Any CPU.Build.0 = Release|Any CPU
+		{A1B2C3D4-000E-000E-000E-00000000000E}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{A1B2C3D4-000E-000E-000E-00000000000E}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{A1B2C3D4-000E-000E-000E-00000000000E}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{A1B2C3D4-000E-000E-000E-00000000000E}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+EndGlobal

@@ -1,16 +1,16 @@
 apiVersion: argoproj.io/v1alpha1
 kind: AppProject
 metadata:
-  name: healthcare-ai
+  name: healthq-copilot
   namespace: argocd
 spec:
-  description: Healthcare AI microservices project
+  description: HealthQ Copilot microservices project
   sourceRepos:
-    - https://github.com/your-org/healthcare-ai.git
+    - https://github.com/your-org/healthq-copilot.git
   destinations:
-    - namespace: healthcare
+    - namespace: healthq-copilot
       server: https://kubernetes.default.svc
-    - namespace: healthcare-dev
+    - namespace: healthq-copilot-dev
       server: https://kubernetes.default.svc
   clusterResourceWhitelist:
     - group: ''

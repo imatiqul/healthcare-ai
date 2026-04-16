@@ -11,7 +11,7 @@ permissions:
   contents: write
 
 env:
-  ACR_REGISTRY: healthcareai.azurecr.io
+  ACR_REGISTRY: HealthQCopilot.azurecr.io
 
 jobs:
   detect-changes:
@@ -31,14 +31,14 @@ jobs:
         id: filter
         with:
           filters: |
-            voice:        ['src/HealthcareAI.Voice/**', 'src/HealthcareAI.Domain/**', 'src/HealthcareAI.Infrastructure/**']
-            ai-agent:     ['src/HealthcareAI.Agents/**', 'src/HealthcareAI.Domain/**', 'src/HealthcareAI.Infrastructure/**']
-            fhir:         ['src/HealthcareAI.Fhir/**', 'src/HealthcareAI.Domain/**', 'src/HealthcareAI.Infrastructure/**']
-            identity:     ['src/HealthcareAI.Identity/**', 'src/HealthcareAI.Domain/**', 'src/HealthcareAI.Infrastructure/**']
-            ocr:          ['src/HealthcareAI.Ocr/**', 'src/HealthcareAI.Domain/**', 'src/HealthcareAI.Infrastructure/**']
-            scheduling:   ['src/HealthcareAI.Scheduling/**', 'src/HealthcareAI.Domain/**', 'src/HealthcareAI.Infrastructure/**']
-            notification: ['src/HealthcareAI.Notifications/**', 'src/HealthcareAI.Domain/**', 'src/HealthcareAI.Infrastructure/**']
-            pop-health:   ['src/HealthcareAI.PopulationHealth/**', 'src/HealthcareAI.Domain/**', 'src/HealthcareAI.Infrastructure/**']
+            voice:        ['src/HealthQCopilot.Voice/**', 'src/HealthQCopilot.Domain/**', 'src/HealthQCopilot.Infrastructure/**']
+            ai-agent:     ['src/HealthQCopilot.Agents/**', 'src/HealthQCopilot.Domain/**', 'src/HealthQCopilot.Infrastructure/**']
+            fhir:         ['src/HealthQCopilot.Fhir/**', 'src/HealthQCopilot.Domain/**', 'src/HealthQCopilot.Infrastructure/**']
+            identity:     ['src/HealthQCopilot.Identity/**', 'src/HealthQCopilot.Domain/**', 'src/HealthQCopilot.Infrastructure/**']
+            ocr:          ['src/HealthQCopilot.Ocr/**', 'src/HealthQCopilot.Domain/**', 'src/HealthQCopilot.Infrastructure/**']
+            scheduling:   ['src/HealthQCopilot.Scheduling/**', 'src/HealthQCopilot.Domain/**', 'src/HealthQCopilot.Infrastructure/**']
+            notification: ['src/HealthQCopilot.Notifications/**', 'src/HealthQCopilot.Domain/**', 'src/HealthQCopilot.Infrastructure/**']
+            pop-health:   ['src/HealthQCopilot.PopulationHealth/**', 'src/HealthQCopilot.Domain/**', 'src/HealthQCopilot.Infrastructure/**']
 
   test-and-build:
     needs: detect-changes
@@ -48,28 +48,28 @@ jobs:
       matrix:
         include:
           - service: voice
-            project: HealthcareAI.Voice
+            project: HealthQCopilot.Voice
             changed: ${{ needs.detect-changes.outputs.voice }}
           - service: ai-agent
-            project: HealthcareAI.Agents
+            project: HealthQCopilot.Agents
             changed: ${{ needs.detect-changes.outputs.ai-agent }}
           - service: fhir
-            project: HealthcareAI.Fhir
+            project: HealthQCopilot.Fhir
             changed: ${{ needs.detect-changes.outputs.fhir }}
           - service: identity
-            project: HealthcareAI.Identity
+            project: HealthQCopilot.Identity
             changed: ${{ needs.detect-changes.outputs.identity }}
           - service: ocr
-            project: HealthcareAI.Ocr
+            project: HealthQCopilot.Ocr
             changed: ${{ needs.detect-changes.outputs.ocr }}
           - service: scheduling
-            project: HealthcareAI.Scheduling
+            project: HealthQCopilot.Scheduling
             changed: ${{ needs.detect-changes.outputs.scheduling }}
           - service: notification
-            project: HealthcareAI.Notifications
+            project: HealthQCopilot.Notifications
             changed: ${{ needs.detect-changes.outputs.notification }}
           - service: pop-health
-            project: HealthcareAI.PopulationHealth
+            project: HealthQCopilot.PopulationHealth
             changed: ${{ needs.detect-changes.outputs.pop-health }}
     if: always()
     steps:
@@ -89,7 +89,7 @@ jobs:
       - name: Unit tests
         if: matrix.changed == 'true'
         run: |
-          dotnet test tests/HealthcareAI.Tests.Unit \
+          dotnet test tests/HealthQCopilot.Tests.Unit \
             --configuration Release \
             --collect:"XPlat Code Coverage" \
             --results-directory ./coverage \
@@ -97,7 +97,7 @@ jobs:
 
       - name: Integration tests
         if: matrix.changed == 'true' && github.event_name == 'push'
-        run: dotnet test tests/HealthcareAI.Tests.Integration --configuration Release
+        run: dotnet test tests/HealthQCopilot.Tests.Integration --configuration Release
 
       - name: Trivy vulnerability scan
         if: matrix.changed == 'true'
@@ -120,9 +120,9 @@ jobs:
         if: matrix.changed == 'true' && github.event_name == 'push' && github.ref == 'refs/heads/main'
         run: |
           az acr build \
-            --registry healthcareai \
-            --image healthcare-ai/${{ matrix.service }}:${{ github.sha }} \
-            --image healthcare-ai/${{ matrix.service }}:latest \
+            --registry HealthQCopilot \
+            --image healthq-copilot/${{ matrix.service }}:${{ github.sha }} \
+            --image healthq-copilot/${{ matrix.service }}:latest \
             --file src/${{ matrix.project }}/Dockerfile .
 
       - name: Update Helm values for ArgoCD

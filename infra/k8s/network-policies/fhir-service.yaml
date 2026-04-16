@@ -2,7 +2,7 @@ apiVersion: networking.k8s.io/v1
 kind: NetworkPolicy
 metadata:
   name: fhir-service-policy
-  namespace: healthcare
+  namespace: healthq-copilot
 spec:
   podSelector:
     matchLabels:

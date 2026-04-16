@@ -1,0 +1,14 @@
+# OpenTelemetry Collector configuration for Helm
+otelCollector:
+  enabled: true
+  image:
+    repository: otel/opentelemetry-collector-contrib
+    tag: 0.97.0
+  service:
+    grpcPort: 4317
+    httpPort: 4318
+  config:
+    exporters:
+      logging:
+        loglevel: info
+    # Add Jaeger, Zipkin, or Azure Monitor exporters as needed

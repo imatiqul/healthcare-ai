@@ -1,0 +1,29 @@
+apiVersion: networking.istio.io/v1beta1
+kind: VirtualService
+metadata:
+  name: identity-service
+  namespace: {{ .Values.global.namespace }}
+spec:
+  hosts:
+    - "identity-service"
+  http:
+    - route:
+        - destination:
+            host: identity-service
+            port:
+              number: 8080
+      retries:
+        attempts: 3
+        perTryTimeout: 2s
+        retryOn: gateway-error,connect-failure,refused-stream
+---
+apiVersion: networking.istio.io/v1beta1
+kind: DestinationRule
+metadata:
+  name: identity-service
+  namespace: {{ .Values.global.namespace }}
+spec:
+  host: identity-service
+  trafficPolicy:
+    tls:
+      mode: ISTIO_MUTUAL

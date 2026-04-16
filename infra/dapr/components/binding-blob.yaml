@@ -2,7 +2,7 @@ apiVersion: dapr.io/v1alpha1
 kind: Component
 metadata:
   name: blob-storage
-  namespace: healthcare
+  namespace: healthq-copilot
 spec:
   type: bindings.azure.blobstorage
   version: v1

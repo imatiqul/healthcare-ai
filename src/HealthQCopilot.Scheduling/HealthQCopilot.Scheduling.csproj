@@ -1,0 +1,10 @@
+<Project Sdk="Microsoft.NET.Sdk.Web">
+  <PropertyGroup>
+    <RootNamespace>HealthQCopilot.Scheduling</RootNamespace>
+  </PropertyGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\HealthQCopilot.Domain\HealthQCopilot.Domain.csproj" />
+    <ProjectReference Include="..\HealthQCopilot.Infrastructure\HealthQCopilot.Infrastructure.csproj" />
+    <ProjectReference Include="..\HealthQCopilot.ServiceDefaults\HealthQCopilot.ServiceDefaults.csproj" />
+  </ItemGroup>
+</Project>

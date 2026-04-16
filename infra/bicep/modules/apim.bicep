@@ -21,7 +21,7 @@ resource apim 'Microsoft.ApiManagement/service@2023-09-01-preview' = {
     type: 'SystemAssigned'
   }
   properties: {
-    publisherName: 'Healthcare AI'
+    publisherName: 'HealthQ Copilot'
     publisherEmail: publisherEmail
     virtualNetworkType: 'Internal'
     virtualNetworkConfiguration: {
@@ -52,7 +52,7 @@ resource globalPolicy 'Microsoft.ApiManagement/service/policies@2023-09-01-previ
             <openid-config url="${environment().authentication.loginEndpoint}common/v2.0/.well-known/openid-configuration" />
             <required-claims>
               <claim name="aud" match="any">
-                <value>api://healthcare-ai</value>
+                <value>api://healthq-copilot</value>
               </claim>
             </required-claims>
           </validate-jwt>

@@ -1,0 +1,74 @@
+using HealthQCopilot.Domain.Agents;
+using HealthQCopilot.Agents.Infrastructure;
+using HealthQCopilot.Agents.Services;
+using Microsoft.EntityFrameworkCore;
+
+namespace HealthQCopilot.Agents.Endpoints;
+
+public static class AgentEndpoints
+{
+    public static IEndpointRouteBuilder MapAgentEndpoints(this IEndpointRouteBuilder app)
+    {
+        var group = app.MapGroup("/api/v1/agents").WithTags("Agents");
+
+        group.MapPost("/triage", async (
+            StartTriageRequest request,
+            TriageOrchestrator orchestrator,
+            CancellationToken ct) =>
+        {
+            var workflow = await orchestrator.RunTriageAsync(request.SessionId, request.TranscriptText, ct);
+            return Results.Created($"/api/v1/agents/triage/{workflow.Id}",
+                new { workflow.Id, workflow.Status, workflow.AssignedLevel, workflow.AgentReasoning });
+        });
+
+        group.MapGet("/triage/{id:guid}", async (
+            Guid id,
+            AgentDbContext db,
+            CancellationToken ct) =>
+        {
+            var workflow = await db.TriageWorkflows
+                .FirstOrDefaultAsync(w => w.Id == id, ct);
+            return workflow is null ? Results.NotFound() : Results.Ok(workflow);
+        });
+
+        group.MapPost("/triage/{id:guid}/approve", async (
+            Guid id,
+            AgentDbContext db,
+            CancellationToken ct) =>
+        {
+            var workflow = await db.TriageWorkflows.FindAsync([id], ct);
+            if (workflow is null) return Results.NotFound();
+            workflow.ApproveEscalation();
+            await db.SaveChangesAsync(ct);
+            return Results.Ok(new { workflow.Id, workflow.Status, workflow.AssignedLevel });
+        });
+
+        group.MapGet("/triage", async (
+            AgentDbContext db,
+            CancellationToken ct) =>
+        {
+            var workflows = await db.TriageWorkflows
+                .OrderByDescending(w => w.CreatedAt)
+                .Take(50)
+                .Select(w => new { w.Id, w.SessionId, w.Status, w.AssignedLevel, w.CreatedAt })
+                .ToListAsync(ct);
+            return Results.Ok(workflows);
+        });
+
+        group.MapGet("/decisions/{workflowId:guid}", async (
+            Guid workflowId,
+            AgentDbContext db,
+            CancellationToken ct) =>
+        {
+            var decisions = await db.AgentDecisions
+                .Where(d => d.WorkflowId == workflowId)
+                .OrderBy(d => d.CreatedAt)
+                .ToListAsync(ct);
+            return Results.Ok(decisions);
+        });
+
+        return app;
+    }
+}
+
+public record StartTriageRequest(Guid SessionId, string TranscriptText);

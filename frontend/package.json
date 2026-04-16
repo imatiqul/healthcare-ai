@@ -1,5 +1,5 @@
 {
-  "name": "healthcare-ai-frontend",
+  "name": "healthq-copilot-frontend",
   "private": true,
   "scripts": {
     "dev": "turbo run dev",

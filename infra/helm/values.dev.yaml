@@ -1,6 +1,6 @@
 global:
   env: development
-  registry: healthcareaidev.azurecr.io
+  registry: healthqcopilotdev.azurecr.io
 
 services:
   voice:

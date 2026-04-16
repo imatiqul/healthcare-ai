@@ -1,0 +1,29 @@
+apiVersion: networking.istio.io/v1beta1
+kind: VirtualService
+metadata:
+  name: notification-service
+  namespace: {{ .Values.global.namespace }}
+spec:
+  hosts:
+    - "notification-service"
+  http:
+    - route:
+        - destination:
+            host: notification-service
+            port:
+              number: 8080
+      retries:
+        attempts: 3
+        perTryTimeout: 2s
+        retryOn: gateway-error,connect-failure,refused-stream
+---
+apiVersion: networking.istio.io/v1beta1
+kind: DestinationRule
+metadata:
+  name: notification-service
+  namespace: {{ .Values.global.namespace }}
+spec:
+  host: notification-service
+  trafficPolicy:
+    tls:
+      mode: ISTIO_MUTUAL

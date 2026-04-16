@@ -12,10 +12,10 @@ spec:
   ingressClassName: nginx
   tls:
     - hosts:
-        - api.healthcare-ai.com
+        - api.healthq-copilot.com
       secretName: healthcare-tls
   rules:
-    - host: api.healthcare-ai.com
+    - host: api.healthq-copilot.com
       http:
         paths:
           {{- range $key, $svc := .Values.services }}

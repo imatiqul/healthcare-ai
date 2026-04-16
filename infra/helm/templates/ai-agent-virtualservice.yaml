@@ -1,0 +1,29 @@
+apiVersion: networking.istio.io/v1beta1
+kind: VirtualService
+metadata:
+  name: ai-agent-service
+  namespace: {{ .Values.global.namespace }}
+spec:
+  hosts:
+    - "ai-agent-service"
+  http:
+    - route:
+        - destination:
+            host: ai-agent-service
+            port:
+              number: 8080
+      retries:
+        attempts: 3
+        perTryTimeout: 2s
+        retryOn: gateway-error,connect-failure,refused-stream
+---
+apiVersion: networking.istio.io/v1beta1
+kind: DestinationRule
+metadata:
+  name: ai-agent-service
+  namespace: {{ .Values.global.namespace }}
+spec:
+  host: ai-agent-service
+  trafficPolicy:
+    tls:
+      mode: ISTIO_MUTUAL

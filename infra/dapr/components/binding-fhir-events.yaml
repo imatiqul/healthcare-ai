@@ -2,7 +2,7 @@ apiVersion: dapr.io/v1alpha1
 kind: Component
 metadata:
   name: fhir-events
-  namespace: healthcare
+  namespace: healthq-copilot
 spec:
   type: bindings.azure.eventgrid
   version: v1

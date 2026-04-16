@@ -1,0 +1,26 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <Sdk Name="Aspire.AppHost.Sdk" Version="9.0.0" />
+  <PropertyGroup>
+    <RootNamespace>HealthQCopilot.AppHost</RootNamespace>
+    <OutputType>Exe</OutputType>
+    <IsAspireHost>true</IsAspireHost>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Aspire.Hosting.AppHost" Version="9.2.0" />
+    <PackageReference Include="Aspire.Hosting.PostgreSQL" Version="9.2.0" />
+    <PackageReference Include="Aspire.Hosting.Redis" Version="9.2.0" />
+    <PackageReference Include="Aspire.Hosting.NodeJs" Version="9.2.0" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\HealthQCopilot.Identity\HealthQCopilot.Identity.csproj" />
+    <ProjectReference Include="..\HealthQCopilot.Voice\HealthQCopilot.Voice.csproj" />
+    <ProjectReference Include="..\HealthQCopilot.Agents\HealthQCopilot.Agents.csproj" />
+    <ProjectReference Include="..\HealthQCopilot.Fhir\HealthQCopilot.Fhir.csproj" />
+    <ProjectReference Include="..\HealthQCopilot.Ocr\HealthQCopilot.Ocr.csproj" />
+    <ProjectReference Include="..\HealthQCopilot.Scheduling\HealthQCopilot.Scheduling.csproj" />
+    <ProjectReference Include="..\HealthQCopilot.Notifications\HealthQCopilot.Notifications.csproj" />
+    <ProjectReference Include="..\HealthQCopilot.PopulationHealth\HealthQCopilot.PopulationHealth.csproj" />
+  </ItemGroup>
+</Project>

@@ -2,7 +2,7 @@ apiVersion: keda.sh/v1alpha1
 kind: ScaledObject
 metadata:
   name: pophealth-scaledobject
-  namespace: healthcare
+  namespace: healthq-copilot
 spec:
   scaleTargetRef:
     name: pophealth-service

@@ -2,7 +2,7 @@ apiVersion: keda.sh/v1alpha1
 kind: ScaledObject
 metadata:
   name: ai-agent-scaledobject
-  namespace: healthcare
+  namespace: healthq-copilot
 spec:
   scaleTargetRef:
     name: ai-agent-service
@@ -13,7 +13,7 @@ spec:
     - type: azure-servicebus
       metadata:
         queueName: transcript-processing
-        namespace: healthcare-ai-servicebus
+        namespace: healthq-copilot-servicebus
         messageCount: "5"
     - type: prometheus
       metadata:

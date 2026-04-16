@@ -1,0 +1,29 @@
+apiVersion: networking.istio.io/v1beta1
+kind: VirtualService
+metadata:
+  name: ocr-service
+  namespace: {{ .Values.global.namespace }}
+spec:
+  hosts:
+    - "ocr-service"
+  http:
+    - route:
+        - destination:
+            host: ocr-service
+            port:
+              number: 8080
+      retries:
+        attempts: 3
+        perTryTimeout: 2s
+        retryOn: gateway-error,connect-failure,refused-stream
+---
+apiVersion: networking.istio.io/v1beta1
+kind: DestinationRule
+metadata:
+  name: ocr-service
+  namespace: {{ .Values.global.namespace }}
+spec:
+  host: ocr-service
+  trafficPolicy:
+    tls:
+      mode: ISTIO_MUTUAL

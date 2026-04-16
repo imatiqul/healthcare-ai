@@ -1,6 +1,6 @@
-# Healthcare AI — Cloud Native Platform
+# HealthQ Copilot — Cloud Native Platform
 
-Production-grade healthcare AI platform built on **8 DDD bounded-context microservices** running on Azure Kubernetes Service, orchestrated locally via **Microsoft Aspire**, communicating asynchronously via Azure Service Bus, and presented through **6 independently deployable micro frontends** federated at runtime with Module Federation.
+Production-grade HealthQ Copilot platform built on **8 DDD bounded-context microservices** running on Azure Kubernetes Service, orchestrated locally via **Microsoft Aspire**, communicating asynchronously via Azure Service Bus, and presented through **6 independently deployable micro frontends** federated at runtime with Module Federation.
 
 Every service follows Domain-Driven Design with Clean Architecture, CQRS, and the Transactional Outbox pattern. AI triage is powered by **Microsoft Semantic Kernel**. Deployments are GitOps-driven via ArgoCD with progressive canary rollouts.
 
@@ -20,7 +20,7 @@ Every service follows Domain-Driven Design with Clean Architecture, CQRS, and th
 ```bash
 # Start all 8 microservices + infrastructure (Postgres, Redis, HAPI FHIR, Qdrant)
 # with the Aspire dashboard at https://localhost:15888
-dotnet run --project src/HealthcareAI.AppHost
+dotnet run --project src/HealthQCopilot.AppHost
 ```
 
 ### Option B — Docker Compose + Dapr
@@ -34,13 +34,13 @@ docker compose up -d
 dapr init
 
 # Run a single service with Dapr sidecar
-cd src/HealthcareAI.Voice
+cd src/HealthQCopilot.Voice
 dapr run --app-id voice-service --app-port 5001 \
   --resources-path ../../infra/dapr/components-local \
   -- dotnet run
 
 # Or build all services
-dotnet build HealthcareAI.sln
+dotnet build HealthQCopilot.sln
 ```
 
 ### Frontend
@@ -55,10 +55,10 @@ pnpm dev          # Starts Shell (3000) + all 5 MFEs (3001-3005)
 
 ```bash
 # Unit tests
-dotnet test tests/HealthcareAI.Tests.Unit
+dotnet test tests/HealthQCopilot.Tests.Unit
 
 # Integration tests (requires Docker for Testcontainers)
-dotnet test tests/HealthcareAI.Tests.Integration
+dotnet test tests/HealthQCopilot.Tests.Integration
 ```
 
 ---
@@ -95,9 +95,9 @@ dotnet test tests/HealthcareAI.Tests.Integration
 ## Project Structure
 
 ```
-healthcare-ai/
+healthq-copilot/
 ├── src/                                  # .NET 9 microservices (12 projects)
-│   ├── HealthcareAI.Domain/              # Shared DDD primitives & aggregates
+│   ├── HealthQCopilot.Domain/              # Shared DDD primitives & aggregates
 │   │   ├── Primitives/                   #   Entity, AggregateRoot, ValueObject, Result
 │   │   ├── Voice/                        #   VoiceSession, AudioStream, events
 │   │   ├── Agents/                       #   TriageWorkflow, AgentDecision, events
@@ -106,26 +106,26 @@ healthcare-ai/
 │   │   ├── PopulationHealth/             #   PatientRisk, CareGap
 │   │   ├── Notifications/               #   OutreachCampaign, Message
 │   │   └── Identity/                     #   UserAccount
-│   ├── HealthcareAI.Infrastructure/      # Shared infrastructure
+│   ├── HealthQCopilot.Infrastructure/      # Shared infrastructure
 │   │   ├── Persistence/                  #   OutboxDbContext (transactional outbox)
 │   │   ├── Messaging/                    #   OutboxRelayService (Service Bus relay)
 │   │   ├── Observability/                #   OpenTelemetry + Serilog setup
 │   │   ├── Middleware/                   #   PHI audit middleware (HIPAA)
 │   │   └── Resilience/                   #   Polly 8 (timeout, retry, circuit breaker)
-│   ├── HealthcareAI.AppHost/             # Aspire orchestrator — launches all services + infra
-│   ├── HealthcareAI.ServiceDefaults/     # Aspire shared defaults (OTel, health, resilience)
-│   ├── HealthcareAI.Identity/            # Auth service
-│   ├── HealthcareAI.Voice/               # Real-time voice service
-│   ├── HealthcareAI.Agents/              # AI triage service (Semantic Kernel)
-│   ├── HealthcareAI.Fhir/                # FHIR R4 proxy service
-│   ├── HealthcareAI.Ocr/                 # Document processing service
-│   ├── HealthcareAI.Scheduling/          # Appointment service
-│   ├── HealthcareAI.Notifications/       # Patient outreach service
-│   └── HealthcareAI.PopulationHealth/    # Risk scoring service
+│   ├── HealthQCopilot.AppHost/             # Aspire orchestrator — launches all services + infra
+│   ├── HealthQCopilot.ServiceDefaults/     # Aspire shared defaults (OTel, health, resilience)
+│   ├── HealthQCopilot.Identity/            # Auth service
+│   ├── HealthQCopilot.Voice/               # Real-time voice service
+│   ├── HealthQCopilot.Agents/              # AI triage service (Semantic Kernel)
+│   ├── HealthQCopilot.Fhir/                # FHIR R4 proxy service
+│   ├── HealthQCopilot.Ocr/                 # Document processing service
+│   ├── HealthQCopilot.Scheduling/          # Appointment service
+│   ├── HealthQCopilot.Notifications/       # Patient outreach service
+│   └── HealthQCopilot.PopulationHealth/    # Risk scoring service
 │
 ├── tests/
-│   ├── HealthcareAI.Tests.Unit/          # 8 test classes covering all aggregates
-│   └── HealthcareAI.Tests.Integration/   # Testcontainers-based integration tests
+│   ├── HealthQCopilot.Tests.Unit/          # 8 test classes covering all aggregates
+│   └── HealthQCopilot.Tests.Integration/   # Testcontainers-based integration tests
 │
 ├── frontend/                             # Turborepo monorepo (pnpm)
 │   ├── apps/
@@ -171,7 +171,7 @@ healthcare-ai/
 │   └── infra-deploy.yml                  # Bicep validation + deployment
 │
 ├── docker-compose.yml                    # Local dev: 15 containers
-├── HealthcareAI.sln                      # .NET solution (12 src + 2 test = 14 projects)
+├── HealthQCopilot.sln                      # .NET solution (12 src + 2 test = 14 projects)
 └── Directory.Build.props                 # .NET 9, C# 13, nullable, TreatWarningsAsErrors
 ```
 
@@ -300,8 +300,8 @@ All workflows use `dorny/paths-filter` for selective triggering — only changed
 
 | Project | Framework | Scope | Test Count |
 |---|---|---|---|
-| `HealthcareAI.Tests.Unit` | xUnit + FluentAssertions + NSubstitute | All domain aggregates | 33 tests across 8 files |
-| `HealthcareAI.Tests.Integration` | xUnit + Testcontainers 4.3 | Database persistence | PostgreSQL 16 container |
+| `HealthQCopilot.Tests.Unit` | xUnit + FluentAssertions + NSubstitute | All domain aggregates | 33 tests across 8 files |
+| `HealthQCopilot.Tests.Integration` | xUnit + Testcontainers 4.3 | Database persistence | PostgreSQL 16 container |
 
 ### Unit Test Coverage
 

@@ -1,0 +1,29 @@
+apiVersion: networking.istio.io/v1beta1
+kind: VirtualService
+metadata:
+  name: voice-service
+  namespace: {{ .Values.global.namespace }}
+spec:
+  hosts:
+    - "voice-service"
+  http:
+    - route:
+        - destination:
+            host: voice-service
+            port:
+              number: 8080
+      retries:
+        attempts: 3
+        perTryTimeout: 2s
+        retryOn: gateway-error,connect-failure,refused-stream
+---
+apiVersion: networking.istio.io/v1beta1
+kind: DestinationRule
+metadata:
+  name: voice-service
+  namespace: {{ .Values.global.namespace }}
+spec:
+  host: voice-service
+  trafficPolicy:
+    tls:
+      mode: ISTIO_MUTUAL

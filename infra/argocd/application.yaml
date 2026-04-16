@@ -1,14 +1,14 @@
 apiVersion: argoproj.io/v1alpha1
 kind: Application
 metadata:
-  name: healthcare-ai
+  name: healthq-copilot
   namespace: argocd
   finalizers:
     - resources-finalizer.argocd.argoproj.io
 spec:
   project: default
   source:
-    repoURL: https://github.com/your-org/healthcare-ai.git
+    repoURL: https://github.com/your-org/healthq-copilot.git
     targetRevision: main
     path: infra/helm
     helm:
@@ -16,7 +16,7 @@ spec:
         - values.yaml
   destination:
     server: https://kubernetes.default.svc
-    namespace: healthcare
+    namespace: healthq-copilot
   syncPolicy:
     automated:
       prune: true
