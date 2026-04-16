@@ -16,7 +16,7 @@ builder.Services.AddHealthcareRateLimiting();
 builder.Services.AddControllers().AddDapr();
 builder.Services.AddDbContext<OcrDbContext>(opt =>
     opt.UseNpgsql(builder.Configuration.GetConnectionString("OcrDb")));
-builder.Services.AddHostedService<OutboxRelayService<OcrDbContext>>();
+builder.Services.AddOutboxRelay<OcrDbContext>(builder.Configuration);
 builder.Services.AddScoped<IDocumentProcessor, AzureDocumentProcessor>();
 builder.Services.AddHostedService<OcrProcessingService>();
 builder.Services.AddHealthChecks();

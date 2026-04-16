@@ -15,7 +15,7 @@ builder.Services.AddHealthcareRateLimiting();
 builder.Services.AddControllers().AddDapr();
 builder.Services.AddDbContext<PopHealthDbContext>(opt =>
     opt.UseNpgsql(builder.Configuration.GetConnectionString("PopHealthDb")));
-builder.Services.AddHostedService<OutboxRelayService<PopHealthDbContext>>();
+builder.Services.AddOutboxRelay<PopHealthDbContext>(builder.Configuration);
 builder.Services.AddHealthChecks();
 builder.Services.AddDatabaseHealthCheck<PopHealthDbContext>("pophealth");
 

@@ -17,7 +17,7 @@ builder.Services.AddHealthcareRateLimiting();
 builder.Services.AddControllers().AddDapr();
 builder.Services.AddDbContext<VoiceDbContext>(opt =>
     opt.UseNpgsql(builder.Configuration.GetConnectionString("VoiceDb")));
-builder.Services.AddHostedService<OutboxRelayService<VoiceDbContext>>();
+builder.Services.AddOutboxRelay<VoiceDbContext>(builder.Configuration);
 builder.Services.AddSingleton<ITranscriptionService, AzureSpeechTranscriptionService>();
 builder.Services.AddHealthChecks();
 builder.Services.AddDatabaseHealthCheck<VoiceDbContext>("voice");

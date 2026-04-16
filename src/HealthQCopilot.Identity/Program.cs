@@ -15,7 +15,7 @@ builder.Services.AddHealthcareRateLimiting();
 builder.Services.AddControllers().AddDapr();
 builder.Services.AddDbContext<IdentityDbContext>(opt =>
     opt.UseNpgsql(builder.Configuration.GetConnectionString("IdentityDb")));
-builder.Services.AddHostedService<OutboxRelayService<IdentityDbContext>>();
+builder.Services.AddOutboxRelay<IdentityDbContext>(builder.Configuration);
 builder.Services.AddHealthChecks();
 builder.Services.AddDatabaseHealthCheck<IdentityDbContext>("identity");
 

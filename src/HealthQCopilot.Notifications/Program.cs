@@ -16,7 +16,7 @@ builder.Services.AddHealthcareRateLimiting();
 builder.Services.AddControllers().AddDapr();
 builder.Services.AddDbContext<NotificationDbContext>(opt =>
     opt.UseNpgsql(builder.Configuration.GetConnectionString("NotificationDb")));
-builder.Services.AddHostedService<OutboxRelayService<NotificationDbContext>>();
+builder.Services.AddOutboxRelay<NotificationDbContext>(builder.Configuration);
 builder.Services.AddScoped<INotificationSender, AcsNotificationSender>();
 builder.Services.AddHostedService<CampaignDispatchService>();
 builder.Services.AddHealthChecks();

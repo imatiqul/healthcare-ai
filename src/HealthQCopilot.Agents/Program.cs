@@ -18,7 +18,7 @@ builder.Services.AddHealthcareRateLimiting();
 builder.Services.AddControllers().AddDapr();
 builder.Services.AddDbContext<AgentDbContext>(opt =>
     opt.UseNpgsql(builder.Configuration.GetConnectionString("AgentDb")));
-builder.Services.AddHostedService<OutboxRelayService<AgentDbContext>>();
+builder.Services.AddOutboxRelay<AgentDbContext>(builder.Configuration);
 builder.Services.AddHealthChecks();
 builder.Services.AddDatabaseHealthCheck<AgentDbContext>("agent");
 

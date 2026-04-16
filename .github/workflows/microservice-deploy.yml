@@ -79,20 +79,20 @@ jobs:
     if: always()
     steps:
       - uses: actions/checkout@v4
-        if: matrix.changed == 'true'
+        if: matrix.changed == 'true' || github.event_name == 'workflow_dispatch'
       - uses: actions/setup-dotnet@v4
-        if: matrix.changed == 'true'
+        if: matrix.changed == 'true' || github.event_name == 'workflow_dispatch'
         with:
           dotnet-version: '9.0.x'
 
       - name: Build + format check
-        if: matrix.changed == 'true'
+        if: matrix.changed == 'true' || github.event_name == 'workflow_dispatch'
         run: |
           dotnet build src/${{ matrix.project }} --configuration Release
           dotnet format src/${{ matrix.project }} --verify-no-changes
 
       - name: Unit tests
-        if: matrix.changed == 'true'
+        if: matrix.changed == 'true' || github.event_name == 'workflow_dispatch'
         run: |
           dotnet test tests/HealthQCopilot.Tests.Unit \
             --configuration Release \
@@ -101,12 +101,12 @@ jobs:
             -- DataCollectionRunSettings.DataCollectors.DataCollector.Configuration.Format=cobertura
 
       - name: Integration tests
-        if: matrix.changed == 'true' && (github.event_name == 'push' || github.event_name == 'workflow_dispatch')
+        if: (matrix.changed == 'true' || github.event_name == 'workflow_dispatch') && (github.event_name == 'push' || github.event_name == 'workflow_dispatch')
         continue-on-error: true
         run: dotnet test tests/HealthQCopilot.Tests.Integration --configuration Release
 
       - name: Trivy vulnerability scan
-        if: matrix.changed == 'true'
+        if: matrix.changed == 'true' || github.event_name == 'workflow_dispatch'
         uses: aquasecurity/trivy-action@master
         with:
           scan-type: fs
@@ -115,7 +115,7 @@ jobs:
           exit-code: '1'
 
       - name: Azure login (OIDC)
-        if: matrix.changed == 'true' && (github.event_name == 'push' || github.event_name == 'workflow_dispatch') && github.ref == 'refs/heads/main'
+        if: (matrix.changed == 'true' || github.event_name == 'workflow_dispatch') && github.ref == 'refs/heads/main'
         uses: azure/login@v2
         with:
           client-id: ${{ secrets.AZURE_CLIENT_ID }}
@@ -123,7 +123,7 @@ jobs:
           subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
 
       - name: Build and push to GHCR
-        if: matrix.changed == 'true' && (github.event_name == 'push' || github.event_name == 'workflow_dispatch') && github.ref == 'refs/heads/main'
+        if: (matrix.changed == 'true' || github.event_name == 'workflow_dispatch') && github.ref == 'refs/heads/main'
         run: |
           echo "${{ secrets.GITHUB_TOKEN }}" | docker login ghcr.io -u ${{ github.actor }} --password-stdin
           docker build \
@@ -135,7 +135,7 @@ jobs:
           docker push ${{ env.IMAGE_PREFIX }}/${{ matrix.service }}:latest
 
       - name: Deploy to Azure Container Apps
-        if: matrix.changed == 'true' && (github.event_name == 'push' || github.event_name == 'workflow_dispatch') && github.ref == 'refs/heads/main'
+        if: (matrix.changed == 'true' || github.event_name == 'workflow_dispatch') && github.ref == 'refs/heads/main'
         run: |
           az containerapp update \
             --name ${{ matrix.service }} \

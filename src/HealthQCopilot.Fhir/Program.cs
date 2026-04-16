@@ -15,7 +15,7 @@ builder.Services.AddHealthcareRateLimiting();
 builder.Services.AddControllers().AddDapr();
 builder.Services.AddDbContext<FhirDbContext>(opt =>
     opt.UseNpgsql(builder.Configuration.GetConnectionString("FhirDb")));
-builder.Services.AddHostedService<OutboxRelayService<FhirDbContext>>();
+builder.Services.AddOutboxRelay<FhirDbContext>(builder.Configuration);
 builder.Services.AddFhirHttpClient(builder.Configuration);
 builder.Services.AddHealthChecks();
 builder.Services.AddDatabaseHealthCheck<FhirDbContext>("fhir");
