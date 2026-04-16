@@ -4,6 +4,7 @@ EXPOSE 8080
 
 FROM mcr.microsoft.com/dotnet/sdk:9.0 AS build
 WORKDIR /src
+COPY ["Directory.Build.props", "."]
 COPY ["src/HealthQCopilot.Domain/HealthQCopilot.Domain.csproj", "src/HealthQCopilot.Domain/"]
 COPY ["src/HealthQCopilot.Infrastructure/HealthQCopilot.Infrastructure.csproj", "src/HealthQCopilot.Infrastructure/"]
 COPY ["src/HealthQCopilot.ServiceDefaults/HealthQCopilot.ServiceDefaults.csproj", "src/HealthQCopilot.ServiceDefaults/"]
@@ -11,7 +12,7 @@ COPY ["src/HealthQCopilot.Notifications/HealthQCopilot.Notifications.csproj", "s
 RUN dotnet restore "src/HealthQCopilot.Notifications/HealthQCopilot.Notifications.csproj"
 COPY . .
 WORKDIR "/src/src/HealthQCopilot.Notifications"
-RUN dotnet publish -c Release -o /app/publish --no-restore
+RUN dotnet publish -c Release -o /app/publish 
 
 FROM base AS final
 WORKDIR /app

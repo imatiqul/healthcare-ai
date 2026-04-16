@@ -27,8 +27,11 @@ public abstract class OutboxDbContext : DbContext
         {
             b.ToTable("outbox_events");
             b.HasKey(e => e.Id);
-            b.Property(e => e.Type).HasMaxLength(256).IsRequired();
-            b.Property(e => e.Payload).IsRequired();
+            b.Property(e => e.Id).HasColumnName("id");
+            b.Property(e => e.Type).HasColumnName("type").HasMaxLength(256).IsRequired();
+            b.Property(e => e.Payload).HasColumnName("payload").IsRequired();
+            b.Property(e => e.CreatedAt).HasColumnName("created_at");
+            b.Property(e => e.ProcessedAt).HasColumnName("processed_at");
             b.HasIndex(e => e.ProcessedAt).HasFilter("processed_at IS NULL");
         });
     }
