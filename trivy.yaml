@@ -1,0 +1,21 @@
+severity:
+  - CRITICAL
+  - HIGH
+
+scan:
+  security-checks:
+    - vuln
+    - config
+    - secret
+
+vulnerability:
+  type:
+    - os
+    - library
+  ignore-unfixed: true
+
+misconfiguration:
+  include:
+    - Dockerfile
+    - "*.yaml"
+    - "*.yml"

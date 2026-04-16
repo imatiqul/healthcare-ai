@@ -1,5 +1,6 @@
 using HealthQCopilot.Domain.Notifications;
 using HealthQCopilot.Notifications.Infrastructure;
+using HealthQCopilot.Notifications.Services;
 using Microsoft.EntityFrameworkCore;
 
 namespace HealthQCopilot.Notifications.Endpoints;
@@ -30,8 +31,31 @@ public static class NotificationEndpoints
             var campaign = await db.OutreachCampaigns.FindAsync([id], ct);
             if (campaign is null) return Results.NotFound();
             campaign.Activate(DateTime.UtcNow);
+
+            // Create messages for each target patient
+            var patientIds = campaign.TargetCriteria.Split(',', StringSplitOptions.RemoveEmptyEntries);
+            foreach (var patientId in patientIds)
+            {
+                var message = Message.Create(campaign.Id, patientId.Trim(),
+                    MessageChannel.Email, $"Campaign: {campaign.Name}");
+                db.Messages.Add(message);
+            }
+
             await db.SaveChangesAsync(ct);
-            return Results.Ok(new { campaign.Id, campaign.Status });
+            return Results.Ok(new { campaign.Id, campaign.Status, MessagesCreated = patientIds.Length });
+        });
+
+        group.MapPost("/messages/{id:guid}/send", async (
+            Guid id,
+            NotificationDbContext db,
+            INotificationSender sender,
+            CancellationToken ct) =>
+        {
+            var message = await db.Messages.FindAsync([id], ct);
+            if (message is null) return Results.NotFound();
+            await sender.SendAsync(message, ct);
+            await db.SaveChangesAsync(ct);
+            return Results.Ok(new { message.Id, message.Status });
         });
 
         group.MapGet("/campaigns", async (

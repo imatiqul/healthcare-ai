@@ -1,5 +1,6 @@
 using HealthQCopilot.Domain.Ocr;
 using HealthQCopilot.Ocr.Infrastructure;
+using HealthQCopilot.Ocr.Services;
 using Microsoft.EntityFrameworkCore;
 
 namespace HealthQCopilot.Ocr.Endpoints;
@@ -20,6 +21,35 @@ public static class OcrEndpoints
             await db.SaveChangesAsync(ct);
             return Results.Created($"/api/v1/ocr/jobs/{job.Id}",
                 new { job.Id, job.Status });
+        });
+
+        group.MapPost("/jobs/{id:guid}/process", async (
+            Guid id,
+            OcrDbContext db,
+            IDocumentProcessor processor,
+            CancellationToken ct) =>
+        {
+            var job = await db.OcrJobs.FindAsync([id], ct);
+            if (job is null) return Results.NotFound();
+            if (job.Status != OcrJobStatus.Queued)
+                return Results.Conflict(new { Error = "Job is not in queued state" });
+
+            job.MarkProcessing();
+            await db.SaveChangesAsync(ct);
+
+            try
+            {
+                var result = await processor.AnalyzeDocumentAsync(job.DocumentUrl, ct);
+                var fhirDocRefId = $"DocumentReference/{Guid.NewGuid()}";
+                job.Complete(result.ExtractedText, fhirDocRefId);
+            }
+            catch
+            {
+                job.Fail();
+            }
+
+            await db.SaveChangesAsync(ct);
+            return Results.Ok(new { job.Id, job.Status, job.ExtractedText });
         });
 
         group.MapGet("/jobs/{id:guid}", async (
