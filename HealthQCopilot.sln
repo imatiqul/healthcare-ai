@@ -29,6 +29,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "HealthQCopilot.Notification
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "HealthQCopilot.PopulationHealth", "src\HealthQCopilot.PopulationHealth\HealthQCopilot.PopulationHealth.csproj", "{A1B2C3D4-000A-000A-000A-00000000000A}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "HealthQCopilot.RevenueCycle", "src\HealthQCopilot.RevenueCycle\HealthQCopilot.RevenueCycle.csproj", "{A1B2C3D4-000F-000F-000F-00000000000F}"
+EndProject
 
 # Tests
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "HealthQCopilot.Tests.Unit", "tests\HealthQCopilot.Tests.Unit\HealthQCopilot.Tests.Unit.csproj", "{A1B2C3D4-000B-000B-000B-00000000000B}"
@@ -88,6 +90,10 @@ Global
 		{A1B2C3D4-000A-000A-000A-00000000000A}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{A1B2C3D4-000A-000A-000A-00000000000A}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{A1B2C3D4-000A-000A-000A-00000000000A}.Release|Any CPU.Build.0 = Release|Any CPU
+		{A1B2C3D4-000F-000F-000F-00000000000F}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{A1B2C3D4-000F-000F-000F-00000000000F}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{A1B2C3D4-000F-000F-000F-00000000000F}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{A1B2C3D4-000F-000F-000F-00000000000F}.Release|Any CPU.Build.0 = Release|Any CPU
 		{A1B2C3D4-000B-000B-000B-00000000000B}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
 		{A1B2C3D4-000B-000B-000B-00000000000B}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{A1B2C3D4-000B-000B-000B-00000000000B}.Release|Any CPU.ActiveCfg = Release|Any CPU

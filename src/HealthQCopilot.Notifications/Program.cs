@@ -2,6 +2,7 @@ using HealthQCopilot.Infrastructure.Auth;
 using HealthQCopilot.Infrastructure.Messaging;
 using HealthQCopilot.Infrastructure.Middleware;
 using HealthQCopilot.Infrastructure.Observability;
+using HealthQCopilot.Infrastructure.Persistence;
 using HealthQCopilot.Notifications.Endpoints;
 using HealthQCopilot.Notifications.Infrastructure;
 using HealthQCopilot.Notifications.Services;
@@ -23,6 +24,8 @@ builder.Services.AddHealthChecks();
 builder.Services.AddDatabaseHealthCheck<NotificationDbContext>("notification");
 
 var app = builder.Build();
+
+await app.InitializeDatabaseAsync<NotificationDbContext>();
 
 app.UseMiddleware<SecurityHeadersMiddleware>();
 app.UseMiddleware<PhiAuditMiddleware>();

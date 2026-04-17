@@ -6,6 +6,7 @@ using HealthQCopilot.Infrastructure.Auth;
 using HealthQCopilot.Infrastructure.Messaging;
 using HealthQCopilot.Infrastructure.Middleware;
 using HealthQCopilot.Infrastructure.Observability;
+using HealthQCopilot.Infrastructure.Persistence;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.SemanticKernel;
 
@@ -34,6 +35,8 @@ builder.Services.AddSingleton(sp =>
 });
 
 var app = builder.Build();
+
+await app.InitializeDatabaseAsync<AgentDbContext>();
 
 app.UseMiddleware<SecurityHeadersMiddleware>();
 app.UseMiddleware<PhiAuditMiddleware>();

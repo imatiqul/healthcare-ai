@@ -1,7 +1,9 @@
-import { lazy, Suspense } from 'react';
+import { lazy, Suspense, Component, type ReactNode, type ErrorInfo } from 'react';
 import { Routes, Route } from 'react-router-dom';
 import Box from '@mui/material/Box';
 import CircularProgress from '@mui/material/CircularProgress';
+import Typography from '@mui/material/Typography';
+import Button from '@mui/material/Button';
 import { Sidebar } from './components/Sidebar';
 import { TopNav } from './components/TopNav';
 import Dashboard from './pages/Dashboard';
@@ -20,6 +22,40 @@ function Loading() {
   );
 }
 
+interface ErrorBoundaryProps { children: ReactNode; name: string }
+interface ErrorBoundaryState { hasError: boolean; error?: Error }
+
+class MfeErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundaryState> {
+  state: ErrorBoundaryState = { hasError: false };
+
+  static getDerivedStateFromError(error: Error) {
+    return { hasError: true, error };
+  }
+
+  componentDidCatch(error: Error, info: ErrorInfo) {
+    console.error(`[${this.props.name}] MFE load error:`, error, info);
+  }
+
+  render() {
+    if (this.state.hasError) {
+      return (
+        <Box sx={{ p: 4, textAlign: 'center' }}>
+          <Typography variant="h6" color="error" gutterBottom>
+            Failed to load {this.props.name}
+          </Typography>
+          <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
+            {this.state.error?.message || 'The micro-frontend could not be loaded.'}
+          </Typography>
+          <Button variant="outlined" onClick={() => this.setState({ hasError: false })}>
+            Retry
+          </Button>
+        </Box>
+      );
+    }
+    return this.props.children;
+  }
+}
+
 export default function App() {
   return (
     <Box sx={{ display: 'flex', height: '100vh' }}>
@@ -30,11 +66,11 @@ export default function App() {
           <Suspense fallback={<Loading />}>
             <Routes>
               <Route path="/" element={<Dashboard />} />
-              <Route path="/voice" element={<VoicePage />} />
-              <Route path="/triage" element={<TriagePage />} />
-              <Route path="/scheduling" element={<SchedulingPage />} />
-              <Route path="/population-health" element={<PopHealthPage />} />
-              <Route path="/revenue" element={<RevenuePage />} />
+              <Route path="/voice" element={<MfeErrorBoundary name="Voice"><VoicePage /></MfeErrorBoundary>} />
+              <Route path="/triage" element={<MfeErrorBoundary name="Triage"><TriagePage /></MfeErrorBoundary>} />
+              <Route path="/scheduling" element={<MfeErrorBoundary name="Scheduling"><SchedulingPage /></MfeErrorBoundary>} />
+              <Route path="/population-health" element={<MfeErrorBoundary name="Population Health"><PopHealthPage /></MfeErrorBoundary>} />
+              <Route path="/revenue" element={<MfeErrorBoundary name="Revenue"><RevenuePage /></MfeErrorBoundary>} />
             </Routes>
           </Suspense>
         </Box>

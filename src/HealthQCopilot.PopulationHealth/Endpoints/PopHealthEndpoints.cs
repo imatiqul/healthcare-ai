@@ -67,6 +67,17 @@ public static class PopHealthEndpoints
             return Results.Ok(new { gap.Id, gap.Status });
         });
 
+        group.MapGet("/stats", async (
+            PopHealthDbContext db,
+            CancellationToken ct) =>
+        {
+            var highRisk = await db.PatientRisks.CountAsync(r => r.Level == RiskLevel.Critical || r.Level == RiskLevel.High, ct);
+            var totalPatients = await db.PatientRisks.CountAsync(ct);
+            var openGaps = await db.CareGaps.CountAsync(g => g.Status == CareGapStatus.Open, ct);
+            var closedGaps = await db.CareGaps.CountAsync(g => g.Status == CareGapStatus.Addressed, ct);
+            return Results.Ok(new { HighRiskPatients = highRisk, TotalPatients = totalPatients, OpenCareGaps = openGaps, ClosedCareGaps = closedGaps });
+        });
+
         return app;
     }
 }

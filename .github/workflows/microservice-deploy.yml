@@ -30,6 +30,7 @@ jobs:
       scheduling: ${{ steps.filter.outputs.scheduling }}
       notification: ${{ steps.filter.outputs.notification }}
       pop-health: ${{ steps.filter.outputs.pop-health }}
+      revenue: ${{ steps.filter.outputs.revenue }}
     steps:
       - uses: actions/checkout@v4
       - uses: dorny/paths-filter@v3
@@ -44,6 +45,7 @@ jobs:
             scheduling:   ['src/HealthQCopilot.Scheduling/**', 'src/HealthQCopilot.Domain/**', 'src/HealthQCopilot.Infrastructure/**', 'src/HealthQCopilot.ServiceDefaults/**']
             notification: ['src/HealthQCopilot.Notifications/**', 'src/HealthQCopilot.Domain/**', 'src/HealthQCopilot.Infrastructure/**', 'src/HealthQCopilot.ServiceDefaults/**']
             pop-health:   ['src/HealthQCopilot.PopulationHealth/**', 'src/HealthQCopilot.Domain/**', 'src/HealthQCopilot.Infrastructure/**', 'src/HealthQCopilot.ServiceDefaults/**']
+            revenue:      ['src/HealthQCopilot.RevenueCycle/**', 'src/HealthQCopilot.Domain/**', 'src/HealthQCopilot.Infrastructure/**', 'src/HealthQCopilot.ServiceDefaults/**']
 
   test-and-build:
     needs: detect-changes
@@ -76,6 +78,9 @@ jobs:
           - service: pop-health
             project: HealthQCopilot.PopulationHealth
             changed: ${{ needs.detect-changes.outputs.pop-health }}
+          - service: revenue
+            project: HealthQCopilot.RevenueCycle
+            changed: ${{ needs.detect-changes.outputs.revenue }}
     if: always()
     steps:
       - uses: actions/checkout@v4

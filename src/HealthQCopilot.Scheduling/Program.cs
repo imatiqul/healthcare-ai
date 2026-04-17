@@ -1,7 +1,9 @@
+using HealthQCopilot.Domain.Scheduling;
 using HealthQCopilot.Infrastructure.Auth;
 using HealthQCopilot.Infrastructure.Messaging;
 using HealthQCopilot.Infrastructure.Middleware;
 using HealthQCopilot.Infrastructure.Observability;
+using HealthQCopilot.Infrastructure.Persistence;
 using HealthQCopilot.Scheduling.Endpoints;
 using HealthQCopilot.Scheduling.Infrastructure;
 using Microsoft.EntityFrameworkCore;
@@ -21,6 +23,8 @@ builder.Services.AddDatabaseHealthCheck<SchedulingDbContext>("scheduling");
 
 var app = builder.Build();
 
+await app.InitializeDatabaseAsync<SchedulingDbContext>();
+
 app.UseMiddleware<SecurityHeadersMiddleware>();
 app.UseMiddleware<PhiAuditMiddleware>();
 app.UseAuthentication();
@@ -29,6 +33,28 @@ app.UseHealthcareRateLimiting();
 app.MapControllers();
 app.MapDefaultEndpoints();
 app.MapSchedulingEndpoints();
+
+app.MapPost("/api/v1/scheduling/seed", async (SchedulingDbContext db) =>
+{
+    if (await db.Slots.AnyAsync()) return Results.Ok(new { message = "Already seeded" });
+
+    var today = DateTime.UtcNow.Date;
+    var practitioners = new[] { "DR-001", "DR-002", "DR-003" };
+    var slots = new List<Slot>();
+    foreach (var practitioner in practitioners)
+    {
+        for (var hour = 8; hour < 17; hour++)
+        {
+            slots.Add(Slot.Create(Guid.NewGuid(), practitioner,
+                today.AddHours(hour), today.AddHours(hour).AddMinutes(30)));
+            slots.Add(Slot.Create(Guid.NewGuid(), practitioner,
+                today.AddHours(hour).AddMinutes(30), today.AddHours(hour + 1)));
+        }
+    }
+    db.Slots.AddRange(slots);
+    await db.SaveChangesAsync();
+    return Results.Ok(new { message = "Seeded", slots = slots.Count });
+});
 
 app.Run();
 

@@ -67,6 +67,16 @@ public static class AgentEndpoints
             return Results.Ok(decisions);
         });
 
+        group.MapGet("/stats", async (
+            AgentDbContext db,
+            CancellationToken ct) =>
+        {
+            var pending = await db.TriageWorkflows.CountAsync(w => w.Status == WorkflowStatus.Pending || w.Status == WorkflowStatus.Processing, ct);
+            var awaitingReview = await db.TriageWorkflows.CountAsync(w => w.Status == WorkflowStatus.AwaitingHumanReview, ct);
+            var completed = await db.TriageWorkflows.CountAsync(w => w.Status == WorkflowStatus.Completed, ct);
+            return Results.Ok(new { PendingTriage = pending, AwaitingReview = awaitingReview, Completed = completed });
+        });
+
         return app;
     }
 }

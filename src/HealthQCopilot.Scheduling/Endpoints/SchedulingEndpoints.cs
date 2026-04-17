@@ -82,6 +82,18 @@ public static class SchedulingEndpoints
             return booking is null ? Results.NotFound() : Results.Ok(booking);
         });
 
+        group.MapGet("/stats", async (
+            SchedulingDbContext db,
+            CancellationToken ct) =>
+        {
+            var today = DateTime.UtcNow.Date;
+            var tomorrow = today.AddDays(1);
+            var availableToday = await db.Slots.CountAsync(s => s.Status == SlotStatus.Available && s.StartTime >= today && s.StartTime < tomorrow, ct);
+            var bookedToday = await db.Slots.CountAsync(s => s.Status == SlotStatus.Booked && s.StartTime >= today && s.StartTime < tomorrow, ct);
+            var totalBookings = await db.Bookings.CountAsync(ct);
+            return Results.Ok(new { AvailableToday = availableToday, BookedToday = bookedToday, TotalBookings = totalBookings });
+        });
+
         return app;
     }
 }

@@ -2,6 +2,7 @@ using HealthQCopilot.Infrastructure.Auth;
 using HealthQCopilot.Infrastructure.Messaging;
 using HealthQCopilot.Infrastructure.Middleware;
 using HealthQCopilot.Infrastructure.Observability;
+using HealthQCopilot.Infrastructure.Persistence;
 using HealthQCopilot.Ocr.Endpoints;
 using HealthQCopilot.Ocr.Infrastructure;
 using HealthQCopilot.Ocr.Services;
@@ -23,6 +24,8 @@ builder.Services.AddHealthChecks();
 builder.Services.AddDatabaseHealthCheck<OcrDbContext>("ocr");
 
 var app = builder.Build();
+
+await app.InitializeDatabaseAsync<OcrDbContext>();
 
 app.UseMiddleware<SecurityHeadersMiddleware>();
 app.UseMiddleware<PhiAuditMiddleware>();
