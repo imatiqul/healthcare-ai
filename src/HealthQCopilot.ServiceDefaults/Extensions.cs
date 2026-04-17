@@ -30,6 +30,10 @@ public static class Extensions
         {
             builder.AddRedisDistributedCache("redis");
         }
+        else
+        {
+            builder.Services.AddDistributedMemoryCache();
+        }
 
         return builder;
     }

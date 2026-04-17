@@ -5,6 +5,7 @@ using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Mvc.Testing;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Caching.Distributed;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
@@ -43,6 +44,10 @@ public class ServiceWebApplicationFactory<TProgram, TDbContext> : WebApplication
 
             // Ensure IHttpClientFactory is registered for plugins
             services.AddHttpClient();
+
+            // Register in-memory distributed cache for tests (replaces Aspire Redis)
+            services.RemoveAll(typeof(IDistributedCache));
+            services.AddDistributedMemoryCache();
 
             // Add test DbContext using Testcontainers Postgres
             services.AddDbContext<TDbContext>(options =>
