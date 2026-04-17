@@ -6,6 +6,7 @@
     <PackageReference Include="Microsoft.AspNetCore.OpenApi" Version="9.0.0" />
     <PackageReference Include="Microsoft.SemanticKernel" Version="1.71.0" />
     <PackageReference Include="Microsoft.SemanticKernel.Connectors.OpenAI" Version="1.71.0" />
+    <PackageReference Include="Microsoft.EntityFrameworkCore.Design" Version="9.0.1" PrivateAssets="all" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\HealthQCopilot.Domain\HealthQCopilot.Domain.csproj" />

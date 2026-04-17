@@ -1,6 +1,8 @@
+using System.Text.Json;
 using HealthQCopilot.Domain.PopulationHealth;
 using HealthQCopilot.PopulationHealth.Infrastructure;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Caching.Distributed;
 
 namespace HealthQCopilot.PopulationHealth.Endpoints;
 
@@ -60,24 +62,37 @@ public static class PopHealthEndpoints
         group.MapPost("/care-gaps/{id:guid}/address", async (
             Guid id,
             PopHealthDbContext db,
+            IDistributedCache cache,
             CancellationToken ct) =>
         {
             var gap = await db.CareGaps.FindAsync([id], ct);
             if (gap is null) return Results.NotFound();
             gap.Address();
             await db.SaveChangesAsync(ct);
+            await cache.RemoveAsync("healthq:pophealth:stats", ct);
             return Results.Ok(new { gap.Id, gap.Status });
         });
 
         group.MapGet("/stats", async (
             PopHealthDbContext db,
+            IDistributedCache cache,
             CancellationToken ct) =>
         {
+            const string cacheKey = "healthq:pophealth:stats";
+            var cached = await cache.GetAsync(cacheKey, ct);
+            if (cached is not null)
+                return Results.Ok(JsonSerializer.Deserialize<object>(cached));
+
             var highRisk = await db.PatientRisks.CountAsync(r => r.Level == RiskLevel.Critical || r.Level == RiskLevel.High, ct);
             var totalPatients = await db.PatientRisks.CountAsync(ct);
             var openGaps = await db.CareGaps.CountAsync(g => g.Status == CareGapStatus.Open, ct);
             var closedGaps = await db.CareGaps.CountAsync(g => g.Status == CareGapStatus.Addressed, ct);
-            return Results.Ok(new { HighRiskPatients = highRisk, TotalPatients = totalPatients, OpenCareGaps = openGaps, ClosedCareGaps = closedGaps });
+            var stats = new { HighRiskPatients = highRisk, TotalPatients = totalPatients, OpenCareGaps = openGaps, ClosedCareGaps = closedGaps };
+
+            await cache.SetAsync(cacheKey, JsonSerializer.SerializeToUtf8Bytes(stats),
+                new DistributedCacheEntryOptions { AbsoluteExpirationRelativeToNow = TimeSpan.FromMinutes(2) }, ct);
+
+            return Results.Ok(stats);
         });
 
         return app;

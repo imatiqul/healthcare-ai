@@ -122,3 +122,102 @@ paths:
       responses:
         "200":
           description: FHIR patient bundle
+  /api/v1/agents/demo/start:
+    post:
+      operationId: StartDemo
+      summary: Start a new interactive demo session (no auth required)
+      tags: [Demo]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                clientName:
+                  type: string
+                company:
+                  type: string
+                email:
+                  type: string
+                  format: email
+              required: [clientName, company]
+      responses:
+        "201":
+          description: Demo session created
+  /api/v1/agents/demo/{id}/next:
+    post:
+      operationId: AdvanceDemoStep
+      summary: Advance to the next demo step
+      tags: [Demo]
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        "200":
+          description: Next step result
+  /api/v1/agents/demo/{id}/feedback:
+    post:
+      operationId: SubmitStepFeedback
+      summary: Submit feedback for a demo step
+      tags: [Demo]
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        "200":
+          description: Feedback recorded
+  /api/v1/agents/demo/{id}/complete:
+    post:
+      operationId: CompleteDemo
+      summary: Complete the demo with overall feedback
+      tags: [Demo]
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        "200":
+          description: Demo completed
+  /api/v1/agents/demo/{id}/status:
+    get:
+      operationId: GetDemoStatus
+      summary: Get current demo session status and progress
+      tags: [Demo]
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        "200":
+          description: Session status
+  /api/v1/agents/demo/sessions:
+    get:
+      operationId: GetDemoSessions
+      summary: List all demo sessions (admin only)
+      tags: [Demo Admin]
+      responses:
+        "200":
+          description: Demo sessions list
+  /api/v1/agents/demo/insights:
+    post:
+      operationId: GenerateDemoInsights
+      summary: Generate AI-aggregated insights from demo feedback (admin only)
+      tags: [Demo Admin]
+      responses:
+        "200":
+          description: Demo insights

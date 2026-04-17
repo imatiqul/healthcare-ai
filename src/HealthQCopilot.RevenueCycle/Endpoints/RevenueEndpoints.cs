@@ -1,7 +1,9 @@
+using System.Text.Json;
 using HealthQCopilot.Domain.RevenueCycle;
 using HealthQCopilot.Infrastructure.Validation;
 using HealthQCopilot.RevenueCycle.Infrastructure;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Caching.Distributed;
 
 namespace HealthQCopilot.RevenueCycle.Endpoints;
 
@@ -67,11 +69,13 @@ public static class RevenueEndpoints
         group.MapPost("/coding-jobs", async (
             CreateCodingJobRequest request,
             RevenueDbContext db,
+            IDistributedCache cache,
             CancellationToken ct) =>
         {
             var job = CodingJob.Create(request.EncounterId, request.PatientId, request.PatientName, request.SuggestedCodes);
             db.CodingJobs.Add(job);
             await db.SaveChangesAsync(ct);
+            await cache.RemoveAsync("healthq:revenue:stats", ct);
             return Results.Created($"/api/v1/revenue/coding-jobs/{job.Id}",
                 new { job.Id, job.EncounterId, job.Status });
         });
@@ -80,6 +84,7 @@ public static class RevenueEndpoints
             Guid id,
             ReviewCodingJobRequest request,
             RevenueDbContext db,
+            IDistributedCache cache,
             CancellationToken ct) =>
         {
             var job = await db.CodingJobs.FindAsync([id], ct);
@@ -87,12 +92,14 @@ public static class RevenueEndpoints
             var result = job.Review(request.ApprovedCodes, request.ReviewedBy);
             if (result.IsFailure) return Results.BadRequest(new { error = result.Error });
             await db.SaveChangesAsync(ct);
+            await cache.RemoveAsync("healthq:revenue:stats", ct);
             return Results.Ok(new { job.Id, job.Status, job.ApprovedCodes });
         });
 
         group.MapPost("/coding-jobs/{id:guid}/submit", async (
             Guid id,
             RevenueDbContext db,
+            IDistributedCache cache,
             CancellationToken ct) =>
         {
             var job = await db.CodingJobs.FindAsync([id], ct);
@@ -100,6 +107,7 @@ public static class RevenueEndpoints
             var result = job.Submit();
             if (result.IsFailure) return Results.BadRequest(new { error = result.Error });
             await db.SaveChangesAsync(ct);
+            await cache.RemoveAsync("healthq:revenue:stats", ct);
             return Results.Ok(new { job.Id, job.Status });
         });
 
@@ -158,6 +166,7 @@ public static class RevenueEndpoints
         group.MapPost("/prior-auths", async (
             CreatePriorAuthRequest request,
             RevenueDbContext db,
+            IDistributedCache cache,
             CancellationToken ct) =>
         {
             var auth = PriorAuth.Create(
@@ -165,6 +174,7 @@ public static class RevenueEndpoints
                 request.Procedure, request.ProcedureCode, request.InsurancePayer);
             db.PriorAuths.Add(auth);
             await db.SaveChangesAsync(ct);
+            await cache.RemoveAsync("healthq:revenue:stats", ct);
             return Results.Created($"/api/v1/revenue/prior-auths/{auth.Id}",
                 new { auth.Id, auth.PatientId, auth.Status });
         });
@@ -172,6 +182,7 @@ public static class RevenueEndpoints
         group.MapPost("/prior-auths/{id:guid}/submit", async (
             Guid id,
             RevenueDbContext db,
+            IDistributedCache cache,
             CancellationToken ct) =>
         {
             var auth = await db.PriorAuths.FindAsync([id], ct);
@@ -179,12 +190,14 @@ public static class RevenueEndpoints
             var result = auth.Submit();
             if (result.IsFailure) return Results.BadRequest(new { error = result.Error });
             await db.SaveChangesAsync(ct);
+            await cache.RemoveAsync("healthq:revenue:stats", ct);
             return Results.Ok(new { auth.Id, auth.Status });
         });
 
         group.MapPost("/prior-auths/{id:guid}/approve", async (
             Guid id,
             RevenueDbContext db,
+            IDistributedCache cache,
             CancellationToken ct) =>
         {
             var auth = await db.PriorAuths.FindAsync([id], ct);
@@ -192,6 +205,7 @@ public static class RevenueEndpoints
             var result = auth.Approve();
             if (result.IsFailure) return Results.BadRequest(new { error = result.Error });
             await db.SaveChangesAsync(ct);
+            await cache.RemoveAsync("healthq:revenue:stats", ct);
             return Results.Ok(new { auth.Id, auth.Status });
         });
 
@@ -199,6 +213,7 @@ public static class RevenueEndpoints
             Guid id,
             DenyPriorAuthRequest request,
             RevenueDbContext db,
+            IDistributedCache cache,
             CancellationToken ct) =>
         {
             var auth = await db.PriorAuths.FindAsync([id], ct);
@@ -206,6 +221,7 @@ public static class RevenueEndpoints
             var result = auth.Deny(request.Reason);
             if (result.IsFailure) return Results.BadRequest(new { error = result.Error });
             await db.SaveChangesAsync(ct);
+            await cache.RemoveAsync("healthq:revenue:stats", ct);
             return Results.Ok(new { auth.Id, auth.Status, auth.DenialReason });
         });
 
@@ -213,8 +229,14 @@ public static class RevenueEndpoints
 
         group.MapGet("/stats", async (
             RevenueDbContext db,
+            IDistributedCache cache,
             CancellationToken ct) =>
         {
+            const string cacheKey = "healthq:revenue:stats";
+            var cached = await cache.GetAsync(cacheKey, ct);
+            if (cached is not null)
+                return Results.Ok(JsonSerializer.Deserialize<object>(cached));
+
             var pendingCoding = await db.CodingJobs.CountAsync(j => j.Status == CodingJobStatus.Pending, ct);
             var reviewedCoding = await db.CodingJobs.CountAsync(j => j.Status == CodingJobStatus.Approved, ct);
             var submittedCoding = await db.CodingJobs.CountAsync(j => j.Status == CodingJobStatus.Submitted, ct);
@@ -222,7 +244,7 @@ public static class RevenueEndpoints
             var approvedAuths = await db.PriorAuths.CountAsync(a => a.Status == PriorAuthStatus.Approved, ct);
             var deniedAuths = await db.PriorAuths.CountAsync(a => a.Status == PriorAuthStatus.Denied, ct);
 
-            return Results.Ok(new
+            var stats = new
             {
                 CodingQueue = pendingCoding,
                 CodingReviewed = reviewedCoding,
@@ -230,7 +252,12 @@ public static class RevenueEndpoints
                 PriorAuthsPending = pendingAuths,
                 PriorAuthsApproved = approvedAuths,
                 PriorAuthsDenied = deniedAuths
-            });
+            };
+
+            await cache.SetAsync(cacheKey, JsonSerializer.SerializeToUtf8Bytes(stats),
+                new DistributedCacheEntryOptions { AbsoluteExpirationRelativeToNow = TimeSpan.FromMinutes(2) }, ct);
+
+            return Results.Ok(stats);
         });
 
         return app;

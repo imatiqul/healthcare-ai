@@ -1,7 +1,9 @@
+using System.Text.Json;
 using HealthQCopilot.Domain.Scheduling;
 using HealthQCopilot.Infrastructure.Validation;
 using HealthQCopilot.Scheduling.Infrastructure;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Caching.Distributed;
 
 namespace HealthQCopilot.Scheduling.Endpoints;
 
@@ -39,30 +41,35 @@ public static class SchedulingEndpoints
             Guid id,
             ReserveSlotRequest request,
             SchedulingDbContext db,
+            IDistributedCache cache,
             CancellationToken ct) =>
         {
             var slot = await db.Slots.FindAsync([id], ct);
             if (slot is null) return Results.NotFound();
             slot.Reserve(request.PatientId.ToString());
             await db.SaveChangesAsync(ct);
+            await cache.RemoveAsync("healthq:scheduling:stats", ct);
             return Results.Ok(new { slot.Id, slot.Status });
         });
 
         group.MapDelete("/slots/{id:guid}/reserve", async (
             Guid id,
             SchedulingDbContext db,
+            IDistributedCache cache,
             CancellationToken ct) =>
         {
             var slot = await db.Slots.FindAsync([id], ct);
             if (slot is null) return Results.NotFound();
             slot.Release();
             await db.SaveChangesAsync(ct);
+            await cache.RemoveAsync("healthq:scheduling:stats", ct);
             return Results.Ok(new { slot.Id, slot.Status });
         });
 
         group.MapPost("/bookings", async (
             CreateBookingRequest request,
             SchedulingDbContext db,
+            IDistributedCache cache,
             CancellationToken ct) =>
         {
             var slot = await db.Slots.FindAsync([request.SlotId], ct);
@@ -73,6 +80,7 @@ public static class SchedulingEndpoints
                 request.PractitionerId.ToString(), slot.StartTime);
             db.Bookings.Add(booking);
             await db.SaveChangesAsync(ct);
+            await cache.RemoveAsync("healthq:scheduling:stats", ct);
             return Results.Created($"/api/v1/scheduling/bookings/{booking.Id}",
                 new { booking.Id, booking.SlotId, booking.PatientId });
         });
@@ -88,14 +96,25 @@ public static class SchedulingEndpoints
 
         group.MapGet("/stats", async (
             SchedulingDbContext db,
+            IDistributedCache cache,
             CancellationToken ct) =>
         {
+            const string cacheKey = "healthq:scheduling:stats";
+            var cached = await cache.GetAsync(cacheKey, ct);
+            if (cached is not null)
+                return Results.Ok(JsonSerializer.Deserialize<object>(cached));
+
             var today = DateTime.UtcNow.Date;
             var tomorrow = today.AddDays(1);
             var availableToday = await db.Slots.CountAsync(s => s.Status == SlotStatus.Available && s.StartTime >= today && s.StartTime < tomorrow, ct);
             var bookedToday = await db.Slots.CountAsync(s => s.Status == SlotStatus.Booked && s.StartTime >= today && s.StartTime < tomorrow, ct);
             var totalBookings = await db.Bookings.CountAsync(ct);
-            return Results.Ok(new { AvailableToday = availableToday, BookedToday = bookedToday, TotalBookings = totalBookings });
+            var stats = new { AvailableToday = availableToday, BookedToday = bookedToday, TotalBookings = totalBookings };
+
+            await cache.SetAsync(cacheKey, JsonSerializer.SerializeToUtf8Bytes(stats),
+                new DistributedCacheEntryOptions { AbsoluteExpirationRelativeToNow = TimeSpan.FromMinutes(2) }, ct);
+
+            return Results.Ok(stats);
         });
 
         return app;

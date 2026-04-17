@@ -5,6 +5,7 @@
   <ItemGroup>
     <PackageReference Include="Microsoft.AspNetCore.OpenApi" Version="9.0.0" />
     <PackageReference Include="Npgsql.EntityFrameworkCore.PostgreSQL" Version="9.0.3" />
+    <PackageReference Include="Microsoft.EntityFrameworkCore.Design" Version="9.0.1" PrivateAssets="all" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\HealthQCopilot.Domain\HealthQCopilot.Domain.csproj" />

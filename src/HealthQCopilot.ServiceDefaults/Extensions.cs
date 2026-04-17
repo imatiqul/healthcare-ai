@@ -1,6 +1,7 @@
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Diagnostics.HealthChecks;
 using Microsoft.AspNetCore.Http;
+using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Diagnostics.HealthChecks;
 using Microsoft.Extensions.Hosting;
@@ -23,6 +24,12 @@ public static class Extensions
             http.AddStandardResilienceHandler();
             http.AddServiceDiscovery();
         });
+
+        // Redis distributed cache — only registers when ConnectionStrings__redis is configured
+        if (!string.IsNullOrEmpty(builder.Configuration.GetConnectionString("redis")))
+        {
+            builder.AddRedisDistributedCache("redis");
+        }
 
         return builder;
     }
