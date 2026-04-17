@@ -45,6 +45,8 @@ builder.Services.AddScoped<TriageOrchestrator>();
 builder.Services.AddHttpClient();
 builder.Services.AddSingleton<PlatformGuidePlugin>();
 builder.Services.AddScoped<GuideOrchestrator>();
+builder.Services.AddScoped<DemoOrchestrator>();
+builder.Services.AddSingleton<DemoPlugin>();
 
 // Register Semantic Kernel plugins
 builder.Services.AddSingleton(sp =>
@@ -52,6 +54,7 @@ builder.Services.AddSingleton(sp =>
     var collection = new KernelPluginCollection();
     collection.AddFromType<TriagePlugin>("Triage");
     collection.AddFromObject(sp.GetRequiredService<PlatformGuidePlugin>(), "PlatformGuide");
+    collection.AddFromObject(sp.GetRequiredService<DemoPlugin>(), "Demo");
     return collection;
 });
 
@@ -69,6 +72,7 @@ app.MapControllers();
 app.MapDefaultEndpoints();
 app.MapAgentEndpoints();
 app.MapGuideEndpoints();
+app.MapDemoEndpoints();
 
 app.Run();
 

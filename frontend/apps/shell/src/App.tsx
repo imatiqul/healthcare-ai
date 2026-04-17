@@ -1,5 +1,5 @@
 import { lazy, Suspense, Component, type ReactNode, type ErrorInfo } from 'react';
-import { Routes, Route } from 'react-router-dom';
+import { Routes, Route, useLocation } from 'react-router-dom';
 import Box from '@mui/material/Box';
 import CircularProgress from '@mui/material/CircularProgress';
 import Typography from '@mui/material/Typography';
@@ -14,6 +14,8 @@ const TriagePage = lazy(() => import('triage/TriageViewer').then(m => ({ default
 const SchedulingPage = lazy(() => import('scheduling/SlotCalendar').then(m => ({ default: m.SlotCalendar })));
 const PopHealthPage = lazy(() => import('pophealth/RiskPanel').then(m => ({ default: m.RiskPanel })));
 const RevenuePage = lazy(() => import('revenue/CodingQueue').then(m => ({ default: m.CodingQueue })));
+const DemoLanding = lazy(() => import('./pages/DemoLanding'));
+const DemoLive = lazy(() => import('./pages/DemoLive'));
 
 function Loading() {
   return (
@@ -58,6 +60,21 @@ class MfeErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundaryState>
 }
 
 export default function App() {
+  const location = useLocation();
+  const isDemoRoute = location.pathname.startsWith('/demo');
+
+  // Demo routes render without shell chrome (no sidebar, topnav, or copilot)
+  if (isDemoRoute) {
+    return (
+      <Suspense fallback={<Loading />}>
+        <Routes>
+          <Route path="/demo" element={<DemoLanding />} />
+          <Route path="/demo/live" element={<DemoLive />} />
+        </Routes>
+      </Suspense>
+    );
+  }
+
   return (
     <Box sx={{ display: 'flex', height: '100vh' }}>
       <Sidebar />
