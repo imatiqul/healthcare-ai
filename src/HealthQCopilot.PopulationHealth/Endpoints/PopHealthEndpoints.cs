@@ -8,7 +8,9 @@ public static class PopHealthEndpoints
 {
     public static IEndpointRouteBuilder MapPopHealthEndpoints(this IEndpointRouteBuilder app)
     {
-        var group = app.MapGroup("/api/v1/population-health").WithTags("Population Health");
+        var group = app.MapGroup("/api/v1/population-health")
+            .WithTags("Population Health")
+            .RequireAuthorization();
 
         group.MapGet("/risks", async (
             string? riskLevel,

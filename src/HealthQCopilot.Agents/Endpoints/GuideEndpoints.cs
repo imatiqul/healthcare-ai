@@ -1,4 +1,6 @@
+using System.Threading.RateLimiting;
 using HealthQCopilot.Agents.Services;
+using Microsoft.AspNetCore.RateLimiting;
 
 namespace HealthQCopilot.Agents.Endpoints;
 
@@ -6,7 +8,10 @@ public static class GuideEndpoints
 {
     public static IEndpointRouteBuilder MapGuideEndpoints(this IEndpointRouteBuilder app)
     {
-        var group = app.MapGroup("/api/v1/agents/guide").WithTags("Platform Guide");
+        var group = app.MapGroup("/api/v1/agents/guide")
+            .WithTags("Platform Guide")
+            .RequireAuthorization()
+            .RequireRateLimiting("guide");
 
         group.MapPost("/chat", async (
             GuideChatRequest request,

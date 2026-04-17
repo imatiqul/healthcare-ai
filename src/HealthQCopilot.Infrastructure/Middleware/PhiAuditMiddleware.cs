@@ -14,7 +14,15 @@ public class PhiAuditMiddleware
         "/api/v1/patients",
         "/api/v1/encounters",
         "/api/v1/appointments",
-        "/api/v1/fhir"
+        "/api/v1/fhir",
+        "/api/v1/voice/sessions",
+        "/api/v1/agents/triage",
+        "/api/v1/scheduling/bookings",
+        "/api/v1/population-health/risks",
+        "/api/v1/revenue/coding-jobs",
+        "/api/v1/revenue/prior-auths",
+        "/api/v1/identity/users",
+        "/api/v1/ocr/jobs"
     ];
 
     public PhiAuditMiddleware(RequestDelegate next, ILogger<PhiAuditMiddleware> logger)

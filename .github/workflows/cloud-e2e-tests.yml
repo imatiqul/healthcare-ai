@@ -55,6 +55,7 @@ jobs:
           SCHEDULING_ACA_URL: https://scheduling.gentletree-fe920881.eastus2.azurecontainerapps.io
           NOTIFICATION_ACA_URL: https://notification.gentletree-fe920881.eastus2.azurecontainerapps.io
           POPHEALTH_ACA_URL: https://pop-health.gentletree-fe920881.eastus2.azurecontainerapps.io
+          REVENUE_ACA_URL: https://revenue.gentletree-fe920881.eastus2.azurecontainerapps.io
 
       - uses: actions/upload-artifact@v4
         if: ${{ !cancelled() }}

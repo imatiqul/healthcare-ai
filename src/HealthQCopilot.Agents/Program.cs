@@ -10,6 +10,8 @@ using HealthQCopilot.Infrastructure.Persistence;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.SemanticKernel;
 
+#pragma warning disable SKEXP0010 // Azure OpenAI connector is experimental
+
 var builder = WebApplication.CreateBuilder(args);
 
 builder.AddServiceDefaults();
@@ -24,6 +26,16 @@ builder.Services.AddHealthChecks();
 builder.Services.AddDatabaseHealthCheck<AgentDbContext>("agent");
 
 builder.Services.AddKernel();
+
+// Conditionally add Azure OpenAI when configured
+var aoaiEndpoint = builder.Configuration["AzureOpenAI:Endpoint"];
+var aoaiDeployment = builder.Configuration["AzureOpenAI:DeploymentName"];
+var aoaiKey = builder.Configuration["AzureOpenAI:ApiKey"];
+if (!string.IsNullOrEmpty(aoaiEndpoint) && !string.IsNullOrEmpty(aoaiDeployment) && !string.IsNullOrEmpty(aoaiKey))
+{
+    builder.Services.AddAzureOpenAIChatCompletion(aoaiDeployment, aoaiEndpoint, aoaiKey);
+}
+
 builder.Services.AddScoped<TriageOrchestrator>();
 builder.Services.AddHttpClient();
 builder.Services.AddSingleton<PlatformGuidePlugin>();
@@ -34,6 +46,7 @@ builder.Services.AddSingleton(sp =>
 {
     var collection = new KernelPluginCollection();
     collection.AddFromType<TriagePlugin>("Triage");
+    collection.AddFromObject(sp.GetRequiredService<PlatformGuidePlugin>(), "PlatformGuide");
     return collection;
 });
 

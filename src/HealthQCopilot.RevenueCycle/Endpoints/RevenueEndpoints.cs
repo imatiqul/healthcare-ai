@@ -8,7 +8,9 @@ public static class RevenueEndpoints
 {
     public static IEndpointRouteBuilder MapRevenueEndpoints(this IEndpointRouteBuilder app)
     {
-        var group = app.MapGroup("/api/v1/revenue").WithTags("Revenue Cycle");
+        var group = app.MapGroup("/api/v1/revenue")
+            .WithTags("Revenue Cycle")
+            .RequireAuthorization();
 
         // ── Coding Jobs ──────────────────────────────────────
 

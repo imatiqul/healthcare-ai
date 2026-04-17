@@ -9,7 +9,9 @@ public static class OcrEndpoints
 {
     public static IEndpointRouteBuilder MapOcrEndpoints(this IEndpointRouteBuilder app)
     {
-        var group = app.MapGroup("/api/v1/ocr").WithTags("OCR");
+        var group = app.MapGroup("/api/v1/ocr")
+            .WithTags("OCR")
+            .RequireAuthorization();
 
         group.MapPost("/jobs", async (
             CreateOcrJobRequest request,

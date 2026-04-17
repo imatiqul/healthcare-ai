@@ -8,7 +8,9 @@ public static class VoiceEndpoints
 {
     public static IEndpointRouteBuilder MapVoiceEndpoints(this IEndpointRouteBuilder app)
     {
-        var group = app.MapGroup("/api/v1/voice").WithTags("Voice");
+        var group = app.MapGroup("/api/v1/voice")
+            .WithTags("Voice")
+            .RequireAuthorization();
 
         group.MapPost("/sessions", async (
             CreateSessionRequest request,

@@ -49,6 +49,9 @@ public static class ObservabilityExtensions
                     .AddMeter("HealthQCopilot.OcrService")
                     .AddMeter("HealthQCopilot.NotificationService")
                     .AddMeter("HealthQCopilot.PopulationHealthService")
+                    .AddMeter("HealthQCopilot.RevenueCycleService")
+                    .AddMeter("HealthQCopilot.IdentityService")
+                    .AddMeter("HealthQCopilot.GuideService")
                     .AddPrometheusExporter();
 
                 var aiConnStr = config["ApplicationInsights:ConnectionString"];

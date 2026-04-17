@@ -8,7 +8,9 @@ public static class IdentityEndpoints
 {
     public static IEndpointRouteBuilder MapIdentityEndpoints(this IEndpointRouteBuilder app)
     {
-        var group = app.MapGroup("/api/v1/identity").WithTags("Identity");
+        var group = app.MapGroup("/api/v1/identity")
+            .WithTags("Identity")
+            .RequireAuthorization("Admin");
 
         group.MapPost("/users", async (
             CreateUserRequest request,

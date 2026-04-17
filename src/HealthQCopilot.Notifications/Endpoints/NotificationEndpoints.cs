@@ -9,7 +9,9 @@ public static class NotificationEndpoints
 {
     public static IEndpointRouteBuilder MapNotificationEndpoints(this IEndpointRouteBuilder app)
     {
-        var group = app.MapGroup("/api/v1/notifications").WithTags("Notifications");
+        var group = app.MapGroup("/api/v1/notifications")
+            .WithTags("Notifications")
+            .RequireAuthorization();
 
         group.MapPost("/campaigns", async (
             CreateCampaignRequest request,

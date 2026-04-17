@@ -1,0 +1,124 @@
+openapi: "3.0.1"
+info:
+  title: HealthQ Copilot API
+  version: "1.0.0"
+  description: Healthcare AI Platform API Gateway
+servers:
+  - url: https://healthq-copilot-apim.azure-api.net
+paths:
+  /api/v1/agents/guide/chat:
+    post:
+      operationId: GuideChat
+      summary: Send a message to the HealthQ Copilot platform guide agent
+      tags: [Platform Guide]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                message:
+                  type: string
+                sessionId:
+                  type: string
+                  format: uuid
+              required: [message]
+      responses:
+        "200":
+          description: Guide response
+  /api/v1/agents/guide/suggestions:
+    get:
+      operationId: GuideSuggestions
+      summary: Get contextual suggestions for the platform guide
+      tags: [Platform Guide]
+      responses:
+        "200":
+          description: List of suggestions
+  /api/v1/agents/triage:
+    post:
+      operationId: StartTriage
+      summary: Start AI triage workflow
+      tags: [Agents]
+      responses:
+        "201":
+          description: Triage workflow created
+    get:
+      operationId: ListTriageWorkflows
+      summary: List recent triage workflows
+      tags: [Agents]
+      responses:
+        "200":
+          description: List of triage workflows
+  /api/v1/voice/sessions:
+    post:
+      operationId: CreateVoiceSession
+      summary: Start a new voice intake session
+      tags: [Voice]
+      responses:
+        "201":
+          description: Voice session created
+  /api/v1/scheduling/slots:
+    get:
+      operationId: GetAvailableSlots
+      summary: Get available appointment slots
+      tags: [Scheduling]
+      responses:
+        "200":
+          description: Available slots
+  /api/v1/scheduling/bookings:
+    post:
+      operationId: CreateBooking
+      summary: Create a booking
+      tags: [Scheduling]
+      responses:
+        "201":
+          description: Booking created
+  /api/v1/revenue/coding-jobs:
+    get:
+      operationId: ListCodingJobs
+      summary: List coding jobs
+      tags: [Revenue Cycle]
+      responses:
+        "200":
+          description: Coding jobs list
+  /api/v1/revenue/prior-auths:
+    get:
+      operationId: ListPriorAuths
+      summary: List prior authorizations
+      tags: [Revenue Cycle]
+      responses:
+        "200":
+          description: Prior auth list
+  /api/v1/population-health/risks:
+    get:
+      operationId: GetPatientRisks
+      summary: Get patient risk assessments
+      tags: [Population Health]
+      responses:
+        "200":
+          description: Patient risks
+  /api/v1/population-health/care-gaps:
+    get:
+      operationId: GetCareGaps
+      summary: Get care gaps
+      tags: [Population Health]
+      responses:
+        "200":
+          description: Care gaps
+  /api/v1/identity/users:
+    post:
+      operationId: CreateUser
+      summary: Create user account
+      tags: [Identity]
+      responses:
+        "201":
+          description: User created
+  /api/v1/fhir/patients:
+    get:
+      operationId: SearchPatients
+      summary: Search FHIR patients
+      tags: [FHIR]
+      responses:
+        "200":
+          description: FHIR patient bundle

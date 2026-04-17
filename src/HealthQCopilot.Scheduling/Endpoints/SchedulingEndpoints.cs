@@ -8,7 +8,9 @@ public static class SchedulingEndpoints
 {
     public static IEndpointRouteBuilder MapSchedulingEndpoints(this IEndpointRouteBuilder app)
     {
-        var group = app.MapGroup("/api/v1/scheduling").WithTags("Scheduling");
+        var group = app.MapGroup("/api/v1/scheduling")
+            .WithTags("Scheduling")
+            .RequireAuthorization();
 
         group.MapGet("/slots", async (
             DateOnly? date,

@@ -9,7 +9,9 @@ public static class AgentEndpoints
 {
     public static IEndpointRouteBuilder MapAgentEndpoints(this IEndpointRouteBuilder app)
     {
-        var group = app.MapGroup("/api/v1/agents").WithTags("Agents");
+        var group = app.MapGroup("/api/v1/agents")
+            .WithTags("Agents")
+            .RequireAuthorization();
 
         group.MapPost("/triage", async (
             StartTriageRequest request,

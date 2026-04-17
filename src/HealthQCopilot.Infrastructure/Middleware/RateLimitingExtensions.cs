@@ -35,6 +35,17 @@ public static class RateLimitingExtensions
                         Window = TimeSpan.FromSeconds(30),
                         QueueLimit = 2,
                     }));
+
+            // Named policy for guide/copilot chat (AI-intensive)
+            options.AddPolicy("guide", ctx =>
+                RateLimitPartition.GetFixedWindowLimiter(
+                    partitionKey: ctx.Connection.RemoteIpAddress?.ToString() ?? "unknown",
+                    factory: _ => new FixedWindowRateLimiterOptions
+                    {
+                        PermitLimit = 15,
+                        Window = TimeSpan.FromSeconds(30),
+                        QueueLimit = 3,
+                    }));
         });
 
         return services;
