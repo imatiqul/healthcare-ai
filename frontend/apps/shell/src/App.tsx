@@ -19,8 +19,9 @@ const DemoLive = lazy(() => import('./pages/DemoLive'));
 
 function Loading() {
   return (
-    <Box display="flex" justifyContent="center" alignItems="center" minHeight={200}>
-      <CircularProgress />
+    <Box display="flex" justifyContent="center" alignItems="center" minHeight={200} gap={1}>
+      <CircularProgress size={24} />
+      <Typography variant="body2" color="text.secondary">Loading...</Typography>
     </Box>
   );
 }
