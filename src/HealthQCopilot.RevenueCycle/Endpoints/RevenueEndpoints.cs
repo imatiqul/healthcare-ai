@@ -36,7 +36,7 @@ public static class RevenueEndpoints
                     j.PatientName,
                     SuggestedCodes = j.SuggestedCodes,
                     ApprovedCodes = j.ApprovedCodes,
-                    j.Status,
+                    Status = j.Status.ToString(),
                     j.CreatedAt,
                     j.ReviewedAt,
                     j.ReviewedBy
@@ -59,7 +59,7 @@ public static class RevenueEndpoints
                 job.PatientName,
                 SuggestedCodes = job.SuggestedCodes,
                 ApprovedCodes = job.ApprovedCodes,
-                job.Status,
+                Status = job.Status.ToString(),
                 job.CreatedAt,
                 job.ReviewedAt,
                 job.ReviewedBy
@@ -93,7 +93,7 @@ public static class RevenueEndpoints
             if (result.IsFailure) return Results.BadRequest(new { error = result.Error });
             await db.SaveChangesAsync(ct);
             await cache.RemoveAsync("healthq:revenue:stats", ct);
-            return Results.Ok(new { job.Id, job.Status, job.ApprovedCodes });
+            return Results.Ok(new { job.Id, Status = job.Status.ToString(), job.ApprovedCodes });
         });
 
         group.MapPost("/coding-jobs/{id:guid}/submit", async (
@@ -130,7 +130,7 @@ public static class RevenueEndpoints
                     a.PatientName,
                     a.Procedure,
                     a.ProcedureCode,
-                    a.Status,
+                    Status = a.Status.ToString(),
                     a.InsurancePayer,
                     a.DenialReason,
                     a.CreatedAt,
@@ -154,7 +154,7 @@ public static class RevenueEndpoints
                 auth.PatientName,
                 auth.Procedure,
                 auth.ProcedureCode,
-                auth.Status,
+                Status = auth.Status.ToString(),
                 auth.InsurancePayer,
                 auth.DenialReason,
                 auth.CreatedAt,
@@ -222,7 +222,7 @@ public static class RevenueEndpoints
             if (result.IsFailure) return Results.BadRequest(new { error = result.Error });
             await db.SaveChangesAsync(ct);
             await cache.RemoveAsync("healthq:revenue:stats", ct);
-            return Results.Ok(new { auth.Id, auth.Status, auth.DenialReason });
+            return Results.Ok(new { auth.Id, Status = auth.Status.ToString(), auth.DenialReason });
         });
 
         // ── Summary Stats ────────────────────────────────────
