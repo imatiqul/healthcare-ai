@@ -40,6 +40,14 @@ public static class DatabaseExtensions
                     maxRetryCount: 3,
                     maxRetryDelay: TimeSpan.FromSeconds(5),
                     errorCodesToAdd: null));
+
+                // Migrations were scaffolded against a SQLite design-time context so the
+                // model snapshot contains SQLite column types.  At runtime we use PostgreSQL,
+                // which causes EF Core to report PendingModelChangesWarning even when there
+                // are no actual schema differences.  Suppress the warning so MigrateAsync()
+                // can run successfully.
+                opt.ConfigureWarnings(w =>
+                    w.Ignore(RelationalEventId.PendingModelChangesWarning));
             }
             else
             {
