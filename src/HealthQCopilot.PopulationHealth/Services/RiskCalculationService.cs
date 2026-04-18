@@ -60,9 +60,9 @@ public sealed class RiskCalculationService
     // When risk is re-assessed after a triage event, adjust the base score by level.
     private static readonly Dictionary<string, double> _triageLevelBoost = new(StringComparer.OrdinalIgnoreCase)
     {
-        ["P1_Immediate"] =  0.30,
-        ["P2_Urgent"]    =  0.15,
-        ["P3_Standard"]  =  0.00,
+        ["P1_Immediate"] = 0.30,
+        ["P2_Urgent"] = 0.15,
+        ["P3_Standard"] = 0.00,
         ["P4_NonUrgent"] = -0.05,
     };
 
@@ -81,7 +81,7 @@ public sealed class RiskCalculationService
             >= 0.75 => RiskLevel.Critical,
             >= 0.50 => RiskLevel.High,
             >= 0.25 => RiskLevel.Moderate,
-            _       => RiskLevel.Low
+            _ => RiskLevel.Low
         };
 
         return PatientRisk.Create(patientId, level, score, "rule-v1.0", [.. conditions]);
