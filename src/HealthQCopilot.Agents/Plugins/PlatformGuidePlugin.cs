@@ -25,12 +25,13 @@ public sealed class PlatformGuidePlugin
     {
         _http = http;
         _logger = logger;
-        // In Aspire, services are discovered via config; in ACA, via env vars
-        _schedulingBase = config["Services:SchedulingUrl"] ?? "http://scheduling-service";
-        _pophealthBase = config["Services:PopHealthUrl"] ?? "http://pophealth-service";
-        _revenueBase = config["Services:RevenueUrl"] ?? "http://revenue-service";
-        _agentsBase = ""; // self — agent service
-        _voiceBase = config["Services:VoiceUrl"] ?? "http://voice-service";
+        // In ACA/APIM deployments all services are routed through the API gateway
+        var apiBase = config["Services:ApiBase"] ?? "https://healthq-copilot-apim.azure-api.net";
+        _schedulingBase = config["Services:SchedulingUrl"] ?? apiBase;
+        _pophealthBase = config["Services:PopHealthUrl"] ?? apiBase;
+        _revenueBase = config["Services:RevenueUrl"] ?? apiBase;
+        _agentsBase = ""; // self — agent service (localhost relative)
+        _voiceBase = config["Services:VoiceUrl"] ?? apiBase;
     }
 
     [KernelFunction("get_platform_overview")]
