@@ -7,8 +7,8 @@ const SWA_URLS: Record<string, string> = {
   scheduling: process.env.SCHEDULING_URL || 'https://yellow-smoke-0e7b6b70f.7.azurestaticapps.net',
   pophealth: process.env.POPHEALTH_URL || 'https://orange-bay-00f28280f.7.azurestaticapps.net',
   revenue: process.env.REVENUE_URL || 'https://lemon-pond-067d2f40f.7.azurestaticapps.net',
-  encounters: process.env.ENCOUNTERS_URL || 'https://healthq-copilot-encounters-mfe.azurestaticapps.net',
-  engagement: process.env.ENGAGEMENT_URL || 'https://healthq-copilot-engagement-mfe.azurestaticapps.net',
+  encounters: process.env.ENCOUNTERS_URL || 'https://calm-river-02bddc70f.7.azurestaticapps.net',
+  engagement: process.env.ENGAGEMENT_URL || 'https://agreeable-hill-0d3115b0f.7.azurestaticapps.net',
 };
 
 const ACA_HEALTH_URLS: Record<string, string> = {

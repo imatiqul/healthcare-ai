@@ -47,8 +47,8 @@ jobs:
           SCHEDULING_URL: https://yellow-smoke-0e7b6b70f.7.azurestaticapps.net
           POPHEALTH_URL: https://orange-bay-00f28280f.7.azurestaticapps.net
           REVENUE_URL: https://lemon-pond-067d2f40f.7.azurestaticapps.net
-          ENCOUNTERS_URL: ${{ secrets.ENCOUNTERS_SWA_URL || 'https://healthq-copilot-encounters-mfe.azurestaticapps.net' }}
-          ENGAGEMENT_URL: ${{ secrets.ENGAGEMENT_SWA_URL || 'https://healthq-copilot-engagement-mfe.azurestaticapps.net' }}
+          ENCOUNTERS_URL: ${{ secrets.ENCOUNTERS_SWA_URL || 'https://calm-river-02bddc70f.7.azurestaticapps.net' }}
+          ENGAGEMENT_URL: ${{ secrets.ENGAGEMENT_SWA_URL || 'https://agreeable-hill-0d3115b0f.7.azurestaticapps.net' }}
           VOICE_ACA_URL: https://voice.gentletree-fe920881.eastus2.azurecontainerapps.io
           AGENT_ACA_URL: https://ai-agent.gentletree-fe920881.eastus2.azurecontainerapps.io
           FHIR_ACA_URL: https://fhir.gentletree-fe920881.eastus2.azurecontainerapps.io

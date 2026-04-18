@@ -114,8 +114,8 @@ jobs:
           SCHEDULING_MFE_URL: https://yellow-smoke-0e7b6b70f.7.azurestaticapps.net/remoteEntry.js
           POPHEALTH_MFE_URL: https://orange-bay-00f28280f.7.azurestaticapps.net/remoteEntry.js
           REVENUE_MFE_URL: https://lemon-pond-067d2f40f.7.azurestaticapps.net/remoteEntry.js
-          ENCOUNTERS_MFE_URL: ${{ secrets.ENCOUNTERS_MFE_URL || 'https://healthq-copilot-encounters-mfe.azurestaticapps.net/remoteEntry.js' }}
-          ENGAGEMENT_MFE_URL: ${{ secrets.ENGAGEMENT_MFE_URL || 'https://healthq-copilot-engagement-mfe.azurestaticapps.net/remoteEntry.js' }}
+          ENCOUNTERS_MFE_URL: ${{ secrets.ENCOUNTERS_MFE_URL || 'https://calm-river-02bddc70f.7.azurestaticapps.net/remoteEntry.js' }}
+          ENGAGEMENT_MFE_URL: ${{ secrets.ENGAGEMENT_MFE_URL || 'https://agreeable-hill-0d3115b0f.7.azurestaticapps.net/remoteEntry.js' }}
 
       - name: Copy SWA config to dist
         if: matrix.changed == 'true' || github.event_name == 'workflow_dispatch'
