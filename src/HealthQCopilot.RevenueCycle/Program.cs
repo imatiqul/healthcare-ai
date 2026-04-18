@@ -5,6 +5,7 @@ using HealthQCopilot.Infrastructure.Messaging;
 using HealthQCopilot.Infrastructure.Middleware;
 using HealthQCopilot.Infrastructure.Observability;
 using HealthQCopilot.Infrastructure.Persistence;
+using HealthQCopilot.Infrastructure.Security;
 using HealthQCopilot.RevenueCycle.Endpoints;
 using HealthQCopilot.RevenueCycle.Infrastructure;
 using HealthQCopilot.RevenueCycle.Services;
@@ -29,10 +30,13 @@ builder.Services.AddOutboxRelay<RevenueDbContext>(builder.Configuration);
 builder.Services.AddSingleton<CodeSuggestionService>();
 builder.Services.AddHealthChecks();
 builder.Services.AddDatabaseHealthCheck<RevenueDbContext>("revenue");
+builder.Services.AddHealthcareDb<AuditDbContext>(builder.Configuration, "RevenueDb");
+builder.Services.AddDaprSecretProvider();
 
 var app = builder.Build();
 
 await app.InitializeDatabaseAsync<RevenueDbContext>();
+await app.InitializeDatabaseAsync<AuditDbContext>();
 
 app.MapOpenApi();
 app.UseMiddleware<SecurityHeadersMiddleware>();

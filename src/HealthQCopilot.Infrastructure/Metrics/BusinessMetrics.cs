@@ -55,6 +55,14 @@ public sealed class BusinessMetrics
     public Counter<long> GuideConversationsTotal { get; }
     public Histogram<double> GuideResponseLatencyMs { get; }
 
+    // ── AI Hallucination Guard ───────────────────────────
+    /// <summary>
+    /// Labelled by verdict="safe"|"unsafe".
+    /// Used by Argo Rollouts AnalysisTemplate to block canary if unsafe rate > 5%.
+    /// Prometheus query: sum(rate(agent_guard_verdict_total{verdict="unsafe"}[5m])) / sum(rate(agent_guard_verdict_total[5m]))
+    /// </summary>
+    public Counter<long> AgentGuardVerdictTotal { get; }
+
     public BusinessMetrics(IMeterFactory meterFactory)
     {
         _meter = meterFactory.Create("HealthQCopilot.Business");
@@ -130,5 +138,10 @@ public sealed class BusinessMetrics
             "healthq.guide.conversations.total", description: "Total guide conversations started");
         GuideResponseLatencyMs = _meter.CreateHistogram<double>(
             "healthq.guide.response.latency.ms", "ms", "Guide AI response latency");
+
+        // Hallucination Guard
+        AgentGuardVerdictTotal = _meter.CreateCounter<long>(
+            "agent_guard_verdict_total",
+            description: "Total AI agent guard verdicts. Labels: verdict=safe|unsafe, agent=<name>");
     }
 }

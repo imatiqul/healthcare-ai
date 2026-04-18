@@ -3,6 +3,7 @@ import Box from '@mui/material/Box';
 import Typography from '@mui/material/Typography';
 import { Card, CardContent } from '@healthcare/design-system';
 import { HubConnectionBuilder, LogLevel, type HubConnection } from '@microsoft/signalr';
+import { onAgentDecision } from '@healthcare/mfe-events';
 
 interface TranscriptEntry {
   id: string;
@@ -72,14 +73,12 @@ export function LiveTranscriptFeed({ sessionId, onTriageUpdate }: LiveTranscript
   }, [sessionId, addEntry, onTriageUpdate]);
 
   useEffect(() => {
-    const handleDecision = (e: Event) => {
-      const detail = (e as CustomEvent).detail;
-      if (detail?.triageLevel && onTriageUpdate) {
-        onTriageUpdate(detail.triageLevel);
+    const off = onAgentDecision((e) => {
+      if (e.detail?.triageLevel && onTriageUpdate) {
+        onTriageUpdate(e.detail.triageLevel);
       }
-    };
-    window.addEventListener('mfe:agent:decision', handleDecision);
-    return () => window.removeEventListener('mfe:agent:decision', handleDecision);
+    });
+    return off;
   }, [onTriageUpdate]);
 
   useEffect(() => {

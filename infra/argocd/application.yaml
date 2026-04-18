@@ -8,7 +8,7 @@ metadata:
 spec:
   project: default
   source:
-    repoURL: https://github.com/your-org/healthq-copilot.git
+    repoURL: https://github.com/imatiqul/healthcare-ai.git
     targetRevision: main
     path: infra/helm
     helm:

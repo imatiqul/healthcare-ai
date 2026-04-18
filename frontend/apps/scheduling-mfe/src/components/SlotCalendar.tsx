@@ -5,6 +5,7 @@ import Typography from '@mui/material/Typography';
 import TextField from '@mui/material/TextField';
 import Stack from '@mui/material/Stack';
 import { Card, CardHeader, CardTitle, CardContent, Badge, Button } from '@healthcare/design-system';
+import { emitSlotReserved } from '@healthcare/mfe-events';
 
 const API_BASE = import.meta.env.VITE_API_BASE_URL || '';
 
@@ -34,7 +35,7 @@ export function SlotCalendar() {
 
   async function reserveSlot(slotId: string) {
     await fetch(`${API_BASE}/api/v1/scheduling/slots/${slotId}/reserve`, { method: 'POST' });
-    window.dispatchEvent(new CustomEvent('mfe:slot:reserved', { detail: { slotId } }));
+    emitSlotReserved({ slotId });
     fetchSlots();
   }
 

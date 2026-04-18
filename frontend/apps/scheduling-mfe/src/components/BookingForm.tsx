@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import Stack from '@mui/material/Stack';
 import { Card, CardHeader, CardTitle, CardContent, Button, Input } from '@healthcare/design-system';
+import { onSlotReserved, emitBookingCreated } from '@healthcare/mfe-events';
 
 const API_BASE = import.meta.env.VITE_API_BASE_URL || '';
 
@@ -11,12 +12,10 @@ export function BookingForm() {
   const [submitting, setSubmitting] = useState(false);
 
   useEffect(() => {
-    const handler = (e: Event) => {
-      const detail = (e as CustomEvent).detail;
-      if (detail?.slotId) setSlotId(detail.slotId);
-    };
-    window.addEventListener('mfe:slot:reserved', handler);
-    return () => window.removeEventListener('mfe:slot:reserved', handler);
+    const off = onSlotReserved((e) => {
+      if (e.detail?.slotId) setSlotId(e.detail.slotId);
+    });
+    return off;
   }, []);
 
   async function handleSubmit(e: React.FormEvent) {
@@ -28,7 +27,7 @@ export function BookingForm() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ slotId, patientId, practitionerId }),
       });
-      window.dispatchEvent(new CustomEvent('mfe:booking:created'));
+      emitBookingCreated({ slotId, patientId });
       setSlotId('');
       setPatientId('');
       setPractitionerId('');

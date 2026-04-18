@@ -5,6 +5,7 @@ using HealthQCopilot.Infrastructure.Messaging;
 using HealthQCopilot.Infrastructure.Middleware;
 using HealthQCopilot.Infrastructure.Observability;
 using HealthQCopilot.Infrastructure.Persistence;
+using HealthQCopilot.Infrastructure.Security;
 using Microsoft.EntityFrameworkCore;
 
 
@@ -24,10 +25,13 @@ builder.Services.AddOutboxRelay<FhirDbContext>(builder.Configuration);
 builder.Services.AddFhirHttpClient(builder.Configuration);
 builder.Services.AddHealthChecks();
 builder.Services.AddDatabaseHealthCheck<FhirDbContext>("fhir");
+builder.Services.AddHealthcareDb<AuditDbContext>(builder.Configuration, "FhirDb");
+builder.Services.AddDaprSecretProvider();
 
 var app = builder.Build();
 
 await app.InitializeDatabaseAsync<FhirDbContext>();
+await app.InitializeDatabaseAsync<AuditDbContext>();
 
 app.MapOpenApi();
 app.UseMiddleware<SecurityHeadersMiddleware>();

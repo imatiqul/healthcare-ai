@@ -4,6 +4,7 @@ using HealthQCopilot.Infrastructure.Messaging;
 using HealthQCopilot.Infrastructure.Middleware;
 using HealthQCopilot.Infrastructure.Observability;
 using HealthQCopilot.Infrastructure.Persistence;
+using HealthQCopilot.Infrastructure.Security;
 using HealthQCopilot.Notifications.Endpoints;
 using HealthQCopilot.Notifications.Infrastructure;
 using HealthQCopilot.Notifications.Services;
@@ -27,10 +28,13 @@ builder.Services.AddScoped<INotificationSender, AcsNotificationSender>();
 builder.Services.AddHostedService<CampaignDispatchService>();
 builder.Services.AddHealthChecks();
 builder.Services.AddDatabaseHealthCheck<NotificationDbContext>("notification");
+builder.Services.AddHealthcareDb<AuditDbContext>(builder.Configuration, "NotificationDb");
+builder.Services.AddDaprSecretProvider();
 
 var app = builder.Build();
 
 await app.InitializeDatabaseAsync<NotificationDbContext>();
+await app.InitializeDatabaseAsync<AuditDbContext>();
 
 app.MapOpenApi();
 app.UseMiddleware<SecurityHeadersMiddleware>();

@@ -8,6 +8,9 @@ export default defineConfig({
     react(),
     federation({
       name: 'shell',
+      exposes: {
+        './store': './src/store/globalStore.ts',
+      },
       remotes: {
         voice: {
           type: 'module',

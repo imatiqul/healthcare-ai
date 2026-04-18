@@ -1,0 +1,236 @@
+name: Compliance & Security Checks
+
+on:
+  schedule:
+    - cron: '0 2 * * 1'     # Every Monday at 02:00 UTC
+  workflow_dispatch:
+    inputs:
+      skip_zap:
+        description: 'Skip OWASP ZAP full scan (faster)'
+        required: false
+        default: 'false'
+      skip_load_test:
+        description: 'Skip k6 load test'
+        required: false
+        default: 'false'
+
+permissions:
+  contents: read
+  security-events: write   # for SARIF upload
+
+env:
+  APIM_BASE: https://healthq-copilot-apim.azure-api.net
+  SHELL_URL:  https://gentle-tree-03115af0f.7.azurestaticapps.net
+
+jobs:
+  # ── 1. Trivy: Container & File-System CVE scan ─────────────────────────────
+  trivy-scan:
+    name: Trivy CVE Scan
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Run Trivy on filesystem
+        uses: aquasecurity/trivy-action@0.28.0
+        with:
+          scan-type: fs
+          scan-ref: .
+          format: sarif
+          output: trivy-results.sarif
+          severity: CRITICAL,HIGH
+          exit-code: '0'   # collect report; gate separately below
+
+      - name: Upload SARIF to GitHub Security tab
+        uses: github/codeql-action/upload-sarif@v3
+        with:
+          sarif_file: trivy-results.sarif
+
+      - name: Gate on CRITICAL CVEs
+        run: |
+          CRITICAL=$(cat trivy-results.sarif \
+            | python3 -c "
+          import json,sys
+          d=json.load(sys.stdin)
+          runs=d.get('runs',[])
+          n=sum(1 for r in runs for result in r.get('results',[])
+                if result.get('ruleId','').startswith('CVE')
+                and any(l.get('properties',{}).get('cvss',0)>=9.0
+                        for l in result.get('locations',[])))
+          print(n)
+          " 2>/dev/null || \
+            grep -c '"level": "error"' trivy-results.sarif || echo 0)
+          echo "Critical findings: $CRITICAL"
+          if [ "$CRITICAL" -gt 0 ]; then
+            echo "::error::$CRITICAL CRITICAL CVEs found — pipeline blocked"
+            exit 1
+          fi
+
+  # ── 2. OWASP ZAP: Full API Scan ───────────────────────────────────────────
+  owasp-zap:
+    name: OWASP ZAP Full Scan
+    runs-on: ubuntu-latest
+    if: github.event.inputs.skip_zap != 'true'
+    needs: trivy-scan
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Run ZAP Full Scan against APIM
+        uses: zaproxy/action-full-scan@v0.12.0
+        with:
+          target: ${{ env.APIM_BASE }}
+          rules_file_name: '.github/zap-rules.tsv'
+          cmd_options: '-a -j'
+          fail_action: false   # collect report first
+
+      - name: Upload ZAP HTML report
+        uses: actions/upload-artifact@v4
+        with:
+          name: zap-report
+          path: report_html.html
+
+      - name: Gate on HIGH ZAP findings
+        run: |
+          HIGH=$(grep -c '"riskdesc": "High' report_json.json 2>/dev/null || echo 0)
+          echo "ZAP HIGH findings: $HIGH"
+          if [ "$HIGH" -gt 0 ]; then
+            echo "::error::$HIGH HIGH-severity ZAP findings — remediate before merge"
+            exit 1
+          fi
+
+  # ── 3. k6 Load Test ───────────────────────────────────────────────────────
+  k6-load-test:
+    name: k6 Performance Gate
+    runs-on: ubuntu-latest
+    if: github.event.inputs.skip_load_test != 'true'
+    needs: trivy-scan
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Install k6
+        run: |
+          sudo gpg -k
+          sudo gpg --no-default-keyring \
+            --keyring /usr/share/keyrings/k6-archive-keyring.gpg \
+            --keyserver hkp://keyserver.ubuntu.com:80 \
+            --recv-keys C5AD17C747E3415A3642D57D77C6C491D6AC1D69
+          echo "deb [signed-by=/usr/share/keyrings/k6-archive-keyring.gpg] \
+            https://dl.k6.io/deb stable main" \
+            | sudo tee /etc/apt/sources.list.d/k6.list
+          sudo apt-get update -q
+          sudo apt-get install -y k6
+
+      - name: Write k6 load test script
+        run: |
+          cat > k6-test.js << 'EOF'
+          import http from 'k6/http';
+          import { check, sleep } from 'k6';
+          import { Rate, Trend } from 'k6/metrics';
+
+          const errorRate = new Rate('errors');
+          const triagedLatency = new Trend('triage_latency');
+
+          export const options = {
+            stages: [
+              { duration: '30s', target: 10 },
+              { duration: '1m',  target: 25 },
+              { duration: '30s', target: 0  },
+            ],
+            thresholds: {
+              http_req_duration: ['p(95)<2000'],   // P95 < 2s
+              errors: ['rate<0.05'],               // Error rate < 5%
+              triage_latency: ['p(95)<5000'],      // Triage P95 < 5s
+            },
+          };
+
+          const BASE = __ENV.APIM_BASE || 'https://healthq-copilot-apim.azure-api.net';
+
+          export default function () {
+            // Health check endpoints
+            const healthRes = http.get(`${BASE}/api/v1/voice/health`);
+            check(healthRes, { 'voice health 200': (r) => r.status === 200 });
+            errorRate.add(healthRes.status !== 200);
+
+            const popRes = http.get(`${BASE}/api/v1/population-health/stats`);
+            check(popRes, { 'pophealth stats 200': (r) => r.status === 200 });
+            errorRate.add(popRes.status !== 200);
+
+            // Triage submit (anonymised)
+            const start = Date.now();
+            const triageRes = http.post(
+              `${BASE}/api/v1/agents/triage`,
+              JSON.stringify({
+                sessionId: '00000000-0000-0000-0000-000000000001',
+                transcriptText: 'Patient has mild headache for two days',
+              }),
+              { headers: { 'Content-Type': 'application/json' } },
+            );
+            triagedLatency.add(Date.now() - start);
+            check(triageRes, { 'triage accepted': (r) => r.status < 500 });
+
+            sleep(1);
+          }
+          EOF
+
+      - name: Run k6 load test
+        env:
+          APIM_BASE: ${{ env.APIM_BASE }}
+        run: k6 run --env APIM_BASE=$APIM_BASE k6-test.js
+
+  # ── 4. Lighthouse CI — Frontend Performance ───────────────────────────────
+  lighthouse:
+    name: Lighthouse CI
+    runs-on: ubuntu-latest
+    needs: trivy-scan
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Install LHCI
+        run: npm install -g @lhci/cli@0.14.x
+
+      - name: Write lighthouserc
+        run: |
+          cat > .lighthouserc.json << EOF
+          {
+            "ci": {
+              "collect": {
+                "url": ["${{ env.SHELL_URL }}"],
+                "numberOfRuns": 3
+              },
+              "assert": {
+                "assertions": {
+                  "categories:performance": ["error", {"minScore": 0.90}],
+                  "categories:accessibility": ["warn",  {"minScore": 0.85}],
+                  "categories:best-practices": ["error", {"minScore": 0.90}],
+                  "categories:seo": ["warn", {"minScore": 0.80}]
+                }
+              },
+              "upload": {
+                "target": "temporary-public-storage"
+              }
+            }
+          }
+          EOF
+
+      - name: Run Lighthouse CI
+        run: lhci autorun --config=.lighthouserc.json
+
+  # ── 5. Summary report ─────────────────────────────────────────────────────
+  compliance-summary:
+    name: Compliance Summary
+    runs-on: ubuntu-latest
+    needs: [trivy-scan, k6-load-test, lighthouse]
+    if: always()
+    steps:
+      - name: Print result
+        run: |
+          echo "## Compliance Gate Results" >> $GITHUB_STEP_SUMMARY
+          echo "| Check | Result |" >> $GITHUB_STEP_SUMMARY
+          echo "|-------|--------|" >> $GITHUB_STEP_SUMMARY
+          echo "| Trivy CVE Scan      | ${{ needs.trivy-scan.result }} |"      >> $GITHUB_STEP_SUMMARY
+          echo "| OWASP ZAP           | ${{ needs.owasp-zap.result }} |"       >> $GITHUB_STEP_SUMMARY
+          echo "| k6 Load Test (P95)  | ${{ needs.k6-load-test.result }} |"    >> $GITHUB_STEP_SUMMARY
+          echo "| Lighthouse Perf >90 | ${{ needs.lighthouse.result }} |"      >> $GITHUB_STEP_SUMMARY

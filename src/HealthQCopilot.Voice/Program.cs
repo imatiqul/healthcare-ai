@@ -4,6 +4,7 @@ using HealthQCopilot.Infrastructure.Messaging;
 using HealthQCopilot.Infrastructure.Middleware;
 using HealthQCopilot.Infrastructure.Observability;
 using HealthQCopilot.Infrastructure.Persistence;
+using HealthQCopilot.Infrastructure.Security;
 using HealthQCopilot.Voice.Endpoints;
 using HealthQCopilot.Voice.Hubs;
 using HealthQCopilot.Voice.Infrastructure;
@@ -30,10 +31,13 @@ builder.Services.AddSingleton<ITranscriptionService, AzureSpeechTranscriptionSer
 builder.Services.AddHealthChecks();
 builder.Services.AddDatabaseHealthCheck<VoiceDbContext>("voice");
 builder.Services.AddSignalR();
+builder.Services.AddHealthcareDb<AuditDbContext>(builder.Configuration, "VoiceDb");
+builder.Services.AddDaprSecretProvider();
 
 var app = builder.Build();
 
 await app.InitializeDatabaseAsync<VoiceDbContext>();
+await app.InitializeDatabaseAsync<AuditDbContext>();
 
 app.MapOpenApi();
 app.UseMiddleware<SecurityHeadersMiddleware>();

@@ -41,6 +41,9 @@ importers:
       '@healthcare/fhir-types':
         specifier: workspace:*
         version: link:../../packages/fhir-types
+      '@healthcare/mfe-events':
+        specifier: workspace:*
+        version: link:../../packages/mfe-events
       react:
         specifier: ^19.0.0
         version: 19.2.4
@@ -96,6 +99,9 @@ importers:
       '@healthcare/fhir-types':
         specifier: workspace:*
         version: link:../../packages/fhir-types
+      '@healthcare/mfe-events':
+        specifier: workspace:*
+        version: link:../../packages/mfe-events
       react:
         specifier: ^19.0.0
         version: 19.2.4
@@ -151,6 +157,9 @@ importers:
       '@healthcare/fhir-types':
         specifier: workspace:*
         version: link:../../packages/fhir-types
+      '@healthcare/mfe-events':
+        specifier: workspace:*
+        version: link:../../packages/mfe-events
       react:
         specifier: ^19.0.0
         version: 19.2.4
@@ -206,6 +215,9 @@ importers:
       '@healthcare/design-system':
         specifier: workspace:*
         version: link:../../packages/design-system
+      '@healthcare/mfe-events':
+        specifier: workspace:*
+        version: link:../../packages/mfe-events
       '@healthcare/signalr-client':
         specifier: workspace:*
         version: link:../../packages/signalr-client
@@ -267,6 +279,9 @@ importers:
       '@healthcare/fhir-types':
         specifier: workspace:*
         version: link:../../packages/fhir-types
+      '@healthcare/mfe-events':
+        specifier: workspace:*
+        version: link:../../packages/mfe-events
       react:
         specifier: ^19.0.0
         version: 19.2.4
@@ -322,6 +337,9 @@ importers:
       '@healthcare/fhir-types':
         specifier: workspace:*
         version: link:../../packages/fhir-types
+      '@healthcare/mfe-events':
+        specifier: workspace:*
+        version: link:../../packages/mfe-events
       '@healthcare/signalr-client':
         specifier: workspace:*
         version: link:../../packages/signalr-client
@@ -433,6 +451,8 @@ importers:
       typescript:
         specifier: ^5.6.0
         version: 5.9.3
+
+  packages/mfe-events: {}
 
   packages/signalr-client:
     dependencies:

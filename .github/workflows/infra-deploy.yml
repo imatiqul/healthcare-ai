@@ -3,7 +3,7 @@ name: Infrastructure Deploy
 on:
   push:
     branches: [main]
-    paths: ['infra/bicep/**']
+    paths: ['infra/bicep/**', 'infra/argocd/**', 'infra/k8s/**']
   workflow_dispatch:
     inputs:
       environment:
@@ -14,10 +14,19 @@ on:
         options:
           - dev
           - prod
+      skip_aks_bootstrap:
+        description: 'Skip AKS bootstrap (ArgoCD/KEDA already installed)'
+        required: false
+        default: 'false'
+        type: boolean
 
 permissions:
   id-token: write
   contents: read
+
+env:
+  RESOURCE_GROUP: healthq-copilot-rg
+  AKS_CLUSTER_NAME: healthq-copilot-aks
 
 jobs:
   validate:
@@ -30,6 +39,9 @@ jobs:
           tenant-id: ${{ secrets.AZURE_TENANT_ID }}
           subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
 
+      - name: Install Bicep CLI
+        run: az bicep install
+
       - name: Validate Bicep
         run: |
           az bicep build --file infra/bicep/main.bicep
@@ -38,9 +50,41 @@ jobs:
             --template-file infra/bicep/main.bicep \
             --parameters infra/bicep/main.${{ inputs.environment || 'dev' }}.bicepparam
 
-  deploy:
+  deploy-infrastructure:
     needs: validate
     if: github.event_name == 'push' || github.event_name == 'workflow_dispatch'
+    runs-on: ubuntu-latest
+    environment: ${{ inputs.environment || 'dev' }}
+    outputs:
+      aks_cluster_name: ${{ steps.deploy.outputs.aksClusterName }}
+      acr_login_server: ${{ steps.deploy.outputs.acrLoginServer }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: azure/login@v2
+        with:
+          client-id: ${{ secrets.AZURE_CLIENT_ID }}
+          tenant-id: ${{ secrets.AZURE_TENANT_ID }}
+          subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+
+      - name: Install Bicep CLI
+        run: az bicep install
+
+      - name: Deploy Bicep infrastructure
+        id: deploy
+        run: |
+          RESULT=$(az deployment sub create \
+            --location eastus2 \
+            --template-file infra/bicep/main.bicep \
+            --parameters infra/bicep/main.${{ inputs.environment || 'dev' }}.bicepparam \
+            --name "deploy-$(date +%Y%m%d%H%M%S)" \
+            --query 'properties.outputs' \
+            --output json)
+          echo "aksClusterName=$(echo $RESULT | jq -r '.aksClusterName.value // "healthq-copilot-aks"')" >> $GITHUB_OUTPUT
+          echo "acrLoginServer=$(echo $RESULT | jq -r '.acrLoginServer.value // "healthqcopilot.azurecr.io"')" >> $GITHUB_OUTPUT
+
+  bootstrap-aks:
+    needs: deploy-infrastructure
+    if: (github.event_name == 'push' || github.event_name == 'workflow_dispatch') && inputs.skip_aks_bootstrap != 'true'
     runs-on: ubuntu-latest
     environment: ${{ inputs.environment || 'dev' }}
     steps:
@@ -51,10 +95,63 @@ jobs:
           tenant-id: ${{ secrets.AZURE_TENANT_ID }}
           subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
 
-      - name: Deploy Bicep
+      - name: Get AKS kubeconfig
         run: |
-          az deployment sub create \
-            --location eastus2 \
-            --template-file infra/bicep/main.bicep \
-            --parameters infra/bicep/main.${{ inputs.environment || 'dev' }}.bicepparam \
-            --name "deploy-$(date +%Y%m%d%H%M%S)"
+          az aks get-credentials \
+            --resource-group ${{ env.RESOURCE_GROUP }} \
+            --name ${{ needs.deploy-infrastructure.outputs.aks_cluster_name || env.AKS_CLUSTER_NAME }} \
+            --overwrite-existing
+
+      - name: Install ArgoCD
+        run: |
+          kubectl create namespace argocd --dry-run=client -o yaml | kubectl apply -f -
+          kubectl apply -n argocd -f https://raw.githubusercontent.com/argoproj/argo-cd/stable/manifests/install.yaml
+          kubectl wait --for=condition=available deployment/argocd-server -n argocd --timeout=300s
+
+      - name: Install Argo Rollouts
+        run: |
+          kubectl create namespace argo-rollouts --dry-run=client -o yaml | kubectl apply -f -
+          kubectl apply -n argo-rollouts -f https://github.com/argoproj/argo-rollouts/releases/latest/download/install.yaml
+          kubectl wait --for=condition=available deployment/argo-rollouts -n argo-rollouts --timeout=300s
+
+      - name: Install KEDA
+        run: |
+          helm repo add kedacore https://kedacore.github.io/charts
+          helm repo update
+          helm upgrade --install keda kedacore/keda \
+            --namespace keda \
+            --create-namespace \
+            --set watchNamespace=healthq-copilot \
+            --wait --timeout=5m
+
+      - name: Install kube-prometheus-stack
+        run: |
+          helm repo add prometheus-community https://prometheus-community.github.io/helm-charts
+          helm repo update
+          helm upgrade --install kube-prometheus-stack prometheus-community/kube-prometheus-stack \
+            --namespace monitoring \
+            --create-namespace \
+            --set grafana.adminPassword="${{ secrets.GRAFANA_ADMIN_PASSWORD }}" \
+            --set prometheus.prometheusSpec.serviceMonitorSelectorNilUsesHelmValues=false \
+            --wait --timeout=10m
+
+      - name: Apply network policies
+        run: |
+          kubectl apply -f infra/k8s/network-policies/ --recursive || true
+
+      - name: Apply KEDA ScaledObjects
+        run: |
+          kubectl apply -f infra/k8s/keda/ --recursive || true
+
+      - name: Bootstrap ArgoCD Application
+        run: |
+          # Patch ArgoCD Application with secrets before applying
+          kubectl apply -f infra/argocd/project.yaml
+          kubectl apply -f infra/argocd/application${{ inputs.environment == 'dev' && '-dev' || '' }}.yaml
+
+      - name: Wait for ArgoCD sync
+        run: |
+          # Give ArgoCD 60s to detect and begin sync
+          sleep 60
+          kubectl get applications -n argocd -o wide || true
+

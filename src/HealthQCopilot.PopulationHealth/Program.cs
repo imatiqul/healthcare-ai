@@ -4,6 +4,7 @@ using HealthQCopilot.Infrastructure.Messaging;
 using HealthQCopilot.Infrastructure.Middleware;
 using HealthQCopilot.Infrastructure.Observability;
 using HealthQCopilot.Infrastructure.Persistence;
+using HealthQCopilot.Infrastructure.Security;
 using HealthQCopilot.PopulationHealth.Endpoints;
 using HealthQCopilot.PopulationHealth.Infrastructure;
 using HealthQCopilot.PopulationHealth.Services;
@@ -36,10 +37,13 @@ builder.Services.AddHttpClient<CareGapNotificationDispatcher>(client =>
     client.Timeout = TimeSpan.FromSeconds(15);
 });
 builder.Services.AddScoped<CareGapNotificationDispatcher>();
+builder.Services.AddHealthcareDb<AuditDbContext>(builder.Configuration, "PopHealthDb");
+builder.Services.AddDaprSecretProvider();
 
 var app = builder.Build();
 
 await app.InitializeDatabaseAsync<PopHealthDbContext>();
+await app.InitializeDatabaseAsync<AuditDbContext>();
 
 app.MapOpenApi();
 app.UseMiddleware<SecurityHeadersMiddleware>();

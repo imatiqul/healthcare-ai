@@ -3,6 +3,7 @@ global:
   registry: healthqcopilot.azurecr.io
   imagePullPolicy: Always
   env: production
+  tenantId: "" # Set via values.production.yaml or --set global.tenantId=<tenant-id>
 
 services:
   voice:
@@ -12,6 +13,8 @@ services:
     image:
       repository: healthq-copilot/voice
       tag: latest
+    workloadIdentity:
+      clientId: "" # Set via values.production.yaml: voice managed identity client ID
     resources:
       requests:
         cpu: 250m
@@ -32,6 +35,8 @@ services:
     image:
       repository: healthq-copilot/ai-agent
       tag: latest
+    workloadIdentity:
+      clientId: "" # ai-agent managed identity client ID
     resources:
       requests:
         cpu: 500m
@@ -56,6 +61,8 @@ services:
     image:
       repository: healthq-copilot/fhir
       tag: latest
+    workloadIdentity:
+      clientId: "" # fhir managed identity client ID
     resources:
       requests:
         cpu: 250m
@@ -76,6 +83,8 @@ services:
     image:
       repository: healthq-copilot/identity
       tag: latest
+    workloadIdentity:
+      clientId: "" # identity managed identity client ID
     resources:
       requests:
         cpu: 250m
@@ -96,6 +105,8 @@ services:
     image:
       repository: healthq-copilot/ocr
       tag: latest
+    workloadIdentity:
+      clientId: "" # ocr managed identity client ID
     resources:
       requests:
         cpu: 500m
@@ -120,6 +131,8 @@ services:
     image:
       repository: healthq-copilot/scheduling
       tag: latest
+    workloadIdentity:
+      clientId: "" # scheduling managed identity client ID
     resources:
       requests:
         cpu: 250m
@@ -140,6 +153,8 @@ services:
     image:
       repository: healthq-copilot/notification
       tag: latest
+    workloadIdentity:
+      clientId: "" # notification managed identity client ID
     resources:
       requests:
         cpu: 250m
@@ -160,6 +175,8 @@ services:
     image:
       repository: healthq-copilot/pophealth
       tag: latest
+    workloadIdentity:
+      clientId: "" # pophealth managed identity client ID
     resources:
       requests:
         cpu: 500m
@@ -173,6 +190,28 @@ services:
       - key: kubernetes.azure.com/scalesetpriority
         value: spot
         effect: NoSchedule
+    env:
+      ASPNETCORE_ENVIRONMENT: Production
+      ASPNETCORE_URLS: http://+:8080
+
+  revenue:
+    name: revenue-service
+    port: 8080
+    replicas: 2
+    image:
+      repository: healthq-copilot/revenue
+      tag: latest
+    workloadIdentity:
+      clientId: "" # revenue managed identity client ID
+    resources:
+      requests:
+        cpu: 250m
+        memory: 512Mi
+      limits:
+        cpu: "1"
+        memory: 1Gi
+    nodeSelector:
+      workload: api
     env:
       ASPNETCORE_ENVIRONMENT: Production
       ASPNETCORE_URLS: http://+:8080

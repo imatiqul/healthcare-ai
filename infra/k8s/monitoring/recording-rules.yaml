@@ -1,0 +1,175 @@
+---
+# Prometheus PrometheusRule — Healthcare AI Platform
+# 5 Golden Signals: Latency, Traffic, Errors, Saturation, and AI Safety
+#
+# Applied by infra-deploy.yml via `kubectl apply -f infra/k8s/monitoring/`
+# Consumed by kube-prometheus-stack (Prometheus Operator).
+apiVersion: monitoring.coreos.com/v1
+kind: PrometheusRule
+metadata:
+  name: healthq-copilot-recording-rules
+  namespace: monitoring
+  labels:
+    release: kube-prometheus-stack
+    app: healthq-copilot
+spec:
+  groups:
+    # ── 1. Request Latency ─────────────────────────────────────────────────
+    - name: healthq.latency
+      interval: 30s
+      rules:
+        - record: job:http_request_duration_seconds:p50
+          expr: |
+            histogram_quantile(0.50,
+              sum(rate(http_request_duration_seconds_bucket[5m])) by (job, le))
+
+        - record: job:http_request_duration_seconds:p95
+          expr: |
+            histogram_quantile(0.95,
+              sum(rate(http_request_duration_seconds_bucket[5m])) by (job, le))
+
+        - record: job:http_request_duration_seconds:p99
+          expr: |
+            histogram_quantile(0.99,
+              sum(rate(http_request_duration_seconds_bucket[5m])) by (job, le))
+
+    # ── 2. Request Traffic (RPS) ───────────────────────────────────────────
+    - name: healthq.traffic
+      interval: 30s
+      rules:
+        - record: job:http_requests_total:rate5m
+          expr: |
+            sum(rate(http_requests_total[5m])) by (job)
+
+        - record: job:http_requests_total:rate1h
+          expr: |
+            sum(rate(http_requests_total[1h])) by (job)
+
+    # ── 3. Error Rate ──────────────────────────────────────────────────────
+    - name: healthq.errors
+      interval: 30s
+      rules:
+        - record: job:http_requests_errors:rate5m
+          expr: |
+            sum(rate(http_requests_total{status=~"5.."}[5m])) by (job)
+
+        - record: job:http_error_ratio:rate5m
+          expr: |
+            sum(rate(http_requests_total{status=~"5.."}[5m])) by (job)
+            /
+            sum(rate(http_requests_total[5m])) by (job)
+
+    # ── 4. Saturation (CPU + Memory) ──────────────────────────────────────
+    - name: healthq.saturation
+      interval: 60s
+      rules:
+        - record: namespace_pod:container_cpu_usage_seconds_total:rate5m
+          expr: |
+            sum(rate(container_cpu_usage_seconds_total{
+              namespace="healthq-copilot",
+              container!=""
+            }[5m])) by (pod, container)
+
+        - record: namespace_pod:container_memory_working_set_bytes:avg
+          expr: |
+            avg(container_memory_working_set_bytes{
+              namespace="healthq-copilot",
+              container!=""
+            }) by (pod, container)
+
+    # ── 5. AI Safety — Hallucination Guard Verdict Rate ───────────────────
+    - name: healthq.ai_safety
+      interval: 30s
+      rules:
+        - record: agent:guard_unsafe_ratio:rate5m
+          expr: |
+            sum(rate(agent_guard_verdict_total{verdict="unsafe"}[5m])) by (agent)
+            /
+            (sum(rate(agent_guard_verdict_total[5m])) by (agent) > 0)
+          labels:
+            signal: ai_safety
+
+        - record: agent:guard_verdict_total:rate5m
+          expr: |
+            sum(rate(agent_guard_verdict_total[5m])) by (agent, verdict)
+
+        - record: agent:guard_unsafe_ratio:rate1h
+          expr: |
+            sum(rate(agent_guard_verdict_total{verdict="unsafe"}[1h])) by (agent)
+            /
+            (sum(rate(agent_guard_verdict_total[1h])) by (agent) > 0)
+
+    # ── 6. FHIR / Clinical Operations ─────────────────────────────────────
+    - name: healthq.fhir
+      interval: 60s
+      rules:
+        - record: job:fhir_operations_total:rate5m
+          expr: |
+            sum(rate(fhir_operations_total[5m])) by (job, operation, resource_type)
+
+        - record: job:fhir_operation_errors:rate5m
+          expr: |
+            sum(rate(fhir_operations_total{status="error"}[5m])) by (job)
+
+    # ── 7. Triage Throughput ───────────────────────────────────────────────
+    - name: healthq.triage
+      interval: 60s
+      rules:
+        - record: job:triage_completed_total:rate5m
+          expr: |
+            sum(rate(triage_completed_total[5m])) by (level)
+
+        - record: job:triage_latency_seconds:p95
+          expr: |
+            histogram_quantile(0.95,
+              sum(rate(triage_latency_seconds_bucket[5m])) by (le))
+
+---
+# Alerting rules for SLO breaches
+apiVersion: monitoring.coreos.com/v1
+kind: PrometheusRule
+metadata:
+  name: healthq-copilot-alerts
+  namespace: monitoring
+  labels:
+    release: kube-prometheus-stack
+    app: healthq-copilot
+spec:
+  groups:
+    - name: healthq.slos
+      rules:
+        - alert: HighErrorRate
+          expr: job:http_error_ratio:rate5m > 0.05
+          for: 5m
+          labels:
+            severity: warning
+          annotations:
+            summary: "High HTTP error rate on {{ $labels.job }}"
+            description: "{{ $labels.job }} error ratio is {{ $value | humanizePercentage }} (threshold 5%)"
+
+        - alert: CriticalErrorRate
+          expr: job:http_error_ratio:rate5m > 0.10
+          for: 2m
+          labels:
+            severity: critical
+          annotations:
+            summary: "Critical HTTP error rate on {{ $labels.job }}"
+            description: "{{ $labels.job }} error ratio is {{ $value | humanizePercentage }} (threshold 10%)"
+
+        - alert: HighP99Latency
+          expr: job:http_request_duration_seconds:p99 > 5
+          for: 5m
+          labels:
+            severity: warning
+          annotations:
+            summary: "P99 latency > 5s on {{ $labels.job }}"
+            description: "P99 latency is {{ $value }}s for {{ $labels.job }}"
+
+        - alert: AIGuardUnsafeRatioHigh
+          expr: agent:guard_unsafe_ratio:rate5m > 0.05
+          for: 2m
+          labels:
+            severity: critical
+          annotations:
+            summary: "AI hallucination guard unsafe ratio above 5% for {{ $labels.agent }}"
+            description: "Guard unsafe ratio is {{ $value | humanizePercentage }} — canary deployment may be blocked"

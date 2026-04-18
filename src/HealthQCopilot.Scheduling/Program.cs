@@ -5,6 +5,7 @@ using HealthQCopilot.Infrastructure.Messaging;
 using HealthQCopilot.Infrastructure.Middleware;
 using HealthQCopilot.Infrastructure.Observability;
 using HealthQCopilot.Infrastructure.Persistence;
+using HealthQCopilot.Infrastructure.Security;
 using HealthQCopilot.Scheduling.BackgroundServices;
 using HealthQCopilot.Scheduling.Endpoints;
 using HealthQCopilot.Scheduling.Infrastructure;
@@ -29,10 +30,13 @@ builder.Services.AddOutboxRelay<SchedulingDbContext>(builder.Configuration);
 builder.Services.AddHostedService<SlotGenerationService>();
 builder.Services.AddHealthChecks();
 builder.Services.AddDatabaseHealthCheck<SchedulingDbContext>("scheduling");
+builder.Services.AddHealthcareDb<AuditDbContext>(builder.Configuration, "SchedulingDb");
+builder.Services.AddDaprSecretProvider();
 
 var app = builder.Build();
 
 await app.InitializeDatabaseAsync<SchedulingDbContext>();
+await app.InitializeDatabaseAsync<AuditDbContext>();
 
 app.MapOpenApi();
 app.UseMiddleware<SecurityHeadersMiddleware>();

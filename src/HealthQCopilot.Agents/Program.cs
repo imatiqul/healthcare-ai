@@ -8,6 +8,7 @@ using HealthQCopilot.Infrastructure.Messaging;
 using HealthQCopilot.Infrastructure.Middleware;
 using HealthQCopilot.Infrastructure.Observability;
 using HealthQCopilot.Infrastructure.Persistence;
+using HealthQCopilot.Infrastructure.Security;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.SemanticKernel;
 
@@ -44,6 +45,7 @@ if (!string.IsNullOrEmpty(aoaiEndpoint) && !string.IsNullOrEmpty(aoaiDeployment)
 }
 
 builder.Services.AddScoped<TriageOrchestrator>();
+builder.Services.AddScoped<HallucinationGuardAgent>();
 builder.Services.AddHttpClient();
 builder.Services.AddSingleton<PlatformGuidePlugin>();
 builder.Services.AddScoped<GuideOrchestrator>();
@@ -67,9 +69,13 @@ builder.Services.AddSingleton(sp =>
     return collection;
 });
 
+builder.Services.AddHealthcareDb<AuditDbContext>(builder.Configuration, "AgentDb");
+builder.Services.AddDaprSecretProvider();
+
 var app = builder.Build();
 
 await app.InitializeDatabaseAsync<AgentDbContext>();
+await app.InitializeDatabaseAsync<AuditDbContext>();
 
 app.MapOpenApi();
 app.UseMiddleware<SecurityHeadersMiddleware>();

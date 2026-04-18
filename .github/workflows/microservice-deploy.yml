@@ -152,3 +152,52 @@ jobs:
             --resource-group ${{ env.ACA_RESOURCE_GROUP }} \
             --type external \
             --target-port 8080
+
+      - name: Update Helm image tag for GitOps (ArgoCD)
+        if: (matrix.changed == 'true' || github.event_name == 'workflow_dispatch') && github.ref == 'refs/heads/main'
+        run: |
+          # Map CI matrix service name to Helm values key
+          SERVICE_KEY="${{ matrix.service }}"
+          # ai-agent maps to the 'ai-agent' key in values.yaml
+          VALUES_FILE="infra/helm/values.yaml"
+          PROD_VALUES="infra/helm/values.production.yaml"
+
+          # Update the image tag in values.production.yaml (create if missing)
+          if [ ! -f "$PROD_VALUES" ]; then
+            echo "services:" > "$PROD_VALUES"
+          fi
+
+          # Use Python (available on ubuntu-latest) for safe YAML key update
+          python3 - <<'PYEOF'
+          import sys, re
+
+          service = "${{ matrix.service }}"
+          sha     = "${{ github.sha }}"
+          path    = "infra/helm/values.production.yaml"
+
+          try:
+              with open(path) as f:
+                  content = f.read()
+          except FileNotFoundError:
+              content = "services:\n"
+
+          # Replace or append the image tag for this service
+          pattern = rf'(  {re.escape(service)}:.*?\n(?:    .*\n)*?    image:\n(?:      .*\n)*?      tag: ).*\n'
+          replacement = rf'\g<1>{sha}\n'
+          new_content, n = re.subn(pattern, replacement, content, flags=re.MULTILINE)
+
+          if n == 0:
+              # Service block not found — append a minimal override
+              new_content = content.rstrip('\n') + f"\n  {service}:\n    image:\n      tag: {sha}\n"
+
+          with open(path, 'w') as f:
+              f.write(new_content)
+
+          print(f"Updated {service} → {sha} in {path}")
+          PYEOF
+
+          git config user.name  "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add infra/helm/values.production.yaml
+          git diff --staged --quiet || git commit -m "ci: update ${{ matrix.service }} image tag to ${{ github.sha }}"
+          git push || true  # Non-fatal: ArgoCD poll will catch next sync anyway

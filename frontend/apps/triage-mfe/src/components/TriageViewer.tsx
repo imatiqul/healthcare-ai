@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import Stack from '@mui/material/Stack';
 import Typography from '@mui/material/Typography';
 import { Card, CardHeader, CardTitle, CardContent, Badge, Button } from '@healthcare/design-system';
+import { onEscalationRequired, onAgentDecision } from '@healthcare/mfe-events';
 import { HitlEscalationModal } from './HitlEscalationModal';
 
 const API_BASE = import.meta.env.VITE_API_BASE_URL || '';
@@ -22,13 +23,12 @@ export function TriageViewer() {
 
   useEffect(() => {
     fetchWorkflows();
-    const handleEscalation = () => setShowEscalation(true);
-    window.addEventListener('mfe:escalation:required', handleEscalation);
-    window.addEventListener('mfe:agent:decision', fetchWorkflows);
+    const offEscalation = onEscalationRequired(() => setShowEscalation(true));
+    const offDecision = onAgentDecision(() => fetchWorkflows());
     const interval = setInterval(fetchWorkflows, 5000);
     return () => {
-      window.removeEventListener('mfe:escalation:required', handleEscalation);
-      window.removeEventListener('mfe:agent:decision', fetchWorkflows);
+      offEscalation();
+      offDecision();
       clearInterval(interval);
     };
   }, []);
@@ -105,11 +105,9 @@ export function TriageViewer() {
       {showEscalation && selectedWorkflow && (
         <HitlEscalationModal
           workflowId={selectedWorkflow}
-          onApprove={async () => {
-            await fetch(`${API_BASE}/api/v1/agents/triage/${selectedWorkflow}/approve`, { method: 'POST' });
-            setShowEscalation(false);
-            fetchWorkflows();
-          }}
+          triageLevel={workflows.find(w => w.id === selectedWorkflow)?.assignedLevel}
+          agentReasoning={workflows.find(w => w.id === selectedWorkflow)?.agentReasoning}
+          onApprove={() => { setShowEscalation(false); fetchWorkflows(); }}
           onClose={() => setShowEscalation(false)}
         />
       )}

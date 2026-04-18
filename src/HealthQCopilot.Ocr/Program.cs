@@ -4,6 +4,7 @@ using HealthQCopilot.Infrastructure.Messaging;
 using HealthQCopilot.Infrastructure.Middleware;
 using HealthQCopilot.Infrastructure.Observability;
 using HealthQCopilot.Infrastructure.Persistence;
+using HealthQCopilot.Infrastructure.Security;
 using HealthQCopilot.Ocr.Endpoints;
 using HealthQCopilot.Ocr.Infrastructure;
 using HealthQCopilot.Ocr.Services;
@@ -27,10 +28,13 @@ builder.Services.AddScoped<IDocumentProcessor, AzureDocumentProcessor>();
 builder.Services.AddHostedService<OcrProcessingService>();
 builder.Services.AddHealthChecks();
 builder.Services.AddDatabaseHealthCheck<OcrDbContext>("ocr");
+builder.Services.AddHealthcareDb<AuditDbContext>(builder.Configuration, "OcrDb");
+builder.Services.AddDaprSecretProvider();
 
 var app = builder.Build();
 
 await app.InitializeDatabaseAsync<OcrDbContext>();
+await app.InitializeDatabaseAsync<AuditDbContext>();
 
 app.MapOpenApi();
 app.UseMiddleware<SecurityHeadersMiddleware>();

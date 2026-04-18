@@ -1,0 +1,17 @@
+# ZAP scan rules override — Healthcare AI Platform
+# Format: <rule-id>\t<action>\t<parameter>\t<evidence>
+# Actions: IGNORE | WARN | FAIL
+#
+# Suppress false-positives for known patterns in APIM-managed APIs.
+# Reference: https://www.zaproxy.org/docs/desktop/ui/dialogs/scanpolicy/
+
+# ── Informational — demote to WARN ──────────────────────────────────────────
+10015	WARN	(Incomplete or No Cache-control Header)
+10017	WARN	(Cross-Domain JavaScript Source File Inclusion)
+10036	WARN	(Server Leaks Version Information)
+10096	WARN	(Timestamp Disclosure)
+
+# ── APIM-handled controls — suppress ────────────────────────────────────────
+10023	IGNORE	(Information Disclosure - Debug Error Messages)
+10024	IGNORE	(Information Disclosure - Sensitive Information in URL)
+10109	IGNORE	(Modern Web Application)
