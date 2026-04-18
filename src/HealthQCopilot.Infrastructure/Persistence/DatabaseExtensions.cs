@@ -4,6 +4,7 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
+using Npgsql;
 
 namespace HealthQCopilot.Infrastructure.Persistence;
 
@@ -20,14 +21,22 @@ public static class DatabaseExtensions
         params IInterceptor[] interceptors) where TContext : DbContext
     {
         var connectionString = configuration.GetConnectionString(connectionStringName);
+
+        // Build NpgsqlDataSource once outside the lambda to avoid creating
+        // a new connection pool per DbContext resolution.
+        NpgsqlDataSource? npgsqlDataSource = null;
+        if (!string.IsNullOrEmpty(connectionString))
+        {
+            var dataSourceBuilder = new Npgsql.NpgsqlDataSourceBuilder(connectionString);
+            dataSourceBuilder.EnableDynamicJson();
+            npgsqlDataSource = dataSourceBuilder.Build();
+        }
+
         services.AddDbContext<TContext>(opt =>
         {
-            if (!string.IsNullOrEmpty(connectionString))
+            if (npgsqlDataSource is not null)
             {
-                var dataSourceBuilder = new Npgsql.NpgsqlDataSourceBuilder(connectionString);
-                dataSourceBuilder.EnableDynamicJson();
-                var dataSource = dataSourceBuilder.Build();
-                opt.UseNpgsql(dataSource);
+                opt.UseNpgsql(npgsqlDataSource);
             }
             else
             {
