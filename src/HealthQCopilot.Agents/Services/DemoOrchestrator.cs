@@ -111,12 +111,11 @@ public sealed class DemoOrchestrator
 
     public async Task SubmitStepFeedbackAsync(Guid sessionId, DemoStep step, int rating, List<string> tags, string? comment, CancellationToken ct)
     {
-        var session = await _db.DemoSessions
-            .Include(s => s.StepFeedbacks)
-            .FirstOrDefaultAsync(s => s.Id == sessionId, ct)
-            ?? throw new InvalidOperationException("Demo session not found");
+        var exists = await _db.DemoSessions.AnyAsync(s => s.Id == sessionId, ct);
+        if (!exists) throw new InvalidOperationException("Demo session not found");
 
-        session.AddStepFeedback(step, rating, tags, comment);
+        var feedback = StepFeedback.Create(sessionId, step, rating, tags, comment);
+        _db.StepFeedbacks.Add(feedback);
         await _db.SaveChangesAsync(ct);
     }
 
@@ -128,6 +127,11 @@ public sealed class DemoOrchestrator
             ?? throw new InvalidOperationException("Demo session not found");
 
         session.Complete(npsScore, featurePriorities, comment);
+
+        // Explicitly add OverallFeedback to ensure EF Core tracks it as Added
+        if (session.OverallFeedback is not null)
+            _db.OverallFeedbacks.Add(session.OverallFeedback);
+
         await _db.SaveChangesAsync(ct);
 
         var avgRating = session.StepFeedbacks.Count > 0
