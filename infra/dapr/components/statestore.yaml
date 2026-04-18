@@ -1,3 +1,8 @@
+# OPTIONAL: Dapr state store backed by Azure Cache for Redis
+# Not provisioned - no service currently calls GetStateAsync/SaveStateAsync.
+# If needed in future: provision Azure Cache for Redis, then replace
+# {REDIS_HOST} with the hostname and register via: infra/scripts/setup-dapr.sh
+# Scopes corrected to ACA container app names (not -service suffix)
 apiVersion: dapr.io/v1alpha1
 kind: Component
 metadata:
@@ -18,5 +23,5 @@ spec:
     - name: actorStateStore
       value: "true"
 scopes:
-  - scheduling-service
-  - voice-service
+  - scheduling
+  - voice

@@ -1,3 +1,7 @@
+# Dapr pub/sub component for Azure Service Bus Topics
+# Registered in ACA environment via: infra/scripts/setup-dapr.sh
+# Auth: connection string stored as Dapr component secret (not Key Vault)
+# Scopes use ACA container app names (not service names with -service suffix)
 apiVersion: dapr.io/v1alpha1
 kind: Component
 metadata:
@@ -6,30 +10,24 @@ metadata:
 spec:
   type: pubsub.azure.servicebus.topics
   version: v1
+  secretStore: ""
+  secrets:
+    - name: sb-connection-string
+      value: "${SERVICEBUS_CONNECTION_STRING}"
   metadata:
-    - name: namespaceName
-      value: "{SERVICEBUS_NAMESPACE}.servicebus.windows.net"
-    - name: consumerID
-      value: "{APP_ID}"
+    - name: connectionString
+      secretRef: sb-connection-string
     - name: maxDeliveryCount
-      value: "10"
-    - name: lockDurationInSec
-      value: "60"
-    - name: maxConcurrentHandlers
-      value: "8"
-    - name: maxRetriableErrorStatusCodes
-      value: "500,503"
+      value: "5"
     - name: deadLetterTopic
       value: "healthq-dlq"
-  auth:
-    secretStore: azure-keyvault
 scopes:
-  - voice-service
-  - ai-agent-service
-  - fhir-service
-  - ocr-service
-  - scheduling-service
-  - notification-service
-  - pophealth-service
-  - revenue-service
-  - identity-service
+  - voice
+  - ai-agent
+  - fhir
+  - ocr
+  - scheduling
+  - notification
+  - pop-health
+  - revenue
+  - identity
