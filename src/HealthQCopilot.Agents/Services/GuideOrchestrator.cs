@@ -55,6 +55,7 @@ public sealed class GuideOrchestrator
         }
 
         conversation.AddMessage("user", userMessage);
+        _db.GuideMessages.Add(conversation.Messages[^1]);
 
         string assistantReply;
         if (_hasLlm)
@@ -67,6 +68,7 @@ public sealed class GuideOrchestrator
         }
 
         conversation.AddMessage("assistant", assistantReply);
+        _db.GuideMessages.Add(conversation.Messages[^1]);
         await _db.SaveChangesAsync(ct);
 
         return new GuideResponse(sessionId, assistantReply, DetectSuggestedRoute(assistantReply));
