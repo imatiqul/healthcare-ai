@@ -5,3 +5,6 @@ services:
   ocr:
     image:
       tag: 3397c62771fb8d84a17f7abe65dedf98db178668
+  fhir:
+    image:
+      tag: fe1eb4ce8e6544f76e17b6961c8615dbb08454dc
