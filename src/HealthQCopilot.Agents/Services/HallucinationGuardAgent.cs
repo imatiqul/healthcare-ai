@@ -84,7 +84,7 @@ public sealed class HallucinationGuardAgent(
         }
 
         var isUnsafe = findings.Count > 0;
-        var verdict  = isUnsafe ? "unsafe" : "safe";
+        var verdict = isUnsafe ? "unsafe" : "safe";
 
         // ── Emit Prometheus metric ─────────────────────────────────────────────
         metrics.AgentGuardVerdictTotal.Add(1,

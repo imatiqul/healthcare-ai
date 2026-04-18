@@ -26,14 +26,14 @@ public sealed class TriageOrchestrator
                                IEventHubAuditService auditService, DaprClient dapr,
                                ILogger<TriageOrchestrator> logger)
     {
-        _kernel       = kernel;
-        _db           = db;
-        _dispatcher   = dispatcher;
-        _guard        = guard;
-        _pubSub       = pubSub;
+        _kernel = kernel;
+        _db = db;
+        _dispatcher = dispatcher;
+        _guard = guard;
+        _pubSub = pubSub;
         _auditService = auditService;
-        _dapr         = dapr;
-        _logger       = logger;
+        _dapr = dapr;
+        _logger = logger;
     }
 
     public async Task<TriageWorkflow> RunTriageAsync(Guid sessionId, string transcriptText, CancellationToken ct)
@@ -91,7 +91,7 @@ public sealed class TriageOrchestrator
             guardApproved = true;
         }
 
-        triageComplete:
+    triageComplete:
         var latency = DateTime.UtcNow - start;
         var decision = AgentDecision.Create(workflow.Id, "TriageAgent", transcriptText,
             $"Classified as {workflow.AssignedLevel}: {workflow.AgentReasoning}",
