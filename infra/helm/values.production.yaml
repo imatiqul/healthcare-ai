@@ -1,0 +1,4 @@
+services:
+  identity:
+    image:
+      tag: 25d434b198d96576db49c568f51d81e919abcfcd
