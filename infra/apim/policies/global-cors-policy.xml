@@ -1,0 +1,36 @@
+<policies>
+  <inbound>
+    <cors allow-credentials="false">
+      <allowed-origins>
+        <origin>https://gentle-tree-03115af0f.7.azurestaticapps.net</origin>
+        <origin>http://localhost:3000</origin>
+        <origin>http://localhost:3001</origin>
+        <origin>http://localhost:3002</origin>
+        <origin>http://localhost:3003</origin>
+        <origin>http://localhost:3004</origin>
+        <origin>http://localhost:3005</origin>
+      </allowed-origins>
+      <allowed-methods preflight-result-max-age="600">
+        <method>GET</method>
+        <method>POST</method>
+        <method>PUT</method>
+        <method>DELETE</method>
+        <method>OPTIONS</method>
+      </allowed-methods>
+      <allowed-headers>
+        <header>*</header>
+      </allowed-headers>
+      <expose-headers>
+        <header>*</header>
+      </expose-headers>
+    </cors>
+  </inbound>
+  <backend>
+    <forward-request />
+  </backend>
+  <outbound>
+    <set-header name="X-Powered-By" exists-action="delete" />
+    <set-header name="Server" exists-action="delete" />
+  </outbound>
+  <on-error />
+</policies>

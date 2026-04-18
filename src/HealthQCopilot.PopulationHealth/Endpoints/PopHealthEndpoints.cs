@@ -1,6 +1,7 @@
 using System.Text.Json;
 using HealthQCopilot.Domain.PopulationHealth;
 using HealthQCopilot.PopulationHealth.Infrastructure;
+using HealthQCopilot.PopulationHealth.Services;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Caching.Distributed;
 
@@ -25,7 +26,7 @@ public static class PopHealthEndpoints
             var risks = await query
                 .OrderByDescending(r => r.RiskScore)
                 .Take(top ?? 50)
-                .Select(r => new { r.Id, r.PatientId, r.Level, r.RiskScore, r.AssessedAt })
+                .Select(r => new { r.Id, r.PatientId, Level = r.Level.ToString(), r.RiskScore, r.AssessedAt })
                 .ToListAsync(ct);
             return Results.Ok(risks);
         });
@@ -53,7 +54,7 @@ public static class PopHealthEndpoints
             var gaps = await query
                 .OrderByDescending(g => g.IdentifiedAt)
                 .Take(100)
-                .Select(g => new { g.Id, g.PatientId, g.MeasureId, g.Status, g.IdentifiedAt })
+                .Select(g => new { g.Id, g.PatientId, MeasureName = g.MeasureId, Status = g.Status.ToString(), g.IdentifiedAt })
                 .ToListAsync(ct);
             return Results.Ok(gaps);
         });
@@ -62,6 +63,7 @@ public static class PopHealthEndpoints
             Guid id,
             PopHealthDbContext db,
             IDistributedCache cache,
+            CareGapNotificationDispatcher notificationDispatcher,
             CancellationToken ct) =>
         {
             var gap = await db.CareGaps.FindAsync([id], ct);
@@ -69,6 +71,8 @@ public static class PopHealthEndpoints
             gap.Address();
             await db.SaveChangesAsync(ct);
             await cache.RemoveAsync("healthq:pophealth:stats", ct);
+            // Fire-and-forget: create follow-up notification campaign for this patient
+            _ = Task.Run(() => notificationDispatcher.DispatchCareGapAddressedAsync(gap, CancellationToken.None));
             return Results.Ok(new { gap.Id, gap.Status });
         });
 

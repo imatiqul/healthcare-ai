@@ -10,7 +10,8 @@ interface TriageWorkflow {
   id: string;
   sessionId: string;
   status: string;
-  triageLevel: string;
+  assignedLevel: string;
+  agentReasoning?: string;
   createdAt: string;
 }
 
@@ -23,7 +24,13 @@ export function TriageViewer() {
     fetchWorkflows();
     const handleEscalation = () => setShowEscalation(true);
     window.addEventListener('mfe:escalation:required', handleEscalation);
-    return () => window.removeEventListener('mfe:escalation:required', handleEscalation);
+    window.addEventListener('mfe:agent:decision', fetchWorkflows);
+    const interval = setInterval(fetchWorkflows, 5000);
+    return () => {
+      window.removeEventListener('mfe:escalation:required', handleEscalation);
+      window.removeEventListener('mfe:agent:decision', fetchWorkflows);
+      clearInterval(interval);
+    };
   }, []);
 
   async function fetchWorkflows() {
@@ -63,8 +70,8 @@ export function TriageViewer() {
                 <Stack direction="row" justifyContent="space-between" alignItems="center">
                   <span>Session {wf.sessionId.substring(0, 8)}...</span>
                   <Stack direction="row" spacing={1}>
-                    <Badge variant={getTriageBadgeVariant(wf.triageLevel)}>
-                      {wf.triageLevel}
+                    <Badge variant={getTriageBadgeVariant(wf.assignedLevel)}>
+                      {wf.assignedLevel ?? 'Pending'}
                     </Badge>
                     <Badge variant={wf.status === 'Completed' ? 'success' : 'warning'}>
                       {wf.status}
@@ -77,6 +84,11 @@ export function TriageViewer() {
               <Typography variant="body2" color="text.secondary">
                 Created: {new Date(wf.createdAt).toLocaleString()}
               </Typography>
+              {wf.agentReasoning && (
+                <Typography variant="caption" color="text.secondary" sx={{ mt: 0.5, display: 'block', fontStyle: 'italic' }}>
+                  AI: {wf.agentReasoning}
+                </Typography>
+              )}
               {wf.status === 'AwaitingHumanReview' && (
                 <Button size="sm" sx={{ mt: 1 }} onClick={(e: React.MouseEvent) => {
                   e.stopPropagation();

@@ -6,10 +6,34 @@ using HealthQCopilot.Infrastructure.Observability;
 using HealthQCopilot.Infrastructure.Persistence;
 using HealthQCopilot.PopulationHealth.Endpoints;
 using HealthQCopilot.PopulationHealth.Infrastructure;
+using HealthQCopilot.PopulationHealth.Services;
 using Microsoft.EntityFrameworkCore;
 
 
 var builder = WebApplication.CreateBuilder(args);
+
+builder.AddServiceDefaults();
+builder.Services.AddHealthcareObservability(builder.Configuration, "pophealth-service");
+builder.Services.AddHealthcareAuth(builder.Configuration);
+builder.Services.AddHealthcareRateLimiting();
+builder.Services.AddControllers().AddDapr();
+builder.Services.AddOpenApi();
+builder.Services.AddHealthcareDb<PopHealthDbContext>(
+    builder.Configuration, "PopHealthDb",
+    new HealthQCopilot.Infrastructure.Persistence.AuditInterceptor(),
+    new HealthQCopilot.Infrastructure.Persistence.SoftDeleteInterceptor());
+builder.Services.AddOutboxRelay<PopHealthDbContext>(builder.Configuration);
+builder.Services.AddHealthChecks();
+builder.Services.AddDatabaseHealthCheck<PopHealthDbContext>("pophealth");
+
+// CareGapNotificationDispatcher: fire-and-forget HTTP calls to Notification service via APIM
+var apiBase = builder.Configuration["Services:ApiBase"] ?? "https://healthq-copilot-apim.azure-api.net";
+builder.Services.AddHttpClient<CareGapNotificationDispatcher>(client =>
+{
+    client.BaseAddress = new Uri(apiBase);
+    client.Timeout = TimeSpan.FromSeconds(15);
+});
+builder.Services.AddScoped<CareGapNotificationDispatcher>();
 
 builder.AddServiceDefaults();
 builder.Services.AddHealthcareObservability(builder.Configuration, "pophealth-service");
@@ -39,7 +63,7 @@ app.MapControllers();
 app.MapDefaultEndpoints();
 app.MapPopHealthEndpoints();
 
-app.MapPost("/api/v1/population-health/seed", async (PopHealthDbContext db) =>
+app.MapPost("/api/v1/population-health/seed", async (PopHealthDbContext db, CareGapNotificationDispatcher notificationDispatcher) =>
 {
     if (await db.PatientRisks.AnyAsync()) return Results.Ok(new { message = "Already seeded" });
 
@@ -66,6 +90,8 @@ app.MapPost("/api/v1/population-health/seed", async (PopHealthDbContext db) =>
     };
     db.CareGaps.AddRange(gaps);
     await db.SaveChangesAsync();
+    // Fire-and-forget: bulk notification campaigns for all open care gaps
+    _ = Task.Run(() => notificationDispatcher.DispatchOpenCareGapCampaignsAsync(gaps, CancellationToken.None));
     return Results.Ok(new { message = "Seeded", risks = risks.Length, careGaps = gaps.Length });
 });
 

@@ -21,7 +21,7 @@ public static class AgentEndpoints
         {
             var workflow = await orchestrator.RunTriageAsync(request.SessionId, request.TranscriptText, ct);
             return Results.Created($"/api/v1/agents/triage/{workflow.Id}",
-                new { workflow.Id, workflow.Status, workflow.AssignedLevel, workflow.AgentReasoning });
+                new { workflow.Id, Status = workflow.Status.ToString(), AssignedLevel = workflow.AssignedLevel?.ToString(), workflow.AgentReasoning });
         });
 
         group.MapGet("/triage/{id:guid}", async (
@@ -53,7 +53,7 @@ public static class AgentEndpoints
             var workflows = await db.TriageWorkflows
                 .OrderByDescending(w => w.CreatedAt)
                 .Take(50)
-                .Select(w => new { w.Id, w.SessionId, w.Status, w.AssignedLevel, w.CreatedAt })
+                .Select(w => new { w.Id, w.SessionId, Status = w.Status.ToString(), AssignedLevel = w.AssignedLevel != null ? w.AssignedLevel.ToString() : null, w.AgentReasoning, w.CreatedAt })
                 .ToListAsync(ct);
             return Results.Ok(workflows);
         });
