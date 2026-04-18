@@ -86,6 +86,24 @@ public static class DatabaseExtensions
             else
             {
                 await db.Database.EnsureCreatedAsync();
+
+                // EnsureCreatedAsync is a no-op when the database already exists (e.g.
+                // created by the primary DbContext). For secondary contexts that share
+                // the same database, explicitly create any missing tables.
+                if (db is AuditDbContext)
+                {
+                    await db.Database.ExecuteSqlRawAsync("""
+                        CREATE TABLE IF NOT EXISTS phi_audit_logs (
+                            id              uuid PRIMARY KEY,
+                            user_id         varchar(128) NOT NULL,
+                            http_method     varchar(10)  NOT NULL,
+                            resource_path   varchar(512) NOT NULL,
+                            status_code     integer      NOT NULL,
+                            correlation_id  varchar(128),
+                            accessed_at     timestamp    NOT NULL
+                        )
+                        """);
+                }
             }
 
             logger.LogInformation("Database initialized for {Context} (migrations={UseMigrations})",
