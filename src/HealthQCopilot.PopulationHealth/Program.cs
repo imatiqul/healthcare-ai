@@ -17,10 +17,10 @@ builder.Services.AddHealthcareAuth(builder.Configuration);
 builder.Services.AddHealthcareRateLimiting();
 builder.Services.AddControllers().AddDapr();
 builder.Services.AddOpenApi();
-builder.Services.AddDbContext<PopHealthDbContext>(opt =>
-    opt.UseNpgsql(builder.Configuration.GetConnectionString("PopHealthDb"))
-       .AddInterceptors(new HealthQCopilot.Infrastructure.Persistence.AuditInterceptor(),
-                        new HealthQCopilot.Infrastructure.Persistence.SoftDeleteInterceptor()));
+builder.Services.AddHealthcareDb<PopHealthDbContext>(
+    builder.Configuration, "PopHealthDb",
+    new HealthQCopilot.Infrastructure.Persistence.AuditInterceptor(),
+    new HealthQCopilot.Infrastructure.Persistence.SoftDeleteInterceptor());
 builder.Services.AddOutboxRelay<PopHealthDbContext>(builder.Configuration);
 builder.Services.AddHealthChecks();
 builder.Services.AddDatabaseHealthCheck<PopHealthDbContext>("pophealth");

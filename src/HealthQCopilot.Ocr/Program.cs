@@ -18,10 +18,10 @@ builder.Services.AddHealthcareRateLimiting();
 builder.Services.AddControllers().AddDapr();
 builder.Services.AddOpenApi();
 builder.Services.AddValidatorsFromAssemblyContaining<Program>();
-builder.Services.AddDbContext<OcrDbContext>(opt =>
-    opt.UseNpgsql(builder.Configuration.GetConnectionString("OcrDb"))
-       .AddInterceptors(new HealthQCopilot.Infrastructure.Persistence.AuditInterceptor(),
-                        new HealthQCopilot.Infrastructure.Persistence.SoftDeleteInterceptor()));
+builder.Services.AddHealthcareDb<OcrDbContext>(
+    builder.Configuration, "OcrDb",
+    new HealthQCopilot.Infrastructure.Persistence.AuditInterceptor(),
+    new HealthQCopilot.Infrastructure.Persistence.SoftDeleteInterceptor());
 builder.Services.AddOutboxRelay<OcrDbContext>(builder.Configuration);
 builder.Services.AddScoped<IDocumentProcessor, AzureDocumentProcessor>();
 builder.Services.AddHostedService<OcrProcessingService>();

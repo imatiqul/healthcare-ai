@@ -1,6 +1,8 @@
+using System.Text.Json;
 using HealthQCopilot.Domain.Agents;
 using HealthQCopilot.Infrastructure.Persistence;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 namespace HealthQCopilot.Agents.Infrastructure;
 
@@ -76,7 +78,18 @@ public class AgentDbContext : OutboxDbContext
             b.ToTable("demo_step_feedbacks");
             b.HasKey(e => e.Id);
             b.Property(e => e.Step).HasConversion<string>();
-            b.Property(e => e.Tags).HasColumnType("jsonb");
+            if (Database.ProviderName?.Contains("Npgsql") == true)
+            {
+                b.Property(e => e.Tags).HasColumnType("jsonb");
+            }
+            else
+            {
+                b.Property(e => e.Tags).HasConversion(
+                    new ValueConverter<List<string>, string>(
+                        v => JsonSerializer.Serialize(v, (JsonSerializerOptions?)null),
+                        v => JsonSerializer.Deserialize<List<string>>(v, (JsonSerializerOptions?)null) ?? new List<string>()));
+            }
+
             b.HasIndex(e => e.DemoSessionId);
         });
 
@@ -84,7 +97,18 @@ public class AgentDbContext : OutboxDbContext
         {
             b.ToTable("demo_overall_feedbacks");
             b.HasKey(e => e.Id);
-            b.Property(e => e.FeaturePriorities).HasColumnType("jsonb");
+            if (Database.ProviderName?.Contains("Npgsql") == true)
+            {
+                b.Property(e => e.FeaturePriorities).HasColumnType("jsonb");
+            }
+            else
+            {
+                b.Property(e => e.FeaturePriorities).HasConversion(
+                    new ValueConverter<List<string>, string>(
+                        v => JsonSerializer.Serialize(v, (JsonSerializerOptions?)null),
+                        v => JsonSerializer.Deserialize<List<string>>(v, (JsonSerializerOptions?)null) ?? new List<string>()));
+            }
+
             b.HasIndex(e => e.DemoSessionId).IsUnique();
         });
 

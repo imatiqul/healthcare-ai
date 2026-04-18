@@ -22,10 +22,10 @@ builder.Services.AddHealthcareRateLimiting();
 builder.Services.AddControllers().AddDapr();
 builder.Services.AddOpenApi();
 builder.Services.AddValidatorsFromAssemblyContaining<Program>();
-builder.Services.AddDbContext<AgentDbContext>(opt =>
-    opt.UseNpgsql(builder.Configuration.GetConnectionString("AgentDb"))
-       .AddInterceptors(new HealthQCopilot.Infrastructure.Persistence.AuditInterceptor(),
-                        new HealthQCopilot.Infrastructure.Persistence.SoftDeleteInterceptor()));
+builder.Services.AddHealthcareDb<AgentDbContext>(
+    builder.Configuration, "AgentDb",
+    new HealthQCopilot.Infrastructure.Persistence.AuditInterceptor(),
+    new HealthQCopilot.Infrastructure.Persistence.SoftDeleteInterceptor());
 builder.Services.AddOutboxRelay<AgentDbContext>(builder.Configuration);
 builder.Services.AddHealthChecks();
 builder.Services.AddDatabaseHealthCheck<AgentDbContext>("agent");

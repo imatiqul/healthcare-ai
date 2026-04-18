@@ -18,10 +18,10 @@ builder.Services.AddHealthcareRateLimiting();
 builder.Services.AddControllers().AddDapr();
 builder.Services.AddOpenApi();
 builder.Services.AddValidatorsFromAssemblyContaining<Program>();
-builder.Services.AddDbContext<SchedulingDbContext>(opt =>
-    opt.UseNpgsql(builder.Configuration.GetConnectionString("SchedulingDb"))
-       .AddInterceptors(new HealthQCopilot.Infrastructure.Persistence.AuditInterceptor(),
-                        new HealthQCopilot.Infrastructure.Persistence.SoftDeleteInterceptor()));
+builder.Services.AddHealthcareDb<SchedulingDbContext>(
+    builder.Configuration, "SchedulingDb",
+    new HealthQCopilot.Infrastructure.Persistence.AuditInterceptor(),
+    new HealthQCopilot.Infrastructure.Persistence.SoftDeleteInterceptor());
 builder.Services.AddOutboxRelay<SchedulingDbContext>(builder.Configuration);
 builder.Services.AddHealthChecks();
 builder.Services.AddDatabaseHealthCheck<SchedulingDbContext>("scheduling");

@@ -17,10 +17,10 @@ builder.Services.AddHealthcareRateLimiting();
 builder.Services.AddControllers().AddDapr();
 builder.Services.AddOpenApi();
 builder.Services.AddValidatorsFromAssemblyContaining<Program>();
-builder.Services.AddDbContext<IdentityDbContext>(opt =>
-    opt.UseNpgsql(builder.Configuration.GetConnectionString("IdentityDb"))
-       .AddInterceptors(new HealthQCopilot.Infrastructure.Persistence.AuditInterceptor(),
-                        new HealthQCopilot.Infrastructure.Persistence.SoftDeleteInterceptor()));
+builder.Services.AddHealthcareDb<IdentityDbContext>(
+    builder.Configuration, "IdentityDb",
+    new HealthQCopilot.Infrastructure.Persistence.AuditInterceptor(),
+    new HealthQCopilot.Infrastructure.Persistence.SoftDeleteInterceptor());
 builder.Services.AddOutboxRelay<IdentityDbContext>(builder.Configuration);
 builder.Services.AddHealthChecks();
 builder.Services.AddDatabaseHealthCheck<IdentityDbContext>("identity");

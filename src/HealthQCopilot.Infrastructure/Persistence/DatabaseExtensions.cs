@@ -1,4 +1,5 @@
 using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Diagnostics;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
@@ -8,6 +9,37 @@ namespace HealthQCopilot.Infrastructure.Persistence;
 
 public static class DatabaseExtensions
 {
+    /// <summary>
+    /// Registers a DbContext with PostgreSQL when a connection string is configured,
+    /// or falls back to SQLite for environments without a database server.
+    /// </summary>
+    public static IServiceCollection AddHealthcareDb<TContext>(
+        this IServiceCollection services,
+        IConfiguration configuration,
+        string connectionStringName,
+        params IInterceptor[] interceptors) where TContext : DbContext
+    {
+        var connectionString = configuration.GetConnectionString(connectionStringName);
+        services.AddDbContext<TContext>(opt =>
+        {
+            if (!string.IsNullOrEmpty(connectionString))
+            {
+                opt.UseNpgsql(connectionString);
+            }
+            else
+            {
+                opt.UseSqlite($"Data Source={typeof(TContext).Name}.db");
+            }
+
+            if (interceptors.Length > 0)
+            {
+                opt.AddInterceptors(interceptors);
+            }
+        });
+
+        return services;
+    }
+
     /// <summary>
     /// Initializes the database. Uses EF Core migrations when pending migrations exist,
     /// otherwise falls back to EnsureCreated for development/CI environments.

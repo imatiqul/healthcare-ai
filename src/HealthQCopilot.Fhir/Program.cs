@@ -16,10 +16,10 @@ builder.Services.AddHealthcareAuth(builder.Configuration);
 builder.Services.AddHealthcareRateLimiting();
 builder.Services.AddControllers().AddDapr();
 builder.Services.AddOpenApi();
-builder.Services.AddDbContext<FhirDbContext>(opt =>
-    opt.UseNpgsql(builder.Configuration.GetConnectionString("FhirDb"))
-       .AddInterceptors(new HealthQCopilot.Infrastructure.Persistence.AuditInterceptor(),
-                        new HealthQCopilot.Infrastructure.Persistence.SoftDeleteInterceptor()));
+builder.Services.AddHealthcareDb<FhirDbContext>(
+    builder.Configuration, "FhirDb",
+    new HealthQCopilot.Infrastructure.Persistence.AuditInterceptor(),
+    new HealthQCopilot.Infrastructure.Persistence.SoftDeleteInterceptor());
 builder.Services.AddOutboxRelay<FhirDbContext>(builder.Configuration);
 builder.Services.AddFhirHttpClient(builder.Configuration);
 builder.Services.AddHealthChecks();
