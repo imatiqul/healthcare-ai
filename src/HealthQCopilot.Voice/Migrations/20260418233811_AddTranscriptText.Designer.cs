@@ -3,6 +3,7 @@ using System;
 using HealthQCopilot.Voice.Infrastructure;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 #nullable disable
@@ -10,9 +11,11 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace HealthQCopilot.Voice.Migrations
 {
     [DbContext(typeof(VoiceDbContext))]
-    partial class VoiceDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260418233811_AddTranscriptText")]
+    partial class AddTranscriptText
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder.HasAnnotation("ProductVersion", "9.0.1");

@@ -20,6 +20,7 @@ public class VoiceDbContext : OutboxDbContext
             b.HasKey(e => e.Id);
             b.Property(e => e.PatientId).HasMaxLength(128).IsRequired();
             b.Property(e => e.Status).HasConversion<string>();
+            b.Property(e => e.TranscriptText).HasColumnType("text").IsRequired(false);
         });
     }
 }

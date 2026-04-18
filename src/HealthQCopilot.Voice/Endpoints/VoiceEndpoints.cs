@@ -54,6 +54,13 @@ public static class VoiceEndpoints
 
             var partial = await transcription.TranscribeAudioChunkAsync(id, audioBytes, ct);
 
+            // Accumulate partial text so ending the session can publish a full transcript
+            if (!string.IsNullOrWhiteSpace(partial))
+            {
+                session.AppendTranscript(partial);
+                await db.SaveChangesAsync(ct);
+            }
+
             return Results.Ok(new { sessionId = id, partial });
         }).WithSummary("Stream a raw PCM audio chunk for real-time transcription")
           .Accepts<byte[]>("application/octet-stream");
@@ -94,8 +101,19 @@ public static class VoiceEndpoints
         {
             var session = await db.VoiceSessions.FindAsync([id], ct);
             if (session is null) return Results.NotFound();
+
+            // Capture accumulated transcript before ending (End() closes the session)
+            var accumulatedTranscript = session.TranscriptText;
+
             session.End();
             await db.SaveChangesAsync(ct);
+
+            // If audio chunks accumulated a transcript, publish it now so triage runs
+            if (!string.IsNullOrWhiteSpace(accumulatedTranscript))
+            {
+                _ = dapr.PublishEventAsync("pubsub", "transcript.produced",
+                    new { SessionId = id, TranscriptText = accumulatedTranscript }, CancellationToken.None);
+            }
 
             // Publish session.ended — downstream services can react (scheduling, billing audit)
             _ = dapr.PublishEventAsync("pubsub", "session.ended",

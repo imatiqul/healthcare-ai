@@ -99,6 +99,45 @@ public class PopHealthSubscriberController : ControllerBase
 
         return Ok();
     }
+
+    /// <summary>
+    /// When a revenue coding job is created with ICD-10 codes, incorporate those
+    /// diagnostic codes into the patient's population-health risk profile.
+    /// </summary>
+    [Topic("pubsub", "revenue.coding-job.created")]
+    [HttpPost("/dapr/sub/pophealth/coding-job-created")]
+    public async Task<IActionResult> HandleCodingJobCreated(
+        [FromBody] CodingJobCreatedEvent payload,
+        CancellationToken ct)
+    {
+        _logger.LogInformation(
+            "PopHealth received revenue.coding-job.created for patient {PatientId} encounter {EncounterId}",
+            payload.PatientId, payload.EncounterId);
+
+        if (string.IsNullOrWhiteSpace(payload.PatientId))
+            return Ok();
+
+        var newFactors = payload.SuggestedCodes ?? [];
+
+        var existing = await _db.PatientRisks
+            .Where(r => r.PatientId == payload.PatientId)
+            .OrderByDescending(r => r.AssessedAt)
+            .FirstOrDefaultAsync(ct);
+
+        var existingFactors = existing?.RiskFactors ?? [];
+
+        var updated = _riskCalculator.Recalculate(
+            payload.PatientId, existingFactors, newFactors, payload.TriageLevel);
+
+        _db.PatientRisks.Add(updated);
+        await _db.SaveChangesAsync(ct);
+
+        _logger.LogInformation(
+            "Risk updated for patient {PatientId} from coding job: score {Score} ({Level})",
+            payload.PatientId, updated.RiskScore, updated.Level);
+
+        return Ok();
+    }
 }
 
 public record TriageCompletedForRisk(
@@ -113,3 +152,11 @@ public record EscalationForRisk(
     string? SessionId,
     string? PatientId,
     string? Level);
+
+public record CodingJobCreatedEvent(
+    Guid Id,
+    string EncounterId,
+    string PatientId,
+    List<string>? SuggestedCodes,
+    string? TriageLevel,
+    DateTime CreatedAt);
