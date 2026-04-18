@@ -17,3 +17,6 @@ services:
   revenue:
     image:
       tag: ee6cbc22540b6b468b3aecff2ae2f7cd26e55765
+  gateway:
+    image:
+      tag: 1806b5afef252e9116e47aa1472472bd88fa5e84
