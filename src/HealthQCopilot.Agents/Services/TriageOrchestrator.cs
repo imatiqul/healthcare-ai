@@ -36,7 +36,7 @@ public sealed class TriageOrchestrator
         _logger = logger;
     }
 
-    public async Task<TriageWorkflow> RunTriageAsync(Guid sessionId, string transcriptText, CancellationToken ct)
+    public async Task<TriageWorkflow> RunTriageAsync(Guid sessionId, string transcriptText, string patientId, CancellationToken ct)
     {
         var workflow = TriageWorkflow.Create(Guid.NewGuid(), sessionId.ToString(), transcriptText);
         _db.TriageWorkflows.Add(workflow);
@@ -115,7 +115,7 @@ public sealed class TriageOrchestrator
         }, CancellationToken.None);
 
         // Dispatch cross-service workflow events (fire-and-forget with structured error handling)
-        _ = Task.Run(() => _dispatcher.DispatchAsync(workflow, CancellationToken.None), CancellationToken.None);
+        _ = Task.Run(() => _dispatcher.DispatchAsync(workflow, patientId, CancellationToken.None), CancellationToken.None);
 
         // Publish domain events to Dapr pub/sub so downstream subscribers can react
         _ = Task.Run(async () =>
@@ -129,6 +129,7 @@ public sealed class TriageOrchestrator
                 {
                     WorkflowId = workflow.Id,
                     SessionId = workflow.SessionId,
+                    PatientId = patientId,
                     Level = workflow.AssignedLevel?.ToString(),
                     Reasoning = workflow.AgentReasoning
                 });

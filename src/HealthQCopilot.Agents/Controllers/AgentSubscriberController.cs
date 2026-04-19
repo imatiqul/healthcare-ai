@@ -48,7 +48,7 @@ public class AgentSubscriberController : ControllerBase
         try
         {
             var workflow = await _orchestrator.RunTriageAsync(
-                payload.SessionId, payload.TranscriptText, ct);
+                payload.SessionId, payload.TranscriptText, payload.PatientId ?? payload.SessionId.ToString(), ct);
 
             _logger.LogInformation(
                 "Triage workflow {WorkflowId} created for session {SessionId} — level {Level}",
@@ -84,5 +84,5 @@ public class AgentSubscriberController : ControllerBase
     }
 }
 
-public record TranscriptProducedEvent(Guid SessionId, string TranscriptText);
+public record TranscriptProducedEvent(Guid SessionId, string TranscriptText, string? PatientId);
 public record SessionEndedEvent(Guid SessionId, TimeSpan Duration);

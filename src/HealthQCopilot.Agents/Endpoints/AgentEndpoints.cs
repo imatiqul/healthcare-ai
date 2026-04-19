@@ -19,7 +19,7 @@ public static class AgentEndpoints
             TriageOrchestrator orchestrator,
             CancellationToken ct) =>
         {
-            var workflow = await orchestrator.RunTriageAsync(request.SessionId, request.TranscriptText, ct);
+            var workflow = await orchestrator.RunTriageAsync(request.SessionId, request.TranscriptText, request.PatientId ?? request.SessionId.ToString(), ct);
             return Results.Created($"/api/v1/agents/triage/{workflow.Id}",
                 new { workflow.Id, Status = workflow.Status.ToString(), AssignedLevel = workflow.AssignedLevel?.ToString(), workflow.AgentReasoning });
         });
@@ -47,7 +47,7 @@ public static class AgentEndpoints
             workflow.ApproveEscalation();
             await db.SaveChangesAsync(ct);
             // Dispatch cross-service actions (scheduling, FHIR, notifications) after human approval
-            _ = Task.Run(() => dispatcher.DispatchAsync(workflow, CancellationToken.None), CancellationToken.None);
+            _ = Task.Run(() => dispatcher.DispatchAsync(workflow, workflow.SessionId, CancellationToken.None), CancellationToken.None);
             return Results.Ok(new { workflow.Id, Status = workflow.Status.ToString(), AssignedLevel = workflow.AssignedLevel?.ToString() });
         });
 
@@ -104,5 +104,5 @@ public static class AgentEndpoints
     }
 }
 
-public record StartTriageRequest(Guid SessionId, string TranscriptText);
+public record StartTriageRequest(Guid SessionId, string TranscriptText, string? PatientId);
 public record RejectTriageRequest(string Reason);

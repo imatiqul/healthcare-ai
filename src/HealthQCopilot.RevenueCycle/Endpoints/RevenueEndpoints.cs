@@ -296,9 +296,10 @@ public static class RevenueEndpoints
         {
             var codes = codeSuggestion.SuggestCodes(request.TriageLevel, request.TriageReasoning);
             var shortId = request.SessionId.Length >= 8 ? request.SessionId[..8] : request.SessionId;
+            var patientRef = request.PatientId ?? $"PAT-{shortId}";
             var job = CodingJob.Create(
                 encounterId: $"ENC-{shortId}",
-                patientId: $"PAT-{shortId}",
+                patientId: patientRef,
                 patientName: "AI-Triaged Patient",
                 suggestedCodes: codes);
             db.CodingJobs.Add(job);
@@ -316,4 +317,4 @@ public record CreateCodingJobRequest(string EncounterId, string PatientId, strin
 public record ReviewCodingJobRequest(List<string> ApprovedCodes, string ReviewedBy);
 public record CreatePriorAuthRequest(string PatientId, string PatientName, string Procedure, string? ProcedureCode, string? InsurancePayer);
 public record DenyPriorAuthRequest(string Reason);
-public record FromTriageRequest(string SessionId, string TriageLevel, string TriageReasoning);
+public record FromTriageRequest(string SessionId, string TriageLevel, string TriageReasoning, string? PatientId);

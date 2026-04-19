@@ -55,9 +55,10 @@ public class RevenueSubscriberController : ControllerBase
         }
 
         var codes = _codeSuggestion.SuggestCodes(payload.Level ?? "P3_Standard", payload.Reasoning ?? string.Empty);
+        var patientRef = payload.PatientId ?? $"PAT-{encounterId}";
         var job = CodingJob.Create(
             encounterId,
-            $"PAT-{payload.SessionId[..Math.Min(8, payload.SessionId.Length)]}",
+            patientRef,
             "AI-Triaged Patient",
             codes);
 
@@ -105,5 +106,5 @@ public class RevenueSubscriberController : ControllerBase
     }
 }
 
-public record TriageCompletedEvent(Guid WorkflowId, string SessionId, string? Level, string? Reasoning);
+public record TriageCompletedEvent(Guid WorkflowId, string SessionId, string? Level, string? Reasoning, string? PatientId);
 public record PriorAuthStatusEvent(Guid AuthId, string PatientId, string Status, string? DenialReason);

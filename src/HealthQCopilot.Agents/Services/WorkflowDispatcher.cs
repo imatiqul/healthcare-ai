@@ -18,11 +18,12 @@ public sealed class WorkflowDispatcher
         _logger = logger;
     }
 
-    public async Task DispatchAsync(TriageWorkflow workflow, CancellationToken ct)
+    public async Task DispatchAsync(TriageWorkflow workflow, string patientId, CancellationToken ct)
     {
         var tasks = new List<Task>
         {
-            DispatchRevenueCodingJobAsync(workflow, ct)
+            DispatchRevenueCodingJobAsync(workflow, patientId, ct),
+            DispatchFhirEncounterAsync(workflow, patientId, ct),
         };
 
         if (workflow.AssignedLevel is TriageLevel.P1_Immediate or TriageLevel.P2_Urgent)
@@ -38,13 +39,14 @@ public sealed class WorkflowDispatcher
         await Task.WhenAll(tasks);
     }
 
-    private async Task DispatchRevenueCodingJobAsync(TriageWorkflow workflow, CancellationToken ct)
+    private async Task DispatchRevenueCodingJobAsync(TriageWorkflow workflow, string patientId, CancellationToken ct)
     {
         try
         {
             var payload = new
             {
                 SessionId = workflow.SessionId,
+                PatientId = patientId,
                 TriageLevel = workflow.AssignedLevel?.ToString() ?? "P3_Standard",
                 TriageReasoning = workflow.AgentReasoning ?? string.Empty
             };
@@ -139,6 +141,40 @@ public sealed class WorkflowDispatcher
         catch (Exception ex) when (ex is not OperationCanceledException)
         {
             _logger.LogError(ex, "Failed to dispatch escalation notification for session {SessionId}", workflow.SessionId);
+        }
+    }
+
+    private async Task DispatchFhirEncounterAsync(TriageWorkflow workflow, string patientId, CancellationToken ct)
+    {
+        try
+        {
+            var classCode = workflow.AssignedLevel is TriageLevel.P1_Immediate or TriageLevel.P2_Urgent
+                ? "EMER" : "AMB";
+            var subjectRef = patientId.StartsWith("Patient/") ? patientId : $"Patient/{patientId}";
+            var fhirEncounter = new
+            {
+                resourceType = "Encounter",
+                status = "in-progress",
+                @class = new { code = classCode },
+                subject = new { reference = subjectRef },
+                period = new { start = DateTime.UtcNow.ToString("o") },
+                reasonCode = new[]
+                {
+                    new { text = $"AI Triage: {workflow.AssignedLevel} — {workflow.AgentReasoning}" }
+                }
+            };
+
+            var response = await _http.PostAsJsonAsync("/api/v1/fhir/encounters", fhirEncounter, ct);
+            if (response.IsSuccessStatusCode)
+                _logger.LogInformation("FHIR encounter created for session {SessionId} patient {PatientId}",
+                    workflow.SessionId, patientId);
+            else
+                _logger.LogWarning("FHIR service returned {Status} when creating encounter for session {SessionId}",
+                    response.StatusCode, workflow.SessionId);
+        }
+        catch (Exception ex) when (ex is not OperationCanceledException)
+        {
+            _logger.LogError(ex, "Failed to create FHIR encounter for session {SessionId}", workflow.SessionId);
         }
     }
 

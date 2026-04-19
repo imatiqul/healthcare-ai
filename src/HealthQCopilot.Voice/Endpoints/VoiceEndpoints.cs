@@ -88,7 +88,7 @@ public static class VoiceEndpoints
 
             // Publish transcript.produced — AI Agent Service subscribes to trigger triage
             _ = dapr.PublishEventAsync("pubsub", "transcript.produced",
-                new { SessionId = id, request.TranscriptText }, CancellationToken.None);
+                new { SessionId = id, request.TranscriptText, session.PatientId }, CancellationToken.None);
 
             return Results.Ok(new { session.Id, Status = "TranscriptProduced" });
         });
@@ -112,7 +112,7 @@ public static class VoiceEndpoints
             if (!string.IsNullOrWhiteSpace(accumulatedTranscript))
             {
                 _ = dapr.PublishEventAsync("pubsub", "transcript.produced",
-                    new { SessionId = id, TranscriptText = accumulatedTranscript }, CancellationToken.None);
+                    new { SessionId = id, TranscriptText = accumulatedTranscript, session.PatientId }, CancellationToken.None);
             }
 
             // Publish session.ended — downstream services can react (scheduling, billing audit)
