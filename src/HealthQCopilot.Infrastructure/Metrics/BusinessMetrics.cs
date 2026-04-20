@@ -35,6 +35,7 @@ public sealed class BusinessMetrics
     public Histogram<double> OcrProcessingLatencyMs { get; }
 
     // ── Notifications ────────────────────────────────────
+    public Counter<long> CampaignsCreatedTotal { get; }   // Phase 28
     public Counter<long> CampaignsActivatedTotal { get; }
     public Counter<long> MessagesSentTotal { get; }
     public Counter<long> MessagesFailedTotal { get; }
@@ -67,6 +68,7 @@ public sealed class BusinessMetrics
     /// Prometheus query: sum(rate(agent_guard_verdict_total{verdict="unsafe"}[5m])) / sum(rate(agent_guard_verdict_total[5m]))
     /// </summary>
     public Counter<long> AgentGuardVerdictTotal { get; }
+    public Counter<long> MlConfidenceComputedTotal { get; } // Phase 28
 
     public BusinessMetrics(IMeterFactory meterFactory)
     {
@@ -117,6 +119,8 @@ public sealed class BusinessMetrics
             "healthq.ocr.processing.latency.ms", "ms", "OCR document processing latency");
 
         // Notifications
+        CampaignsCreatedTotal = _meter.CreateCounter<long>(
+            "healthq.notifications.campaigns.created.total", description: "Total outreach campaigns created"); // Phase 28
         CampaignsActivatedTotal = _meter.CreateCounter<long>(
             "healthq.notifications.campaigns.activated.total", description: "Total campaigns activated");
         MessagesSentTotal = _meter.CreateCounter<long>(
@@ -170,5 +174,10 @@ public sealed class BusinessMetrics
         AgentGuardVerdictTotal = _meter.CreateCounter<long>(
             "agent_guard_verdict_total",
             description: "Total AI agent guard verdicts. Labels: verdict=safe|unsafe, agent=<name>");
+
+        // XAI — ML Confidence
+        MlConfidenceComputedTotal = _meter.CreateCounter<long>(
+            "healthq.xai.ml_confidence.computed.total",
+            description: "Total ML readmission risk confidence computations performed"); // Phase 28
     }
 }

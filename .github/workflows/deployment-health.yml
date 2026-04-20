@@ -114,6 +114,7 @@ jobs:
             [revenue/denials]="/api/v1/revenue/denials"
             [revenue/denials-analytics]="/api/v1/revenue/denials/analytics"
             [notifications/delivery-analytics]="/api/v1/notifications/analytics/delivery"
+            [notifications/campaigns]="/api/v1/notifications/campaigns"
           )
 
           FAIL=0

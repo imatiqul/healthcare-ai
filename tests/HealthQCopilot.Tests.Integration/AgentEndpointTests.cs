@@ -120,4 +120,34 @@ public class AgentEndpointTests : IClassFixture<PostgresFixture>
 
         response.StatusCode.Should().Be(HttpStatusCode.OK);
     }
+
+    // ── Phase 28 — ML Confidence endpoint tests ──────────────────────────────
+
+    [Fact]
+    public async Task ComputeMlConfidence_ValidProbability_ReturnsOk()
+    {
+        var response = await _client.PostAsJsonAsync("/api/v1/agents/decisions/ml-confidence", new
+        {
+            Probability = 0.72,
+            FeatureValues = new double[] { }
+        });
+
+        response.StatusCode.Should().Be(HttpStatusCode.OK);
+        var doc = JsonDocument.Parse(await response.Content.ReadAsStringAsync());
+        doc.RootElement.GetProperty("confidenceInterval").ValueKind.Should().NotBe(JsonValueKind.Undefined);
+    }
+
+    [Fact]
+    public async Task ComputeMlConfidence_WithFeatures_ReturnsFeatureImportance()
+    {
+        var response = await _client.PostAsJsonAsync("/api/v1/agents/decisions/ml-confidence", new
+        {
+            Probability = 0.85,
+            FeatureValues = new[] { 0.9, 0.4, 0.7, 0.2 }
+        });
+
+        response.StatusCode.Should().Be(HttpStatusCode.OK);
+        var doc = JsonDocument.Parse(await response.Content.ReadAsStringAsync());
+        doc.RootElement.GetProperty("featureImportance").ValueKind.Should().NotBe(JsonValueKind.Null);
+    }
 }

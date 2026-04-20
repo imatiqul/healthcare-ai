@@ -1,6 +1,7 @@
 using HealthQCopilot.Domain.Agents;
 using HealthQCopilot.Agents.Infrastructure;
 using HealthQCopilot.Agents.Services;
+using HealthQCopilot.Infrastructure.Metrics;
 using HealthQCopilot.Infrastructure.Validation;
 using Microsoft.EntityFrameworkCore;
 
@@ -143,12 +144,15 @@ public static class AgentEndpoints
         // XAI: compute confidence interval for an ML readmission risk score
         group.MapPost("/decisions/ml-confidence", (
             MlConfidenceRequest req,
-            XaiExplainabilityService xai) =>
+            XaiExplainabilityService xai,
+            BusinessMetrics metrics) =>
         {
             var confidence = xai.ComputeMlConfidence(req.Probability, req.FeatureValues);
             var importance = req.FeatureValues is { Length: > 0 }
                 ? xai.ComputeFeatureImportance(req.Probability, req.FeatureValues)
                 : null;
+
+            metrics.MlConfidenceComputedTotal.Add(1);
 
             return Results.Ok(new
             {

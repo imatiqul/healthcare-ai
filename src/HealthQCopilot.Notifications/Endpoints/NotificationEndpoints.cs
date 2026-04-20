@@ -1,4 +1,5 @@
 using HealthQCopilot.Domain.Notifications;
+using HealthQCopilot.Infrastructure.Metrics;
 using HealthQCopilot.Infrastructure.Validation;
 using HealthQCopilot.Notifications.Infrastructure;
 using HealthQCopilot.Notifications.Services;
@@ -17,11 +18,13 @@ public static class NotificationEndpoints
         group.MapPost("/campaigns", async (
             CreateCampaignRequest request,
             NotificationDbContext db,
+            BusinessMetrics metrics,
             CancellationToken ct) =>
         {
             var campaign = OutreachCampaign.Create(Guid.NewGuid(), request.Name, request.Type, string.Join(",", request.TargetPatientIds));
             db.OutreachCampaigns.Add(campaign);
             await db.SaveChangesAsync(ct);
+            metrics.CampaignsCreatedTotal.Add(1);
             return Results.Created($"/api/v1/notifications/campaigns/{campaign.Id}",
                 new { campaign.Id, Status = campaign.Status.ToString() });
         });
@@ -29,6 +32,7 @@ public static class NotificationEndpoints
         group.MapPost("/campaigns/{id:guid}/activate", async (
             Guid id,
             NotificationDbContext db,
+            BusinessMetrics metrics,
             CancellationToken ct) =>
         {
             var campaign = await db.OutreachCampaigns.FindAsync([id], ct);
@@ -45,6 +49,7 @@ public static class NotificationEndpoints
             }
 
             await db.SaveChangesAsync(ct);
+            metrics.CampaignsActivatedTotal.Add(1);
             return Results.Ok(new { campaign.Id, Status = campaign.Status.ToString(), MessagesCreated = patientIds.Length });
         });
 

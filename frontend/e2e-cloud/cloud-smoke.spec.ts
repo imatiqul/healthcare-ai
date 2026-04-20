@@ -168,3 +168,36 @@ test.describe('Phase 12 — Notification Delivery Tracking Endpoints', () => {
   });
 });
 
+// ── Phase 27 — Campaign Manager + ML Confidence ──────────────────────────────
+
+test.describe('Phase 27 — Notification Campaign Endpoints', () => {
+  test('notification campaigns list endpoint responds', async ({ request }) => {
+    const url = process.env.NOTIFICATION_ACA_URL;
+    test.skip(!url, 'NOTIFICATION_ACA_URL not configured');
+    const response = await request.get(`${url}/api/v1/notifications/campaigns`);
+    expect(response.status()).toBeLessThan(500);
+  });
+
+  test('notification campaigns create endpoint responds to validation error', async ({ request }) => {
+    const url = process.env.NOTIFICATION_ACA_URL;
+    test.skip(!url, 'NOTIFICATION_ACA_URL not configured');
+    // POST with empty body should return 400 (validation) — not 5xx
+    const response = await request.post(`${url}/api/v1/notifications/campaigns`, {
+      data: {},
+    });
+    expect(response.status()).toBeLessThan(500);
+  });
+});
+
+test.describe('Phase 27 — ML Confidence Endpoint', () => {
+  test('ml-confidence endpoint responds to validation error', async ({ request }) => {
+    const agentUrl = process.env.AGENT_ACA_URL;
+    test.skip(!agentUrl, 'AGENT_ACA_URL not configured');
+    // POST with empty body should return 400 (validation) — not 5xx
+    const response = await request.post(`${agentUrl}/api/v1/agents/decisions/ml-confidence`, {
+      data: {},
+    });
+    expect(response.status()).toBeLessThan(500);
+  });
+});
+

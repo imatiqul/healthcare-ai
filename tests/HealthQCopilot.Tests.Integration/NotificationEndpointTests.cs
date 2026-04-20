@@ -63,4 +63,38 @@ public class NotificationEndpointTests : IClassFixture<PostgresFixture>
         var response = await _client.GetAsync("/api/v1/notifications/messages");
         response.StatusCode.Should().Be(HttpStatusCode.OK);
     }
+
+    // ── Phase 28 — campaign metrics wiring tests ──────────────────────────────
+
+    [Fact]
+    public async Task CreateCampaign_InvalidRequest_ReturnsBadRequest()
+    {
+        // Sending a request missing required fields should return 400 not 5xx
+        var response = await _client.PostAsJsonAsync("/api/v1/notifications/campaigns", new
+        {
+            Name = (string?)null
+        });
+
+        ((int)response.StatusCode).Should().BeLessThan(500);
+    }
+
+    [Fact]
+    public async Task ActivateCampaign_ReturnsMessagesCreated()
+    {
+        var createResponse = await _client.PostAsJsonAsync("/api/v1/notifications/campaigns", new
+        {
+            Name = "Cardiology Follow-Up",
+            Type = 0, // Email
+            TargetPatientIds = new[] { Guid.NewGuid(), Guid.NewGuid(), Guid.NewGuid() }
+        });
+        createResponse.StatusCode.Should().Be(HttpStatusCode.Created);
+        var createDoc = JsonDocument.Parse(await createResponse.Content.ReadAsStringAsync());
+        var id = createDoc.RootElement.GetProperty("id").GetGuid();
+
+        var activateResponse = await _client.PostAsync($"/api/v1/notifications/campaigns/{id}/activate", null);
+
+        activateResponse.StatusCode.Should().Be(HttpStatusCode.OK);
+        var doc = JsonDocument.Parse(await activateResponse.Content.ReadAsStringAsync());
+        doc.RootElement.GetProperty("messagesCreated").GetInt32().Should().Be(3);
+    }
 }
