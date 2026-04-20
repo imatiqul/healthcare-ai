@@ -48,6 +48,10 @@ const ClinicianFeedbackDashboardPage = lazy(() => import('./pages/ClinicianFeedb
 const ExperimentSummaryPanelPage = lazy(() => import('./pages/ExperimentSummaryPanel')); // Phase 25
 const PushSubscriptionPanelPage = lazy(() => import('engagement/PushSubscriptionPanel').then(m => ({ default: m.PushSubscriptionPanel }))); // Phase 25
 const GdprErasurePanelPage = lazy(() => import('engagement/GdprErasurePanel').then(m => ({ default: m.GdprErasurePanel }))); // Phase 25
+const XaiExplanationPanelPage = lazy(() => import('./pages/XaiExplanationPanel')); // Phase 26
+const GuideHistoryPanelPage = lazy(() => import('./pages/GuideHistoryPanel')); // Phase 26
+const DemoAdminPanelPage = lazy(() => import('./pages/DemoAdminPanel')); // Phase 26
+const ClinicalCoderPanelPage = lazy(() => import('triage/ClinicalCoderPanel').then(m => ({ default: m.ClinicalCoderPanel }))); // Phase 26
 const DemoLive = lazy(() => import('./pages/DemoLive'));
 
 function Loading() {
@@ -125,7 +129,12 @@ export default function App() {
                     <VoiceSessionHistoryPage />
                   </MfeErrorBoundary>
                 } />
-                <Route path="/triage" element={<MfeErrorBoundary name="Triage"><TriagePage /></MfeErrorBoundary>} />
+                <Route path="/triage" element={
+                  <MfeErrorBoundary name="Triage">
+                    <TriagePage />
+                    <ClinicalCoderPanelPage />
+                  </MfeErrorBoundary>
+                } />
                 <Route path="/scheduling" element={
                   <MfeErrorBoundary name="Scheduling">
                     <SchedulingPage />
@@ -178,6 +187,7 @@ export default function App() {
                     <ModelEvaluationPanelPage />
                     <ModelRegisterPanelPage />
                     <ExperimentSummaryPanelPage />
+                    <XaiExplanationPanelPage />
                   </MfeErrorBoundary>
                 } />
                 <Route path="/tenants" element={
@@ -203,6 +213,16 @@ export default function App() {
                 <Route path="/admin/feedback" element={
                   <MfeErrorBoundary name="AI Feedback">
                     <ClinicianFeedbackDashboardPage />
+                  </MfeErrorBoundary>
+                } />
+                <Route path="/admin/guide-history" element={
+                  <MfeErrorBoundary name="Guide History">
+                    <GuideHistoryPanelPage />
+                  </MfeErrorBoundary>
+                } />
+                <Route path="/admin/demo" element={
+                  <MfeErrorBoundary name="Demo Admin">
+                    <DemoAdminPanelPage />
                   </MfeErrorBoundary>
                 } />
               </Routes>

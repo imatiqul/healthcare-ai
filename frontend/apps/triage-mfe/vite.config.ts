@@ -13,6 +13,7 @@ export default defineConfig({
         './TriageViewer': './src/components/TriageViewer.tsx',
         './HitlEscalationModal': './src/components/HitlEscalationModal.tsx',
         './EscalationQueue': './src/components/EscalationQueue.tsx',
+        './ClinicalCoderPanel': './src/components/ClinicalCoderPanel.tsx', // Phase 26
       },
       shared: {
         react: { singleton: true },

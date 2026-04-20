@@ -103,3 +103,7 @@ declare module 'engagement/PushSubscriptionPanel' {
 declare module 'engagement/GdprErasurePanel' {
   export const GdprErasurePanel: React.ComponentType;
 }
+declare module 'triage/ClinicalCoderPanel' {
+  export const ClinicalCoderPanel: React.ComponentType;
+}
+}
