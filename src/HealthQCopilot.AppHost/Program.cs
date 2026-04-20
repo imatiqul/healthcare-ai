@@ -93,13 +93,22 @@ var gateway = builder.AddProject<Projects.HealthQCopilot_Gateway>("api-gateway")
     .WithReference(revenueService)
     .WithHttpEndpoint(port: 5000, name: "gateway")
     .WithExternalHttpEndpoints();
-
+// ── GraphQL Backend-for-Frontend ─────────────────────────────────────────
+var bff = builder.AddProject<Projects.HealthQCopilot_BFF>("bff")
+    .WithReference(pophealthService)
+    .WithReference(agentService)
+    .WithReference(revenueService)
+    .WithReference(schedulingService)
+    .WithReference(fhirService)
+    .WithHttpEndpoint(port: 5010, name: "graphql")
+    .WithExternalHttpEndpoints();
 // ──────────────────────────────────────────────
 // Frontend (Vite apps via pnpm)
 // ──────────────────────────────────────────────
 var frontend = builder.AddNpmApp("frontend-shell", "../../frontend", "dev")
     .WithHttpEndpoint(port: 3000, env: "PORT")
     .WithExternalHttpEndpoints()
-    .WithReference(gateway);
+    .WithReference(gateway)
+    .WithReference(bff);
 
 builder.Build().Run();
