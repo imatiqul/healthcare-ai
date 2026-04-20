@@ -8,6 +8,7 @@ using HealthQCopilot.Infrastructure.Messaging;
 using HealthQCopilot.Infrastructure.Middleware;
 using HealthQCopilot.Infrastructure.Observability;
 using HealthQCopilot.Infrastructure.Persistence;
+using HealthQCopilot.Infrastructure.Resilience;
 using HealthQCopilot.Infrastructure.Security;
 using HealthQCopilot.Infrastructure.Startup;
 using Microsoft.EntityFrameworkCore;
@@ -39,7 +40,7 @@ builder.Services.AddHttpClient("FhirService", client =>
     var apiBase = builder.Configuration["Services:ApiBase"] ?? "http://localhost:5050";
     client.BaseAddress = new Uri(apiBase.TrimEnd('/') + "/");
     client.DefaultRequestHeaders.Add("Accept", "application/fhir+json");
-});
+}).AddServiceResilienceHandler();
 
 // ACS SMS client — used by the OTP endpoints for phone verification
 var acsConnectionString = builder.Configuration["AzureCommunication:ConnectionString"];

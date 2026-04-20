@@ -1,6 +1,7 @@
 using HealthQCopilot.BFF.DataLoaders;
 using HealthQCopilot.BFF.Services;
 using HealthQCopilot.BFF.Types;
+using HealthQCopilot.Infrastructure.Resilience;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -10,27 +11,27 @@ builder.AddServiceDefaults();
 builder.Services.AddHttpClient<PopHealthApiClient>(c =>
     c.BaseAddress = new Uri(builder.Configuration.GetConnectionString("pophealth-service")
         ?? builder.Configuration["Services:PopHealth"]
-        ?? "http://pophealth-service"));
+        ?? "http://pophealth-service")).AddServiceResilienceHandler();
 
 builder.Services.AddHttpClient<AgentApiClient>(c =>
     c.BaseAddress = new Uri(builder.Configuration.GetConnectionString("agent-service")
         ?? builder.Configuration["Services:Agents"]
-        ?? "http://agent-service"));
+        ?? "http://agent-service")).AddServiceResilienceHandler();
 
 builder.Services.AddHttpClient<RevenueApiClient>(c =>
     c.BaseAddress = new Uri(builder.Configuration.GetConnectionString("revenue-service")
         ?? builder.Configuration["Services:Revenue"]
-        ?? "http://revenue-service"));
+        ?? "http://revenue-service")).AddServiceResilienceHandler();
 
 builder.Services.AddHttpClient<SchedulingApiClient>(c =>
     c.BaseAddress = new Uri(builder.Configuration.GetConnectionString("scheduling-service")
         ?? builder.Configuration["Services:Scheduling"]
-        ?? "http://scheduling-service"));
+        ?? "http://scheduling-service")).AddServiceResilienceHandler();
 
 builder.Services.AddHttpClient<FhirApiClient>(c =>
     c.BaseAddress = new Uri(builder.Configuration.GetConnectionString("fhir-service")
         ?? builder.Configuration["Services:Fhir"]
-        ?? "http://fhir-service"));
+        ?? "http://fhir-service")).AddServiceResilienceHandler();
 
 // ── Hot Chocolate GraphQL server ─────────────────────────────────────────
 builder.Services

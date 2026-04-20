@@ -14,10 +14,12 @@ const VoicePage = lazy(() => import('voice/VoiceSessionController').then(m => ({
 const TriagePage = lazy(() => import('triage/TriageViewer').then(m => ({ default: m.TriageViewer })));
 const SchedulingPage = lazy(() => import('scheduling/SlotCalendar').then(m => ({ default: m.SlotCalendar })));
 const BookingFormPage = lazy(() => import('scheduling/BookingForm').then(m => ({ default: m.BookingForm })));
+const WaitlistPanelPage = lazy(() => import('scheduling/WaitlistPanel').then(m => ({ default: m.WaitlistPanel })));
 const PopHealthPage = lazy(() => import('pophealth/RiskPanel').then(m => ({ default: m.RiskPanel })));
 const CareGapListPage = lazy(() => import('pophealth/CareGapList').then(m => ({ default: m.CareGapList })));
 const RevenuePage = lazy(() => import('revenue/CodingQueue').then(m => ({ default: m.CodingQueue })));
 const PriorAuthTrackerPage = lazy(() => import('revenue/PriorAuthTracker').then(m => ({ default: m.PriorAuthTracker })));
+const DenialManagerPage = lazy(() => import('revenue/DenialManager').then(m => ({ default: m.DenialManager })));
 const EncountersPage = lazy(() => import('encounters/EncounterList').then(m => ({ default: m.EncounterList })));
 const EngagementPage = lazy(() => import('engagement/PatientPortal').then(m => ({ default: m.PatientPortal })));
 const DemoLive = lazy(() => import('./pages/DemoLive'));
@@ -97,6 +99,7 @@ export default function App() {
                   <MfeErrorBoundary name="Scheduling">
                     <SchedulingPage />
                     <BookingFormPage />
+                    <WaitlistPanelPage />
                   </MfeErrorBoundary>
                 } />
                 <Route path="/population-health" element={
@@ -109,6 +112,7 @@ export default function App() {
                   <MfeErrorBoundary name="Revenue">
                     <RevenuePage />
                     <PriorAuthTrackerPage />
+                    <DenialManagerPage />
                   </MfeErrorBoundary>
                 } />
                 <Route path="/encounters" element={

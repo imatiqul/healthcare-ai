@@ -5,6 +5,7 @@ using HealthQCopilot.Infrastructure.Messaging;
 using HealthQCopilot.Infrastructure.Middleware;
 using HealthQCopilot.Infrastructure.Observability;
 using HealthQCopilot.Infrastructure.Persistence;
+using HealthQCopilot.Infrastructure.Resilience;
 using HealthQCopilot.Infrastructure.Security;
 using HealthQCopilot.Infrastructure.Startup;
 using HealthQCopilot.RevenueCycle.Endpoints;
@@ -35,7 +36,7 @@ builder.Services.AddScoped<ClearinghouseClient>();
 builder.Services.AddHttpClient("Clearinghouse", client =>
 {
     client.Timeout = TimeSpan.FromSeconds(30);
-});
+}).AddServiceResilienceHandler();
 builder.Services.AddDaprClient();
 builder.Services.AddHealthChecks();
 builder.Services.AddDatabaseHealthCheck<RevenueDbContext>("revenue");

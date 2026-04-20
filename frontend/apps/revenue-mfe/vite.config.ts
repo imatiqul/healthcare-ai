@@ -12,6 +12,7 @@ export default defineConfig({
       exposes: {
         './CodingQueue': './src/components/CodingQueue.tsx',
         './PriorAuthTracker': './src/components/PriorAuthTracker.tsx',
+        './DenialManager': './src/components/DenialManager.tsx',
       },
       shared: {
         react: { singleton: true, requiredVersion: '^19.0.0' },

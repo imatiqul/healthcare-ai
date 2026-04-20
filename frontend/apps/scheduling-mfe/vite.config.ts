@@ -12,6 +12,7 @@ export default defineConfig({
       exposes: {
         './SlotCalendar': './src/components/SlotCalendar.tsx',
         './BookingForm': './src/components/BookingForm.tsx',
+        './WaitlistPanel': './src/components/WaitlistPanel.tsx',
       },
       shared: {
         react: { singleton: true },

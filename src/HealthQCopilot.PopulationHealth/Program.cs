@@ -4,6 +4,7 @@ using HealthQCopilot.Infrastructure.Messaging;
 using HealthQCopilot.Infrastructure.Middleware;
 using HealthQCopilot.Infrastructure.Observability;
 using HealthQCopilot.Infrastructure.Persistence;
+using HealthQCopilot.Infrastructure.Resilience;
 using HealthQCopilot.Infrastructure.Security;
 using HealthQCopilot.Infrastructure.Startup;
 using HealthQCopilot.PopulationHealth.Endpoints;
@@ -36,7 +37,7 @@ builder.Services.AddHttpClient<CareGapNotificationDispatcher>(client =>
 {
     client.BaseAddress = new Uri(apiBase);
     client.Timeout = TimeSpan.FromSeconds(15);
-});
+}).AddServiceResilienceHandler();
 builder.Services.AddScoped<CareGapNotificationDispatcher>();
 builder.Services.AddSingleton<ReadmissionRiskPredictor>();
 builder.Services.AddSingleton<RiskCalculationService>(sp =>

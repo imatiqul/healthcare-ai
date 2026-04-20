@@ -11,6 +11,7 @@ using HealthQCopilot.Infrastructure.Middleware;
 using HealthQCopilot.Infrastructure.Observability;
 using HealthQCopilot.Infrastructure.Persistence;
 using HealthQCopilot.Infrastructure.RealTime;
+using HealthQCopilot.Infrastructure.Resilience;
 using HealthQCopilot.Infrastructure.Security;
 using HealthQCopilot.Infrastructure.Startup;
 using Microsoft.EntityFrameworkCore;
@@ -69,7 +70,7 @@ builder.Services.AddHttpClient<WorkflowDispatcher>(client =>
 {
     client.BaseAddress = new Uri(apiBase);
     client.Timeout = TimeSpan.FromSeconds(15);
-});
+}).AddServiceResilienceHandler();
 builder.Services.AddScoped<WorkflowDispatcher>();
 // DaprClient for publishing events to pub/sub
 builder.Services.AddDaprClient();
@@ -114,7 +115,7 @@ builder.Services.AddSingleton<ClinicianFeedbackRepository>();
 builder.Services.AddHostedService<ModelDriftMonitorService>();
 
 // ── IoT / Wearable streaming agent (Item 29) ──────────────────────────────────
-builder.Services.AddHttpClient("fhir");
+builder.Services.AddHttpClient("fhir").AddServiceResilienceHandler();
 builder.Services.AddHttpClient("dapr");
 builder.Services.AddHostedService<WearableStreamingAgent>();
 

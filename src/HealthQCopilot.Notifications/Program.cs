@@ -4,6 +4,7 @@ using HealthQCopilot.Infrastructure.Messaging;
 using HealthQCopilot.Infrastructure.Middleware;
 using HealthQCopilot.Infrastructure.Observability;
 using HealthQCopilot.Infrastructure.Persistence;
+using HealthQCopilot.Infrastructure.Resilience;
 using HealthQCopilot.Infrastructure.Security;
 using HealthQCopilot.Infrastructure.Startup;
 using HealthQCopilot.Notifications.Endpoints;
@@ -27,12 +28,12 @@ builder.Services.AddHealthcareDb<NotificationDbContext>(
 builder.Services.AddOutboxRelay<NotificationDbContext>(builder.Configuration);
 builder.Services.AddScoped<INotificationSender, AcsNotificationSender>();
 builder.Services.AddScoped<WebPushSender>();
-builder.Services.AddHttpClient("WebPush");
+builder.Services.AddHttpClient("WebPush").AddServiceResilienceHandler();
 builder.Services.AddHttpClient("IdentityService", client =>
 {
     var apiBase = builder.Configuration["Services:ApiBase"] ?? "http://localhost:5050";
     client.BaseAddress = new Uri(apiBase.TrimEnd('/') + "/");
-});
+}).AddServiceResilienceHandler();
 builder.Services.AddHostedService<CampaignDispatchService>();
 builder.Services.AddHealthChecks();
 builder.Services.AddDatabaseHealthCheck<NotificationDbContext>("notification");

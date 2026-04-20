@@ -7,6 +7,7 @@ using HealthQCopilot.Infrastructure.Messaging;
 using HealthQCopilot.Infrastructure.Middleware;
 using HealthQCopilot.Infrastructure.Observability;
 using HealthQCopilot.Infrastructure.Persistence;
+using HealthQCopilot.Infrastructure.Resilience;
 using HealthQCopilot.Infrastructure.Security;
 using HealthQCopilot.Infrastructure.Startup;
 using Microsoft.EntityFrameworkCore;
@@ -52,7 +53,7 @@ builder.Services.AddHostedService(sp =>
 builder.Services.AddHttpClient("SmartTokenExchange", client =>
 {
     client.Timeout = TimeSpan.FromSeconds(30);
-});
+}).AddServiceResilienceHandler();
 
 // HttpClients used by CDS Hooks to call internal services for clinical decision support
 builder.Services.AddHttpClient("RevenueCycleService", client =>
@@ -60,14 +61,14 @@ builder.Services.AddHttpClient("RevenueCycleService", client =>
     client.BaseAddress = new Uri(
         builder.Configuration["Services:RevenueCycleBaseUrl"] ?? "http://revenue-service");
     client.Timeout = TimeSpan.FromSeconds(5);
-});
+}).AddServiceResilienceHandler();
 
 builder.Services.AddHttpClient("IdentityService", client =>
 {
     client.BaseAddress = new Uri(
         builder.Configuration["Services:IdentityBaseUrl"] ?? "http://identity-service");
     client.Timeout = TimeSpan.FromSeconds(5);
-});
+}).AddServiceResilienceHandler();
 
 var app = builder.Build();
 
