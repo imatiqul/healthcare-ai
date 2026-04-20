@@ -386,6 +386,68 @@ public static class FhirPayerEndpoints
                 statusCode: (int)response.StatusCode);
         }).WithSummary("Check coverage eligibility for a patient");
 
+        // ── Observation search ────────────────────────────────────────────────
+        // FHIR R4 Observation resource search — clinical measurements and lab results.
+        // HL7v2 ORU^R01 messages are transformed to Observations by the MLLP listener;
+        // this endpoint exposes those observations via REST for patient timeline views.
+        group.MapGet("/observations", async (
+            string? patient,
+            string? code,
+            string? date,
+            string? category,
+            string? status,
+            IHttpClientFactory httpClientFactory,
+            CancellationToken ct) =>
+        {
+            var client = httpClientFactory.CreateClient("FhirServer");
+            var qs = new System.Text.StringBuilder("Observation?");
+            if (!string.IsNullOrEmpty(patient))  qs.Append($"patient={Uri.EscapeDataString(patient)}&");
+            if (!string.IsNullOrEmpty(code))     qs.Append($"code={Uri.EscapeDataString(code)}&");
+            if (!string.IsNullOrEmpty(date))     qs.Append($"date={Uri.EscapeDataString(date)}&");
+            if (!string.IsNullOrEmpty(category)) qs.Append($"category={Uri.EscapeDataString(category)}&");
+            if (!string.IsNullOrEmpty(status))   qs.Append($"status={Uri.EscapeDataString(status)}&");
+            var response = await client.GetAsync(qs.ToString().TrimEnd('?', '&'), ct);
+            if (!response.IsSuccessStatusCode)
+                return Results.StatusCode((int)response.StatusCode);
+            return Results.Content(await response.Content.ReadAsStringAsync(ct), "application/fhir+json");
+        }).WithSummary("Search FHIR Observation resources (lab results, vitals)");
+
+        group.MapGet("/observations/{id}", async (
+            string id,
+            IHttpClientFactory httpClientFactory,
+            CancellationToken ct) =>
+        {
+            var client = httpClientFactory.CreateClient("FhirServer");
+            var response = await client.GetAsync($"Observation/{id}", ct);
+            if (!response.IsSuccessStatusCode)
+                return Results.StatusCode((int)response.StatusCode);
+            return Results.Content(await response.Content.ReadAsStringAsync(ct), "application/fhir+json");
+        }).WithSummary("Get a FHIR Observation resource by ID");
+
+        // ── Patient $everything operation ──────────────────────────────────────
+        // FHIR R4 $everything: returns a Bundle of all resources related to a patient
+        // — encounters, observations, conditions, medications, care plans, documents.
+        // US Core and USCDI v2 compliance requires this compartment-level operation.
+        // HIPAA right-of-access (§164.524): patients can request all their records.
+        group.MapGet("/patients/{id}/$everything", async (
+            string id,
+            string? start,
+            string? end,
+            string? type,
+            IHttpClientFactory httpClientFactory,
+            CancellationToken ct) =>
+        {
+            var client = httpClientFactory.CreateClient("FhirServer");
+            var qs = new System.Text.StringBuilder($"Patient/{id}/$everything?");
+            if (!string.IsNullOrEmpty(start)) qs.Append($"start={Uri.EscapeDataString(start)}&");
+            if (!string.IsNullOrEmpty(end))   qs.Append($"end={Uri.EscapeDataString(end)}&");
+            if (!string.IsNullOrEmpty(type))  qs.Append($"_type={Uri.EscapeDataString(type)}&");
+            var response = await client.GetAsync(qs.ToString().TrimEnd('?', '&'), ct);
+            if (!response.IsSuccessStatusCode)
+                return Results.StatusCode((int)response.StatusCode);
+            return Results.Content(await response.Content.ReadAsStringAsync(ct), "application/fhir+json");
+        }).WithSummary("FHIR Patient $everything — full patient compartment Bundle");
+
         return app;
     }
 }

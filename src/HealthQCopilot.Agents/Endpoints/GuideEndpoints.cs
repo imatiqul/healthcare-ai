@@ -2,6 +2,7 @@ using System.Text.Json;
 using System.Threading.RateLimiting;
 using HealthQCopilot.Agents.Infrastructure;
 using HealthQCopilot.Agents.Services;
+using HealthQCopilot.Infrastructure.Metrics;
 using Microsoft.AspNetCore.RateLimiting;
 using Microsoft.EntityFrameworkCore;
 
@@ -53,6 +54,7 @@ public static class GuideEndpoints
             string message,
             Guid? sessionId,
             GuideOrchestrator orchestrator,
+            BusinessMetrics metrics,
             HttpResponse httpResponse,
             CancellationToken ct) =>
         {
@@ -60,10 +62,26 @@ public static class GuideEndpoints
             httpResponse.Headers.CacheControl = "no-cache";
             httpResponse.Headers.Connection = "keep-alive";
 
+            metrics.GuideStreamingSessionsTotal.Add(1);
+
             var effectiveSessionId = sessionId ?? Guid.NewGuid();
             await foreach (var token in orchestrator.StreamChatAsync(effectiveSessionId, message, ct))
             {
-                await httpResponse.WriteAsync($"data: {JsonSerializer.Serialize(token)}\n\n", ct);
+                // Emit each item as an SSE data line.
+                // Regular tokens: {"token":"..."}
+                // Final sentinel:  {"done":true,"suggestedRoute":"..."}
+                // The frontend discriminates by checking for the "done" key.
+                string sseData;
+                if (token.StartsWith("{\"done\":"))
+                {
+                    sseData = token; // already a JSON object (sentinel)
+                }
+                else
+                {
+                    metrics.GuideStreamingTokensTotal.Add(1);
+                    sseData = JsonSerializer.Serialize(new { token });
+                }
+                await httpResponse.WriteAsync($"data: {sseData}\n\n", ct);
                 await httpResponse.Body.FlushAsync(ct);
             }
         })

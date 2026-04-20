@@ -2,6 +2,7 @@ using Azure.Monitor.OpenTelemetry.Exporter;
 using HealthQCopilot.Infrastructure.Metrics;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using OpenTelemetry.Exporter;
 using OpenTelemetry.Metrics;
 using OpenTelemetry.Resources;
 using OpenTelemetry.Trace;
@@ -38,6 +39,16 @@ public static class ObservabilityExtensions
                 var aiConnStr = config["ApplicationInsights:ConnectionString"];
                 if (!string.IsNullOrEmpty(aiConnStr))
                     t.AddAzureMonitorTraceExporter(opt => opt.ConnectionString = aiConnStr);
+
+                // Standard OTLP export — activated when OTEL_EXPORTER_OTLP_ENDPOINT is set
+                // (e.g. Grafana Tempo, Jaeger, or Honeycomb via env var in AKS deployment)
+                var otlpEndpoint = config["OTEL_EXPORTER_OTLP_ENDPOINT"];
+                if (!string.IsNullOrEmpty(otlpEndpoint))
+                    t.AddOtlpExporter(opt =>
+                    {
+                        opt.Endpoint = new Uri(otlpEndpoint);
+                        opt.Protocol = OtlpExportProtocol.HttpProtobuf;
+                    });
             })
             .WithMetrics(m =>
             {
@@ -61,11 +72,21 @@ public static class ObservabilityExtensions
                 var aiConnStr = config["ApplicationInsights:ConnectionString"];
                 if (!string.IsNullOrEmpty(aiConnStr))
                     m.AddAzureMonitorMetricExporter(opt => opt.ConnectionString = aiConnStr);
+
+                // OTLP metrics export (Prometheus OTLP receiver / Grafana Cloud)
+                var otlpEndpoint = config["OTEL_EXPORTER_OTLP_ENDPOINT"];
+                if (!string.IsNullOrEmpty(otlpEndpoint))
+                    m.AddOtlpExporter(opt =>
+                    {
+                        opt.Endpoint = new Uri(otlpEndpoint);
+                        opt.Protocol = OtlpExportProtocol.HttpProtobuf;
+                    });
             });
 
         Log.Logger = new LoggerConfiguration()
             .ReadFrom.Configuration(config)
-            .Enrich.WithCorrelationId()
+            .Enrich.FromLogContext()              // Required: picks up LogContext.PushProperty() calls
+            .Enrich.WithCorrelationId()           // Correlation ID across distributed requests
             .Enrich.WithProperty("ServiceName", serviceName)
             .WriteTo.Console(new RenderedCompactJsonFormatter())
             .CreateLogger();

@@ -1,6 +1,7 @@
 using Dapr.Client;
 using HealthQCopilot.Domain.Identity;
 using HealthQCopilot.Identity.Persistence;
+using HealthQCopilot.Infrastructure.Metrics;
 using HealthQCopilot.Infrastructure.Validation;
 using Microsoft.EntityFrameworkCore;
 
@@ -30,6 +31,7 @@ public static class BreakGlassEndpoints
             BreakGlassRequest request,
             IdentityDbContext db,
             DaprClient dapr,
+            BusinessMetrics metrics,
             ILoggerFactory loggerFactory,
             CancellationToken ct) =>
         {
@@ -75,6 +77,8 @@ public static class BreakGlassEndpoints
                         access.Id);
                 }
             }, CancellationToken.None);
+
+            metrics.BreakGlassGrantedTotal.Add(1);
 
             return Results.Created($"/api/v1/identity/break-glass/{access.Id}", new
             {

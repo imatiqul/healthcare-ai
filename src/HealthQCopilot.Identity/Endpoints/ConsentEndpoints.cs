@@ -1,6 +1,7 @@
 using Dapr.Client;
 using HealthQCopilot.Domain.Identity;
 using HealthQCopilot.Identity.Persistence;
+using HealthQCopilot.Infrastructure.Metrics;
 using HealthQCopilot.Infrastructure.Validation;
 using Microsoft.EntityFrameworkCore;
 
@@ -121,6 +122,7 @@ public static class ConsentEndpoints
                 ErasureRequest request,
                 IdentityDbContext db,
                 DaprClient dapr,
+                BusinessMetrics metrics,
                 CancellationToken ct) =>
             {
                 var patient = await db.UserAccounts.FindAsync([request.PatientUserId], ct);
@@ -157,6 +159,8 @@ public static class ConsentEndpoints
                         // acceptable here since the outbox relay will retry via the Outbox table.
                     }
                 }, CancellationToken.None);
+
+                metrics.GdprErasureRequestedTotal.Add(1);
 
                 return Results.Accepted("/api/v1/identity/consent/erasure", new
                 {

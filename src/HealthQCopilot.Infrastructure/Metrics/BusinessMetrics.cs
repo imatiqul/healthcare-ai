@@ -18,14 +18,14 @@ public sealed class BusinessMetrics
     // ── Scheduling ───────────────────────────────────────
     public Counter<long> BookingsCreatedTotal { get; }
     public Counter<long> SlotsReservedTotal { get; }
-    public Counter<long> BookingCancellationsTotal { get; }
-
+    public Counter<long> BookingCancellationsTotal { get; }    public Counter<long> WaitlistEnqueuedTotal { get; }    // Phase 12
+    public Counter<long> WaitlistPromotedTotal { get; }    // Phase 12
     // ── Revenue Cycle ────────────────────────────────────
     public Counter<long> CodingJobsCreatedTotal { get; }
     public Counter<long> CodingJobsSubmittedTotal { get; }
     public Counter<long> PriorAuthsSubmittedTotal { get; }
-    public Counter<long> PriorAuthsDeniedTotal { get; }
-
+    public Counter<long> PriorAuthsDeniedTotal { get; }    public Counter<long> DenialOpenedTotal { get; }        // Phase 12
+    public Counter<long> DenialAppealedTotal { get; }      // Phase 12
     // ── OCR ──────────────────────────────────────────────
     public Counter<long> OcrJobsCreatedTotal { get; }
     public Counter<long> OcrJobsCompletedTotal { get; }
@@ -35,8 +35,8 @@ public sealed class BusinessMetrics
     // ── Notifications ────────────────────────────────────
     public Counter<long> CampaignsActivatedTotal { get; }
     public Counter<long> MessagesSentTotal { get; }
-    public Counter<long> MessagesFailedTotal { get; }
-
+    public Counter<long> MessagesFailedTotal { get; }    public Counter<long> NotificationDeliveredTotal { get; } // Phase 12 delivery confirmation
+    public Counter<long> NotificationFailedTotal { get; }    // Phase 12 delivery failure
     // ── Voice ────────────────────────────────────────────
     public Counter<long> VoiceSessionsStartedTotal { get; }
     public Counter<long> VoiceSessionsEndedTotal { get; }
@@ -49,12 +49,12 @@ public sealed class BusinessMetrics
 
     // ── Identity ─────────────────────────────────────────
     public Counter<long> UserLoginsTotal { get; }
-    public Counter<long> UsersCreatedTotal { get; }
-
+    public Counter<long> UsersCreatedTotal { get; }    public Counter<long> BreakGlassGrantedTotal { get; }    // Phase 16 — HIPAA §164.312 audit event
+    public Counter<long> GdprErasureRequestedTotal { get; } // Phase 16 — GDPR Art. 17 erasure
     // ── Guide ────────────────────────────────────────────
     public Counter<long> GuideConversationsTotal { get; }
-    public Histogram<double> GuideResponseLatencyMs { get; }
-
+    public Histogram<double> GuideResponseLatencyMs { get; }    public Counter<long> GuideStreamingSessionsTotal { get; } // Phase 16 SSE streaming
+    public Counter<long> GuideStreamingTokensTotal { get; }   // Phase 16 token throughput
     // ── AI Hallucination Guard ───────────────────────────
     /// <summary>
     /// Labelled by verdict="safe"|"unsafe".
@@ -82,6 +82,10 @@ public sealed class BusinessMetrics
             "healthq.scheduling.reservations.total", description: "Total slot reservations");
         BookingCancellationsTotal = _meter.CreateCounter<long>(
             "healthq.scheduling.cancellations.total", description: "Total booking cancellations");
+        WaitlistEnqueuedTotal = _meter.CreateCounter<long>(
+            "healthq.scheduling.waitlist.enqueued.total", description: "Total patients added to waitlist");
+        WaitlistPromotedTotal = _meter.CreateCounter<long>(
+            "healthq.scheduling.waitlist.promoted.total", description: "Total patients promoted from waitlist to booking");
 
         // Revenue
         CodingJobsCreatedTotal = _meter.CreateCounter<long>(
@@ -92,6 +96,10 @@ public sealed class BusinessMetrics
             "healthq.revenue.prior_auths.submitted.total", description: "Total prior auths submitted");
         PriorAuthsDeniedTotal = _meter.CreateCounter<long>(
             "healthq.revenue.prior_auths.denied.total", description: "Total prior auths denied");
+        DenialOpenedTotal = _meter.CreateCounter<long>(
+            "healthq.revenue.denials.opened.total", description: "Total denial management cases opened");
+        DenialAppealedTotal = _meter.CreateCounter<long>(
+            "healthq.revenue.denials.appealed.total", description: "Total denials formally appealed");
 
         // OCR
         OcrJobsCreatedTotal = _meter.CreateCounter<long>(
@@ -110,6 +118,10 @@ public sealed class BusinessMetrics
             "healthq.notifications.messages.sent.total", description: "Total notification messages sent");
         MessagesFailedTotal = _meter.CreateCounter<long>(
             "healthq.notifications.messages.failed.total", description: "Total notification messages failed");
+        NotificationDeliveredTotal = _meter.CreateCounter<long>(
+            "healthq.notifications.delivery.success.total", description: "Total notifications confirmed delivered by provider");
+        NotificationFailedTotal = _meter.CreateCounter<long>(
+            "healthq.notifications.delivery.failed.total", description: "Total notifications with confirmed delivery failure");
 
         // Voice
         VoiceSessionsStartedTotal = _meter.CreateCounter<long>(
@@ -132,12 +144,22 @@ public sealed class BusinessMetrics
             "healthq.identity.logins.total", description: "Total user logins recorded");
         UsersCreatedTotal = _meter.CreateCounter<long>(
             "healthq.identity.users.created.total", description: "Total user accounts created");
+        BreakGlassGrantedTotal = _meter.CreateCounter<long>(
+            "healthq.identity.break_glass.granted.total",
+            description: "Total break-glass emergency access grants. HIPAA §164.312 audit events.");
+        GdprErasureRequestedTotal = _meter.CreateCounter<long>(
+            "healthq.identity.erasure.requested.total",
+            description: "Total GDPR Art. 17 right-to-erasure requests initiated.");
 
         // Guide
         GuideConversationsTotal = _meter.CreateCounter<long>(
             "healthq.guide.conversations.total", description: "Total guide conversations started");
         GuideResponseLatencyMs = _meter.CreateHistogram<double>(
             "healthq.guide.response.latency.ms", "ms", "Guide AI response latency");
+        GuideStreamingSessionsTotal = _meter.CreateCounter<long>(
+            "healthq.guide.streaming.sessions.total", description: "Total guide SSE streaming sessions opened");
+        GuideStreamingTokensTotal = _meter.CreateCounter<long>(
+            "healthq.guide.streaming.tokens.total", description: "Total LLM tokens streamed to clients via SSE");
 
         // Hallucination Guard
         AgentGuardVerdictTotal = _meter.CreateCounter<long>(

@@ -32,12 +32,6 @@ interface Suggestion {
   description: string;
 }
 
-interface GuideResponse {
-  sessionId: string;
-  message: string;
-  suggestedRoute: string | null;
-}
-
 const API_BASE  = import.meta.env.VITE_API_BASE_URL || '';
 const AGENT_API = `${API_BASE}/api/v1/agents/guide`;
 
@@ -94,66 +88,60 @@ export function CopilotChat() {
     setInput('');
     setLoading(true);
 
-    // Optimistic streaming placeholder
-    const streamingIdx = messages.length + 1;
     setMessages(prev => [...prev, { role: 'assistant', content: '', streaming: true }]);
 
-    // Try SSE streaming first; fall back to JSON if server returns non-event-stream
+    // Use the dedicated SSE streaming endpoint (GET /chat/stream).
+    // Falls back to POST /chat JSON path if fetch fails (e.g., CORS pre-flight mismatch).
+    const sid = sessionId ?? crypto.randomUUID();
+    const streamUrl = `${AGENT_API}/chat/stream?message=${encodeURIComponent(text)}&sessionId=${sid}`;
+
     try {
-      const res = await fetch(`${AGENT_API}/chat`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json', Accept: 'text/event-stream, application/json' },
-        body: JSON.stringify({ message: text, sessionId }),
+      const res = await fetch(streamUrl, {
+        method: 'GET',
+        headers: { Accept: 'text/event-stream' },
       });
 
-      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+      if (!res.ok || !res.body) throw new Error(`HTTP ${res.status}`);
 
-      const contentType = res.headers.get('Content-Type') ?? '';
+      if (!sessionId) setSessionId(sid);
 
-      if (contentType.includes('text/event-stream')) {
-        // ── SSE streaming path ─────────────────────────────────────────
-        const reader   = res.body!.getReader();
-        const decoder  = new TextDecoder();
-        let accumulated = '';
-        let finalRoute: string | null = null;
+      // ── SSE streaming path ─────────────────────────────────────────────
+      const reader   = res.body.getReader();
+      const decoder  = new TextDecoder();
+      let accumulated = '';
+      let finalRoute: string | null = null;
 
-        while (true) {
-          const { done, value } = await reader.read();
-          if (done) break;
-          const chunk = decoder.decode(value, { stream: true });
+      while (true) {
+        const { done, value } = await reader.read();
+        if (done) break;
+        const chunk = decoder.decode(value, { stream: true });
 
-          for (const line of chunk.split('\n')) {
-            if (line.startsWith('data: ')) {
-              const data = line.slice(6).trim();
-              if (data === '[DONE]') break;
-              try {
-                const parsed: { token?: string; suggestedRoute?: string | null; sessionId?: string } = JSON.parse(data);
-                if (parsed.sessionId && !sessionId) setSessionId(parsed.sessionId);
-                if (parsed.suggestedRoute !== undefined) finalRoute = parsed.suggestedRoute;
-                if (parsed.token) {
-                  accumulated += parsed.token;
-                  setMessages(prev => prev.map((m, i) =>
-                    i === prev.length - 1 ? { ...m, content: accumulated, streaming: true } : m
-                  ));
-                }
-              } catch { /* ignore malformed SSE line */ }
-            }
+        for (const line of chunk.split('\n')) {
+          if (line.startsWith('data: ')) {
+            const data = line.slice(6).trim();
+            if (!data) continue;
+            try {
+              const parsed = JSON.parse(data) as {
+                token?: string;
+                done?: boolean;
+                suggestedRoute?: string | null;
+              };
+              if (parsed.done) {
+                finalRoute = parsed.suggestedRoute ?? null;
+              } else if (parsed.token) {
+                accumulated += parsed.token;
+                setMessages(prev => prev.map((m, i) =>
+                  i === prev.length - 1 ? { ...m, content: accumulated, streaming: true } : m
+                ));
+              }
+            } catch { /* ignore malformed SSE line */ }
           }
         }
-
-        setMessages(prev => prev.map((m, i) =>
-          i === prev.length - 1 ? { ...m, streaming: false, suggestedRoute: finalRoute } : m
-        ));
-      } else {
-        // ── JSON fallback path ─────────────────────────────────────────
-        const data: GuideResponse = await res.json();
-        if (!sessionId && data.sessionId) setSessionId(data.sessionId);
-        setMessages(prev => prev.map((m, i) =>
-          i === prev.length - 1
-            ? { role: 'assistant', content: data.message, suggestedRoute: data.suggestedRoute, streaming: false }
-            : m
-        ));
       }
+
+      setMessages(prev => prev.map((m, i) =>
+        i === prev.length - 1 ? { ...m, streaming: false, suggestedRoute: finalRoute } : m
+      ));
     } catch {
       setMessages(prev => prev.map((m, i) =>
         i === prev.length - 1
