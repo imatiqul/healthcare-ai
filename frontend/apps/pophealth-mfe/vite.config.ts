@@ -12,6 +12,7 @@ export default defineConfig({
       exposes: {
         './RiskPanel': './src/components/RiskPanel.tsx',
         './CareGapList': './src/components/CareGapList.tsx',
+        './RiskTrajectoryPanel': './src/components/RiskTrajectoryPanel.tsx',
       },
       shared: {
         react: { singleton: true, requiredVersion: '^19.0.0' },

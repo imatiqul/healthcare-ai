@@ -12,6 +12,7 @@ export default defineConfig({
       exposes: {
         './PatientPortal': './src/components/PatientPortal.tsx',
         './NotificationInbox': './src/components/NotificationInbox.tsx',
+        './DeliveryAnalyticsDashboard': './src/components/DeliveryAnalyticsDashboard.tsx',
       },
       shared: {
         react: { singleton: true },

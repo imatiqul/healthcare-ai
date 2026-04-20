@@ -18,17 +18,26 @@ declare module 'scheduling/SlotCalendar' {
 declare module 'scheduling/BookingForm' {
   export const BookingForm: React.ComponentType;
 }
+declare module 'scheduling/WaitlistPanel' {
+  export const WaitlistPanel: React.ComponentType;
+}
 declare module 'pophealth/RiskPanel' {
   export const RiskPanel: React.ComponentType;
 }
 declare module 'pophealth/CareGapList' {
   export const CareGapList: React.ComponentType;
 }
+declare module 'pophealth/RiskTrajectoryPanel' {
+  export const RiskTrajectoryPanel: React.ComponentType;
+}
 declare module 'revenue/CodingQueue' {
   export const CodingQueue: React.ComponentType;
 }
 declare module 'revenue/PriorAuthTracker' {
   export const PriorAuthTracker: React.ComponentType;
+}
+declare module 'revenue/DenialManager' {
+  export const DenialManager: React.ComponentType;
 }
 declare module 'encounters/EncounterList' {
   export const EncounterList: React.ComponentType;
@@ -45,4 +54,7 @@ declare module 'engagement/PatientPortal' {
 }
 declare module 'engagement/NotificationInbox' {
   export const NotificationInbox: React.ComponentType<{ patientId: string }>;
+}
+declare module 'engagement/DeliveryAnalyticsDashboard' {
+  export const DeliveryAnalyticsDashboard: React.ComponentType;
 }

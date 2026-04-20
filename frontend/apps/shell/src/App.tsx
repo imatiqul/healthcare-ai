@@ -17,11 +17,13 @@ const BookingFormPage = lazy(() => import('scheduling/BookingForm').then(m => ({
 const WaitlistPanelPage = lazy(() => import('scheduling/WaitlistPanel').then(m => ({ default: m.WaitlistPanel })));
 const PopHealthPage = lazy(() => import('pophealth/RiskPanel').then(m => ({ default: m.RiskPanel })));
 const CareGapListPage = lazy(() => import('pophealth/CareGapList').then(m => ({ default: m.CareGapList })));
+const RiskTrajectoryPanelPage = lazy(() => import('pophealth/RiskTrajectoryPanel').then(m => ({ default: m.RiskTrajectoryPanel })));
 const RevenuePage = lazy(() => import('revenue/CodingQueue').then(m => ({ default: m.CodingQueue })));
 const PriorAuthTrackerPage = lazy(() => import('revenue/PriorAuthTracker').then(m => ({ default: m.PriorAuthTracker })));
 const DenialManagerPage = lazy(() => import('revenue/DenialManager').then(m => ({ default: m.DenialManager })));
 const EncountersPage = lazy(() => import('encounters/EncounterList').then(m => ({ default: m.EncounterList })));
 const EngagementPage = lazy(() => import('engagement/PatientPortal').then(m => ({ default: m.PatientPortal })));
+const DeliveryAnalyticsDashboardPage = lazy(() => import('engagement/DeliveryAnalyticsDashboard').then(m => ({ default: m.DeliveryAnalyticsDashboard })));
 const DemoLive = lazy(() => import('./pages/DemoLive'));
 
 function Loading() {
@@ -106,6 +108,7 @@ export default function App() {
                   <MfeErrorBoundary name="Population Health">
                     <PopHealthPage />
                     <CareGapListPage />
+                    <RiskTrajectoryPanelPage />
                   </MfeErrorBoundary>
                 } />
                 <Route path="/revenue" element={
@@ -123,6 +126,7 @@ export default function App() {
                 <Route path="/patient-portal" element={
                   <MfeErrorBoundary name="Patient Portal">
                     <EngagementPage />
+                    <DeliveryAnalyticsDashboardPage />
                   </MfeErrorBoundary>
                 } />
               </Routes>

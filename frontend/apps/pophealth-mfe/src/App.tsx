@@ -3,6 +3,7 @@ import { RiskPanel } from './components/RiskPanel';
 import { CareGapList } from './components/CareGapList';
 import { RiskDistributionChart } from './components/RiskDistributionChart';
 import { PatientSearch } from './components/PatientSearch';
+import { RiskTrajectoryPanel } from './components/RiskTrajectoryPanel';
 
 export default function App() {
   return (
@@ -18,6 +19,9 @@ export default function App() {
       </Grid>
       <Grid item xs={12} md={6}>
         <CareGapList />
+      </Grid>
+      <Grid item xs={12}>
+        <RiskTrajectoryPanel />
       </Grid>
     </Grid>
   );
