@@ -24,6 +24,10 @@ const DenialManagerPage = lazy(() => import('revenue/DenialManager').then(m => (
 const EncountersPage = lazy(() => import('encounters/EncounterList').then(m => ({ default: m.EncounterList })));
 const EngagementPage = lazy(() => import('engagement/PatientPortal').then(m => ({ default: m.PatientPortal })));
 const DeliveryAnalyticsDashboardPage = lazy(() => import('engagement/DeliveryAnalyticsDashboard').then(m => ({ default: m.DeliveryAnalyticsDashboard })));
+const LabDeltaFlagsPanelPage = lazy(() => import('encounters/LabDeltaFlagsPanel').then(m => ({ default: m.LabDeltaFlagsPanel })));
+const ConsentManagementPanelPage = lazy(() => import('engagement/ConsentManagementPanel').then(m => ({ default: m.ConsentManagementPanel })));
+const VoiceSessionHistoryPage = lazy(() => import('voice/VoiceSessionHistory').then(m => ({ default: m.VoiceSessionHistory })));
+const ModelGovernanceDashboardPage = lazy(() => import('./pages/ModelGovernanceDashboard'));
 const DemoLive = lazy(() => import('./pages/DemoLive'));
 
 function Loading() {
@@ -95,7 +99,12 @@ export default function App() {
             <Suspense fallback={<Loading />}>
               <Routes>
                 <Route path="/" element={<Dashboard />} />
-                <Route path="/voice" element={<MfeErrorBoundary name="Voice"><VoicePage /></MfeErrorBoundary>} />
+                <Route path="/voice" element={
+                  <MfeErrorBoundary name="Voice">
+                    <VoicePage />
+                    <VoiceSessionHistoryPage />
+                  </MfeErrorBoundary>
+                } />
                 <Route path="/triage" element={<MfeErrorBoundary name="Triage"><TriagePage /></MfeErrorBoundary>} />
                 <Route path="/scheduling" element={
                   <MfeErrorBoundary name="Scheduling">
@@ -121,12 +130,19 @@ export default function App() {
                 <Route path="/encounters" element={
                   <MfeErrorBoundary name="Encounters">
                     <EncountersPage />
+                    <LabDeltaFlagsPanelPage />
                   </MfeErrorBoundary>
                 } />
                 <Route path="/patient-portal" element={
                   <MfeErrorBoundary name="Patient Portal">
                     <EngagementPage />
                     <DeliveryAnalyticsDashboardPage />
+                    <ConsentManagementPanelPage />
+                  </MfeErrorBoundary>
+                } />
+                <Route path="/governance" element={
+                  <MfeErrorBoundary name="Governance">
+                    <ModelGovernanceDashboardPage />
                   </MfeErrorBoundary>
                 } />
               </Routes>

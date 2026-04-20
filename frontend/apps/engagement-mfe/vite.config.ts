@@ -13,6 +13,7 @@ export default defineConfig({
         './PatientPortal': './src/components/PatientPortal.tsx',
         './NotificationInbox': './src/components/NotificationInbox.tsx',
         './DeliveryAnalyticsDashboard': './src/components/DeliveryAnalyticsDashboard.tsx',
+        './ConsentManagementPanel': './src/components/ConsentManagementPanel.tsx',
       },
       shared: {
         react: { singleton: true },

@@ -12,6 +12,7 @@ export default defineConfig({
       exposes: {
         './VoiceSessionController': './src/components/VoiceSessionController.tsx',
         './LiveTranscriptFeed': './src/components/LiveTranscriptFeed.tsx',
+        './VoiceSessionHistory': './src/components/VoiceSessionHistory.tsx',
       },
       shared: {
         react: { singleton: true },

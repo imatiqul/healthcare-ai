@@ -12,6 +12,7 @@ export default defineConfig({
       exposes: {
         './EncounterList': './src/components/EncounterList.tsx',
         './CreateEncounterModal': './src/components/CreateEncounterModal.tsx',
+        './LabDeltaFlagsPanel': './src/components/LabDeltaFlagsPanel.tsx',
       },
       shared: {
         react: { singleton: true },

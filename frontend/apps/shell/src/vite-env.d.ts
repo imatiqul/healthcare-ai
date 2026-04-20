@@ -58,3 +58,12 @@ declare module 'engagement/NotificationInbox' {
 declare module 'engagement/DeliveryAnalyticsDashboard' {
   export const DeliveryAnalyticsDashboard: React.ComponentType;
 }
+declare module 'encounters/LabDeltaFlagsPanel' {
+  export const LabDeltaFlagsPanel: React.ComponentType;
+}
+declare module 'engagement/ConsentManagementPanel' {
+  export const ConsentManagementPanel: React.ComponentType;
+}
+declare module 'voice/VoiceSessionHistory' {
+  export const VoiceSessionHistory: React.ComponentType;
+}
