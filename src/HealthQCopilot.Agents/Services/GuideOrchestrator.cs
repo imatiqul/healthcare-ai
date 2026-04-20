@@ -275,6 +275,113 @@ public sealed class GuideOrchestrator
 
     private static bool ContainsAny(string text, params string[] keywords) =>
         keywords.Any(text.Contains);
+
+    /// <summary>
+    /// Streams the guide response token-by-token using Azure OpenAI streaming.
+    /// Falls back to the non-streaming path if the LLM is unavailable.
+    /// Callers write each yielded string as an SSE `data:` line.
+    /// The final item is always a JSON object: {"done":true,"suggestedRoute":"..."}.
+    /// </summary>
+    public async IAsyncEnumerable<string> StreamChatAsync(
+        Guid sessionId,
+        string userMessage,
+        [System.Runtime.CompilerServices.EnumeratorCancellation] CancellationToken ct)
+    {
+        // Load or create conversation
+        var conversation = await _db.GuideConversations
+            .Include(c => c.Messages)
+            .FirstOrDefaultAsync(c => c.Id == sessionId, ct);
+
+        if (conversation is null)
+        {
+            conversation = GuideConversation.Create(sessionId);
+            _db.GuideConversations.Add(conversation);
+        }
+
+        conversation.AddMessage("user", userMessage);
+        _db.GuideMessages.Add(conversation.Messages[^1]);
+        await _db.SaveChangesAsync(ct);
+
+        if (!_hasLlm)
+        {
+            // Non-LLM path: yield entire response as one token
+            var fallbackReply = await ChatWithRulesAsync(userMessage, ct);
+            conversation.AddMessage("assistant", fallbackReply);
+            _db.GuideMessages.Add(conversation.Messages[^1]);
+            await _db.SaveChangesAsync(ct);
+            yield return fallbackReply;
+            yield return $"{{\"done\":true,\"suggestedRoute\":{System.Text.Json.JsonSerializer.Serialize(DetectSuggestedRoute(fallbackReply))}}}";
+            yield break;
+        }
+
+        // Streaming LLM path.
+        // C# iterators cannot yield inside try-catch, so we stream tokens into a
+        // Channel and read from it in the yield section below.
+        var assembled = new System.Text.StringBuilder();
+        var channel = System.Threading.Channels.Channel.CreateUnbounded<string>(
+            new System.Threading.Channels.UnboundedChannelOptions { SingleReader = true });
+
+        _ = Task.Run(async () =>
+        {
+            try
+            {
+                var chatService = _kernel.GetRequiredService<IChatCompletionService>();
+
+                var ragContext = _rag is not null
+                    ? await _rag.GetRelevantContextAsync(userMessage, topK: 4, ct: ct)
+                    : string.Empty;
+
+                var effectiveSystemPrompt = string.IsNullOrEmpty(ragContext)
+                    ? SystemPrompt
+                    : SystemPrompt + Environment.NewLine + Environment.NewLine + ragContext;
+
+                var history = new ChatHistory(effectiveSystemPrompt);
+                foreach (var msg in conversation.Messages.OrderBy(m => m.Timestamp).TakeLast(20))
+                {
+                    if (msg.Role == "user") history.AddUserMessage(msg.Content);
+                    else if (msg.Role == "assistant") history.AddAssistantMessage(msg.Content);
+                }
+
+                var settings = new OpenAIPromptExecutionSettings
+                {
+                    ToolCallBehavior = ToolCallBehavior.AutoInvokeKernelFunctions,
+                    MaxTokens = 1024,
+                    Temperature = 0.3
+                };
+
+                await foreach (var chunk in chatService.GetStreamingChatMessageContentsAsync(
+                    history, settings, _kernel, ct))
+                {
+                    var token = chunk.Content ?? string.Empty;
+                    if (!string.IsNullOrEmpty(token))
+                        await channel.Writer.WriteAsync(token, ct);
+                }
+            }
+            catch (Exception ex)
+            {
+                _logger.LogWarning(ex, "Streaming LLM chat failed for session {SessionId}, falling back", sessionId);
+                var fallback = await ChatWithRulesAsync(userMessage, ct);
+                await channel.Writer.WriteAsync(fallback, ct);
+            }
+            finally
+            {
+                channel.Writer.Complete();
+            }
+        }, ct);
+
+        await foreach (var token in channel.Reader.ReadAllAsync(ct))
+        {
+            assembled.Append(token);
+            yield return token;
+        }
+
+        var fullReply = assembled.ToString();
+        conversation.AddMessage("assistant", fullReply);
+        _db.GuideMessages.Add(conversation.Messages[^1]);
+        await _db.SaveChangesAsync(ct);
+
+        yield return $"{{\"done\":true,\"suggestedRoute\":{System.Text.Json.JsonSerializer.Serialize(DetectSuggestedRoute(fullReply))}}}";
+    }
 }
 
 public record GuideResponse(Guid SessionId, string Message, string? SuggestedRoute);

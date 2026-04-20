@@ -1,3 +1,4 @@
+using Dapr.Client;
 using HealthQCopilot.Domain.Identity;
 using HealthQCopilot.Identity.Persistence;
 using HealthQCopilot.Infrastructure.Validation;
@@ -28,8 +29,11 @@ public static class BreakGlassEndpoints
         group.MapPost("/", async (
             BreakGlassRequest request,
             IdentityDbContext db,
+            DaprClient dapr,
+            ILoggerFactory loggerFactory,
             CancellationToken ct) =>
         {
+            var logger = loggerFactory.CreateLogger("HealthQCopilot.Identity.BreakGlass");
             // Verify the requesting user exists
             var user = await db.UserAccounts.FindAsync([request.RequestedByUserId], ct);
             if (user is null)
@@ -48,7 +52,29 @@ public static class BreakGlassEndpoints
             db.BreakGlassAccesses.Add(access);
             await db.SaveChangesAsync(ct);
 
-            // TODO: publish BreakGlassAccessGranted event via Dapr pub/sub for supervisor notification
+            // Publish BreakGlassAccessGranted event via Dapr pub/sub for supervisor notification.
+            // Fire-and-forget — do not block the HTTP response on pub/sub delivery.
+            _ = Task.Run(async () =>
+            {
+                try
+                {
+                    await dapr.PublishEventAsync("pubsub", "identity.break-glass.granted", new
+                    {
+                        access.Id,
+                        access.RequestedByUserId,
+                        access.TargetPatientId,
+                        access.ClinicalJustification,
+                        access.GrantedAt,
+                        access.ExpiresAt
+                    });
+                }
+                catch (Exception ex)
+                {
+                    logger.LogWarning(ex,
+                        "Failed to publish break-glass event to Dapr pub/sub for access {AccessId}",
+                        access.Id);
+                }
+            }, CancellationToken.None);
 
             return Results.Created($"/api/v1/identity/break-glass/{access.Id}", new
             {

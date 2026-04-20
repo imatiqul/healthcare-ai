@@ -1,6 +1,9 @@
+using System.Text.Json;
 using System.Threading.RateLimiting;
+using HealthQCopilot.Agents.Infrastructure;
 using HealthQCopilot.Agents.Services;
 using Microsoft.AspNetCore.RateLimiting;
+using Microsoft.EntityFrameworkCore;
 
 namespace HealthQCopilot.Agents.Endpoints;
 
@@ -41,6 +44,55 @@ public static class GuideEndpoints
         })
         .WithName("GuideSuggestions")
         .WithSummary("Get contextual suggestions for the platform guide");
+
+        // ── SSE Streaming endpoint ───────────────────────────────────────────────
+        // Streams the guide AI response token-by-token so the browser can render
+        // tokens progressively without waiting for the full LLM completion.
+        // The final SSE event is a JSON object: {"done":true,"suggestedRoute":"..."}.
+        group.MapGet("/chat/stream", async (
+            string message,
+            Guid? sessionId,
+            GuideOrchestrator orchestrator,
+            HttpResponse httpResponse,
+            CancellationToken ct) =>
+        {
+            httpResponse.Headers.ContentType = "text/event-stream; charset=utf-8";
+            httpResponse.Headers.CacheControl = "no-cache";
+            httpResponse.Headers.Connection = "keep-alive";
+
+            var effectiveSessionId = sessionId ?? Guid.NewGuid();
+            await foreach (var token in orchestrator.StreamChatAsync(effectiveSessionId, message, ct))
+            {
+                await httpResponse.WriteAsync($"data: {JsonSerializer.Serialize(token)}\n\n", ct);
+                await httpResponse.Body.FlushAsync(ct);
+            }
+        })
+        .WithName("GuideChatStream")
+        .WithSummary("Stream the HealthQ Copilot guide response via Server-Sent Events");
+
+        // ── Conversation history endpoint ────────────────────────────────────────
+        // Retrieves the stored conversation messages for a given session.
+        group.MapGet("/history/{sessionId:guid}", async (
+            Guid sessionId,
+            AgentDbContext db,
+            CancellationToken ct) =>
+        {
+            var conversation = await db.GuideConversations
+                .AsNoTracking()
+                .Include(c => c.Messages)
+                .FirstOrDefaultAsync(c => c.Id == sessionId, ct);
+
+            if (conversation is null)
+                return Results.NotFound(new { error = "Conversation session not found." });
+
+            var messages = conversation.Messages
+                .OrderBy(m => m.Timestamp)
+                .Select(m => new { m.Role, m.Content, m.Timestamp });
+
+            return Results.Ok(new { sessionId, messages });
+        })
+        .WithName("GuideHistory")
+        .WithSummary("Retrieve conversation history for a guide session");
 
         return app;
     }
