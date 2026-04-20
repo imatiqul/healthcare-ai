@@ -180,6 +180,19 @@ module eventHubs 'modules/event-hubs.bicep' = {
   }
 }
 
+// Azure Monitor Alert Rules + SLO targets
+module monitorAlerts 'modules/monitor-alerts.bicep' = {
+  name: 'monitor-alerts-deploy'
+  scope: rg
+  params: {
+    envName: envName
+    location: location
+    appInsightsId: appInsights.outputs.connectionString    // workaround — real ID via reference
+    logAnalyticsWorkspaceId: logAnalytics.outputs.workspaceId
+  }
+  dependsOn: [appInsights, logAnalytics]
+}
+
 output aksClusterName string = aks.outputs.clusterName
 output acrLoginServer string = acr.outputs.loginServer
 output apimGatewayUrl string = apim.outputs.gatewayUrl

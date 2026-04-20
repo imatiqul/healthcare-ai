@@ -4,6 +4,9 @@ param envName string
 @description('Azure region')
 param location string
 
+@description('Log Analytics workspace ID for HIPAA/SOC2 audit logging')
+param logAnalyticsWorkspaceId string = ''
+
 resource keyVault 'Microsoft.KeyVault/vaults@2023-07-01' = {
   name: '${envName}-kv'
   location: location
@@ -29,10 +32,12 @@ resource kvDiagnostics 'Microsoft.Insights/diagnosticSettings@2021-05-01-preview
   name: '${envName}-kv-diag'
   scope: keyVault
   properties: {
+    workspaceId: empty(logAnalyticsWorkspaceId) ? null : logAnalyticsWorkspaceId
     logs: [
       {
         categoryGroup: 'allLogs'
         enabled: true
+        retentionPolicy: { days: 2557, enabled: true }   // 7 years HIPAA retention
       }
     ]
     metrics: [

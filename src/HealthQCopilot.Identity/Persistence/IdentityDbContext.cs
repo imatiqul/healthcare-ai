@@ -11,6 +11,7 @@ public class IdentityDbContext(DbContextOptions<IdentityDbContext> options)
     public DbSet<OtpRecord> OtpRecords => Set<OtpRecord>();
     public DbSet<ConsentRecord> ConsentRecords => Set<ConsentRecord>();
     public DbSet<BreakGlassAccess> BreakGlassAccesses => Set<BreakGlassAccess>();
+    public DbSet<TenantConfig> TenantConfigs => Set<TenantConfig>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -76,5 +77,22 @@ public class IdentityDbContext(DbContextOptions<IdentityDbContext> options)
             entity.HasIndex(e => e.TargetPatientId);
             entity.HasIndex(e => new { e.Status, e.ExpiresAt }); // For expiry sweep
         });
+
+        modelBuilder.Entity<TenantConfig>(entity =>
+        {
+            entity.ToTable("tenant_configs");
+            entity.HasKey(e => e.Id);
+            entity.Property(e => e.TenantId).IsRequired();
+            entity.Property(e => e.OrganisationName).HasMaxLength(256).IsRequired();
+            entity.Property(e => e.Slug).HasMaxLength(64).IsRequired();
+            entity.Property(e => e.Locale).HasMaxLength(8).IsRequired();
+            entity.Property(e => e.AppConfigLabel).HasMaxLength(128).IsRequired();
+            entity.Property(e => e.DataRegion).HasMaxLength(64).IsRequired();
+            entity.Property(e => e.ProvisionedAt).HasColumnType("timestamp with time zone");
+            entity.HasIndex(e => e.Slug).IsUnique();
+            entity.HasIndex(e => e.TenantId).IsUnique();
+        });
+
+        modelBuilder.Entity<UserAccount>().Property(e => e.TenantId).IsRequired(false);
     }
 }

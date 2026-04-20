@@ -7,4 +7,6 @@ export default defineWorkspace([
   'apps/scheduling-mfe',
   'apps/pophealth-mfe',
   'apps/revenue-mfe',
+  'apps/encounters-mfe',
+  'apps/engagement-mfe',
 ]);

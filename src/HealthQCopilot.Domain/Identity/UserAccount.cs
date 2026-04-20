@@ -16,6 +16,11 @@ public class UserAccount : AggregateRoot<Guid>
     /// <summary>The corresponding FHIR Patient resource ID on the HAPI FHIR server.</summary>
     public string? FhirPatientId { get; private set; }
 
+    /// <summary>
+    /// Tenant this user belongs to. Null for platform-level admin accounts.
+    /// </summary>
+    public Guid? TenantId { get; private set; }
+
     private UserAccount() { }
 
     public static UserAccount Create(Guid id, string externalId, string email, string displayName, UserRole role)

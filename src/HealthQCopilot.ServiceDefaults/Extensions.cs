@@ -6,6 +6,7 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Diagnostics.HealthChecks;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
+using Microsoft.FeatureManagement;
 using OpenTelemetry;
 using OpenTelemetry.Metrics;
 using OpenTelemetry.Trace;
@@ -34,6 +35,29 @@ public static class Extensions
         {
             builder.Services.AddDistributedMemoryCache();
         }
+
+        // Feature Management — wires Azure App Configuration when endpoint is provided.
+        // Each tenant's flags are isolated by the label filter "{tenantId}" set in appsettings.
+        var appConfigEndpoint = builder.Configuration["AppConfig:Endpoint"];
+        if (!string.IsNullOrWhiteSpace(appConfigEndpoint))
+        {
+            builder.Configuration.AddAzureAppConfiguration(options =>
+            {
+                var tenantId = builder.Configuration["AppConfig:TenantLabel"] ?? "default";
+                options.Connect(new Uri(appConfigEndpoint),
+                                new Azure.Identity.DefaultAzureCredential())
+                       .Select("HealthQ:*", tenantId)
+                       .UseFeatureFlags(ff =>
+                       {
+                           ff.Select("HealthQ:*", tenantId);
+                           ff.CacheExpirationInterval = TimeSpan.FromMinutes(5);
+                       });
+            });
+        }
+
+        builder.Services.AddFeatureManagement()
+                        .AddFeatureFilter<Microsoft.FeatureManagement.FeatureFilters.PercentageFilter>()
+                        .AddFeatureFilter<Microsoft.FeatureManagement.FeatureFilters.TimeWindowFilter>();
 
         return builder;
     }

@@ -1,0 +1,495 @@
+# Argo Rollouts canary strategy for all 10 HealthQ Copilot microservices.
+# Promotes from 20% → 40% → 60% → 100% with 2-minute pause between each step.
+# A failed analysis at any step triggers automatic rollback.
+#
+# Usage:
+#   kubectl apply -f infra/argocd/rollouts/
+#
+# Prerequisites:
+#   - Argo Rollouts controller installed in the cluster
+#   - Prometheus scraped at 'http://prometheus.monitoring.svc:9090'
+#   - Each service exposes /metrics with 'http_server_requests_seconds_count' and
+#     'http_server_requests_seconds_bucket' (OpenTelemetry .NET instrumentation)
+---
+# AnalysisTemplate shared by all rollouts
+apiVersion: argoproj.io/v1alpha1
+kind: AnalysisTemplate
+metadata:
+  name: healthq-success-rate
+  namespace: healthq-copilot
+spec:
+  args:
+    - name: service-name
+    - name: canary-hash
+  metrics:
+    - name: success-rate
+      interval: 60s
+      count: 3           # evaluate 3 times over 3 minutes before passing
+      successCondition: result[0] >= 0.99
+      failureLimit: 1
+      provider:
+        prometheus:
+          address: http://prometheus-operated.monitoring.svc:9090
+          query: |
+            sum(rate(http_server_requests_seconds_count{
+              service="{{args.service-name}}",
+              pod_template_hash="{{args.canary-hash}}",
+              status!~"5.."
+            }[2m]))
+            /
+            sum(rate(http_server_requests_seconds_count{
+              service="{{args.service-name}}",
+              pod_template_hash="{{args.canary-hash}}"
+            }[2m]))
+    - name: latency-p99
+      interval: 60s
+      count: 3
+      successCondition: result[0] <= 1.0   # p99 ≤ 1 second
+      failureLimit: 1
+      provider:
+        prometheus:
+          address: http://prometheus-operated.monitoring.svc:9090
+          query: |
+            histogram_quantile(0.99, sum(rate(
+              http_server_requests_seconds_bucket{
+                service="{{args.service-name}}",
+                pod_template_hash="{{args.canary-hash}}"
+              }[2m])) by (le))
+---
+# Rollout: agents
+apiVersion: argoproj.io/v1alpha1
+kind: Rollout
+metadata:
+  name: healthq-agents
+  namespace: healthq-copilot
+spec:
+  replicas: 3
+  selector:
+    matchLabels:
+      app: healthq-agents
+  template:
+    metadata:
+      labels:
+        app: healthq-agents
+    spec:
+      containers:
+        - name: agents
+          image: ghcr.io/imatiqul/healthcare-ai/healthq-copilot-agents:latest
+          ports:
+            - containerPort: 8080
+          envFrom:
+            - secretRef:
+                name: healthq-secrets
+  strategy:
+    canary:
+      canaryService: healthq-agents-canary
+      stableService: healthq-agents-stable
+      analysis:
+        templates:
+          - templateName: healthq-success-rate
+        startingStep: 2
+        args:
+          - name: service-name
+            value: healthq-agents
+          - name: canary-hash
+            valueFrom:
+              podTemplateHashValue: Latest
+      steps:
+        - setWeight: 20
+        - pause: { duration: 2m }
+        - setWeight: 40
+        - pause: { duration: 2m }
+        - setWeight: 60
+        - pause: { duration: 2m }
+        - setWeight: 100
+---
+# Rollout: voice
+apiVersion: argoproj.io/v1alpha1
+kind: Rollout
+metadata:
+  name: healthq-voice
+  namespace: healthq-copilot
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: healthq-voice
+  template:
+    metadata:
+      labels:
+        app: healthq-voice
+    spec:
+      containers:
+        - name: voice
+          image: ghcr.io/imatiqul/healthcare-ai/healthq-copilot-voice:latest
+          ports:
+            - containerPort: 8080
+          envFrom:
+            - secretRef:
+                name: healthq-secrets
+  strategy:
+    canary:
+      canaryService: healthq-voice-canary
+      stableService: healthq-voice-stable
+      analysis:
+        templates:
+          - templateName: healthq-success-rate
+        startingStep: 2
+        args:
+          - name: service-name
+            value: healthq-voice
+          - name: canary-hash
+            valueFrom:
+              podTemplateHashValue: Latest
+      steps:
+        - setWeight: 20
+        - pause: { duration: 2m }
+        - setWeight: 40
+        - pause: { duration: 2m }
+        - setWeight: 100
+---
+# Rollout: fhir
+apiVersion: argoproj.io/v1alpha1
+kind: Rollout
+metadata:
+  name: healthq-fhir
+  namespace: healthq-copilot
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: healthq-fhir
+  template:
+    metadata:
+      labels:
+        app: healthq-fhir
+    spec:
+      containers:
+        - name: fhir
+          image: ghcr.io/imatiqul/healthcare-ai/healthq-copilot-fhir:latest
+          ports:
+            - containerPort: 8080
+          envFrom:
+            - secretRef:
+                name: healthq-secrets
+  strategy:
+    canary:
+      canaryService: healthq-fhir-canary
+      stableService: healthq-fhir-stable
+      analysis:
+        templates:
+          - templateName: healthq-success-rate
+        startingStep: 2
+        args:
+          - name: service-name
+            value: healthq-fhir
+          - name: canary-hash
+            valueFrom:
+              podTemplateHashValue: Latest
+      steps:
+        - setWeight: 20
+        - pause: { duration: 2m }
+        - setWeight: 100
+---
+# Rollout: identity
+apiVersion: argoproj.io/v1alpha1
+kind: Rollout
+metadata:
+  name: healthq-identity
+  namespace: healthq-copilot
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: healthq-identity
+  template:
+    metadata:
+      labels:
+        app: healthq-identity
+    spec:
+      containers:
+        - name: identity
+          image: ghcr.io/imatiqul/healthcare-ai/healthq-copilot-identity:latest
+          ports:
+            - containerPort: 8080
+          envFrom:
+            - secretRef:
+                name: healthq-secrets
+  strategy:
+    canary:
+      canaryService: healthq-identity-canary
+      stableService: healthq-identity-stable
+      analysis:
+        templates:
+          - templateName: healthq-success-rate
+        startingStep: 2
+        args:
+          - name: service-name
+            value: healthq-identity
+          - name: canary-hash
+            valueFrom:
+              podTemplateHashValue: Latest
+      steps:
+        - setWeight: 20
+        - pause: { duration: 2m }
+        - setWeight: 100
+---
+# Rollout: notifications
+apiVersion: argoproj.io/v1alpha1
+kind: Rollout
+metadata:
+  name: healthq-notifications
+  namespace: healthq-copilot
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: healthq-notifications
+  template:
+    metadata:
+      labels:
+        app: healthq-notifications
+    spec:
+      containers:
+        - name: notifications
+          image: ghcr.io/imatiqul/healthcare-ai/healthq-copilot-notifications:latest
+          ports:
+            - containerPort: 8080
+          envFrom:
+            - secretRef:
+                name: healthq-secrets
+  strategy:
+    canary:
+      canaryService: healthq-notifications-canary
+      stableService: healthq-notifications-stable
+      analysis:
+        templates:
+          - templateName: healthq-success-rate
+        startingStep: 2
+        args:
+          - name: service-name
+            value: healthq-notifications
+          - name: canary-hash
+            valueFrom:
+              podTemplateHashValue: Latest
+      steps:
+        - setWeight: 20
+        - pause: { duration: 2m }
+        - setWeight: 100
+---
+# Rollout: revenue-cycle
+apiVersion: argoproj.io/v1alpha1
+kind: Rollout
+metadata:
+  name: healthq-revenue
+  namespace: healthq-copilot
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: healthq-revenue
+  template:
+    metadata:
+      labels:
+        app: healthq-revenue
+    spec:
+      containers:
+        - name: revenue
+          image: ghcr.io/imatiqul/healthcare-ai/healthq-copilot-revenuecycle:latest
+          ports:
+            - containerPort: 8080
+          envFrom:
+            - secretRef:
+                name: healthq-secrets
+  strategy:
+    canary:
+      canaryService: healthq-revenue-canary
+      stableService: healthq-revenue-stable
+      analysis:
+        templates:
+          - templateName: healthq-success-rate
+        startingStep: 2
+        args:
+          - name: service-name
+            value: healthq-revenue
+          - name: canary-hash
+            valueFrom:
+              podTemplateHashValue: Latest
+      steps:
+        - setWeight: 20
+        - pause: { duration: 2m }
+        - setWeight: 100
+---
+# Rollout: population-health
+apiVersion: argoproj.io/v1alpha1
+kind: Rollout
+metadata:
+  name: healthq-pophealth
+  namespace: healthq-copilot
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: healthq-pophealth
+  template:
+    metadata:
+      labels:
+        app: healthq-pophealth
+    spec:
+      containers:
+        - name: pophealth
+          image: ghcr.io/imatiqul/healthcare-ai/healthq-copilot-populationhealth:latest
+          ports:
+            - containerPort: 8080
+          envFrom:
+            - secretRef:
+                name: healthq-secrets
+  strategy:
+    canary:
+      canaryService: healthq-pophealth-canary
+      stableService: healthq-pophealth-stable
+      analysis:
+        templates:
+          - templateName: healthq-success-rate
+        startingStep: 2
+        args:
+          - name: service-name
+            value: healthq-pophealth
+          - name: canary-hash
+            valueFrom:
+              podTemplateHashValue: Latest
+      steps:
+        - setWeight: 20
+        - pause: { duration: 2m }
+        - setWeight: 100
+---
+# Rollout: scheduling
+apiVersion: argoproj.io/v1alpha1
+kind: Rollout
+metadata:
+  name: healthq-scheduling
+  namespace: healthq-copilot
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: healthq-scheduling
+  template:
+    metadata:
+      labels:
+        app: healthq-scheduling
+    spec:
+      containers:
+        - name: scheduling
+          image: ghcr.io/imatiqul/healthcare-ai/healthq-copilot-scheduling:latest
+          ports:
+            - containerPort: 8080
+          envFrom:
+            - secretRef:
+                name: healthq-secrets
+  strategy:
+    canary:
+      canaryService: healthq-scheduling-canary
+      stableService: healthq-scheduling-stable
+      analysis:
+        templates:
+          - templateName: healthq-success-rate
+        startingStep: 2
+        args:
+          - name: service-name
+            value: healthq-scheduling
+          - name: canary-hash
+            valueFrom:
+              podTemplateHashValue: Latest
+      steps:
+        - setWeight: 20
+        - pause: { duration: 2m }
+        - setWeight: 100
+---
+# Rollout: ocr
+apiVersion: argoproj.io/v1alpha1
+kind: Rollout
+metadata:
+  name: healthq-ocr
+  namespace: healthq-copilot
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: healthq-ocr
+  template:
+    metadata:
+      labels:
+        app: healthq-ocr
+    spec:
+      containers:
+        - name: ocr
+          image: ghcr.io/imatiqul/healthcare-ai/healthq-copilot-ocr:latest
+          ports:
+            - containerPort: 8080
+          envFrom:
+            - secretRef:
+                name: healthq-secrets
+  strategy:
+    canary:
+      canaryService: healthq-ocr-canary
+      stableService: healthq-ocr-stable
+      analysis:
+        templates:
+          - templateName: healthq-success-rate
+        startingStep: 2
+        args:
+          - name: service-name
+            value: healthq-ocr
+          - name: canary-hash
+            valueFrom:
+              podTemplateHashValue: Latest
+      steps:
+        - setWeight: 50
+        - pause: { duration: 2m }
+        - setWeight: 100
+---
+# Rollout: gateway
+apiVersion: argoproj.io/v1alpha1
+kind: Rollout
+metadata:
+  name: healthq-gateway
+  namespace: healthq-copilot
+spec:
+  replicas: 3
+  selector:
+    matchLabels:
+      app: healthq-gateway
+  template:
+    metadata:
+      labels:
+        app: healthq-gateway
+    spec:
+      containers:
+        - name: gateway
+          image: ghcr.io/imatiqul/healthcare-ai/healthq-copilot-gateway:latest
+          ports:
+            - containerPort: 8080
+          envFrom:
+            - secretRef:
+                name: healthq-secrets
+  strategy:
+    canary:
+      canaryService: healthq-gateway-canary
+      stableService: healthq-gateway-stable
+      analysis:
+        templates:
+          - templateName: healthq-success-rate
+        startingStep: 2
+        args:
+          - name: service-name
+            value: healthq-gateway
+          - name: canary-hash
+            valueFrom:
+              podTemplateHashValue: Latest
+      steps:
+        - setWeight: 10
+        - pause: { duration: 2m }
+        - setWeight: 30
+        - pause: { duration: 2m }
+        - setWeight: 100

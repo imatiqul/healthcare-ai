@@ -63,6 +63,8 @@ app.MapDefaultEndpoints();
 app.MapIdentityEndpoints();
 app.MapConsentEndpoints();
 app.MapBreakGlassEndpoints();
+app.MapTenantOnboardingEndpoints();
+app.MapAuditExportEndpoints();
 
 app.Run();
 
