@@ -52,6 +52,8 @@ const XaiExplanationPanelPage = lazy(() => import('./pages/XaiExplanationPanel')
 const GuideHistoryPanelPage = lazy(() => import('./pages/GuideHistoryPanel')); // Phase 26
 const DemoAdminPanelPage = lazy(() => import('./pages/DemoAdminPanel')); // Phase 26
 const ClinicalCoderPanelPage = lazy(() => import('triage/ClinicalCoderPanel').then(m => ({ default: m.ClinicalCoderPanel }))); // Phase 26
+const MlConfidencePanelPage = lazy(() => import('./pages/MlConfidencePanel')); // Phase 27
+const CampaignManagerPanelPage = lazy(() => import('engagement/CampaignManagerPanel').then(m => ({ default: m.CampaignManagerPanel }))); // Phase 27
 const DemoLive = lazy(() => import('./pages/DemoLive'));
 
 function Loading() {
@@ -179,6 +181,7 @@ export default function App() {
                     <OtpVerificationPanelPage />
                     <PushSubscriptionPanelPage />
                     <GdprErasurePanelPage />
+                    <CampaignManagerPanelPage />
                   </MfeErrorBoundary>
                 } />
                 <Route path="/governance" element={
@@ -188,6 +191,7 @@ export default function App() {
                     <ModelRegisterPanelPage />
                     <ExperimentSummaryPanelPage />
                     <XaiExplanationPanelPage />
+                    <MlConfidencePanelPage />
                   </MfeErrorBoundary>
                 } />
                 <Route path="/tenants" element={

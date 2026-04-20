@@ -20,6 +20,7 @@ export default defineConfig({
         './OtpVerificationPanel': './src/components/OtpVerificationPanel.tsx',     // Phase 23
         './PushSubscriptionPanel': './src/components/PushSubscriptionPanel.tsx',   // Phase 25
         './GdprErasurePanel': './src/components/GdprErasurePanel.tsx',             // Phase 25
+        './CampaignManagerPanel': './src/components/CampaignManagerPanel.tsx',    // Phase 27
       },
       shared: {
         react: { singleton: true },

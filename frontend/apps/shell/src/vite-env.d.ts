@@ -106,4 +106,7 @@ declare module 'engagement/GdprErasurePanel' {
 declare module 'triage/ClinicalCoderPanel' {
   export const ClinicalCoderPanel: React.ComponentType;
 }
+declare module 'engagement/CampaignManagerPanel' {
+  export const CampaignManagerPanel: React.ComponentType;
+}
 }
