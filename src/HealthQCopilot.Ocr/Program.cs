@@ -5,6 +5,7 @@ using HealthQCopilot.Infrastructure.Middleware;
 using HealthQCopilot.Infrastructure.Observability;
 using HealthQCopilot.Infrastructure.Persistence;
 using HealthQCopilot.Infrastructure.Security;
+using HealthQCopilot.Infrastructure.Startup;
 using HealthQCopilot.Ocr.Endpoints;
 using HealthQCopilot.Ocr.Infrastructure;
 using HealthQCopilot.Ocr.Services;
@@ -31,6 +32,7 @@ builder.Services.AddDatabaseHealthCheck<OcrDbContext>("ocr");
 builder.Services.AddHealthcareDb<AuditDbContext>(builder.Configuration, "OcrDb");
 builder.Services.AddDaprSecretProvider();
 builder.Services.AddEventHubAudit();
+builder.Services.AddHostedService<StartupValidationService>();
 
 var app = builder.Build();
 
@@ -38,6 +40,7 @@ await app.InitializeDatabaseAsync<OcrDbContext>();
 await app.InitializeDatabaseAsync<AuditDbContext>();
 
 app.MapOpenApi();
+app.UseMiddleware<TenantContextMiddleware>();
 app.UseMiddleware<SecurityHeadersMiddleware>();
 app.UseMiddleware<PhiAuditMiddleware>();
 app.UseAuthentication();

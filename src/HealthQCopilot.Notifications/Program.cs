@@ -5,6 +5,7 @@ using HealthQCopilot.Infrastructure.Middleware;
 using HealthQCopilot.Infrastructure.Observability;
 using HealthQCopilot.Infrastructure.Persistence;
 using HealthQCopilot.Infrastructure.Security;
+using HealthQCopilot.Infrastructure.Startup;
 using HealthQCopilot.Notifications.Endpoints;
 using HealthQCopilot.Notifications.Infrastructure;
 using HealthQCopilot.Notifications.Services;
@@ -38,6 +39,7 @@ builder.Services.AddDatabaseHealthCheck<NotificationDbContext>("notification");
 builder.Services.AddHealthcareDb<AuditDbContext>(builder.Configuration, "NotificationDb");
 builder.Services.AddDaprSecretProvider();
 builder.Services.AddEventHubAudit();
+builder.Services.AddHostedService<StartupValidationService>();
 
 var app = builder.Build();
 
@@ -46,6 +48,7 @@ await app.InitializeDatabaseAsync<AuditDbContext>();
 
 app.MapOpenApi();
 app.UseCloudEvents();
+app.UseMiddleware<TenantContextMiddleware>();
 app.UseMiddleware<SecurityHeadersMiddleware>();
 app.UseMiddleware<PhiAuditMiddleware>();
 app.UseAuthentication();

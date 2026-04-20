@@ -6,6 +6,7 @@ using HealthQCopilot.Infrastructure.Observability;
 using HealthQCopilot.Infrastructure.Persistence;
 using HealthQCopilot.Infrastructure.RealTime;
 using HealthQCopilot.Infrastructure.Security;
+using HealthQCopilot.Infrastructure.Startup;
 using HealthQCopilot.Voice.Endpoints;
 using HealthQCopilot.Voice.Hubs;
 using HealthQCopilot.Voice.Infrastructure;
@@ -41,6 +42,7 @@ builder.Services.AddEventHubAudit();
 
 builder.Services.AddHealthcareDb<AuditDbContext>(builder.Configuration, "VoiceDb");
 builder.Services.AddDaprSecretProvider();
+builder.Services.AddHostedService<StartupValidationService>();
 
 var app = builder.Build();
 

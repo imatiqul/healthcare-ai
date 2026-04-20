@@ -6,6 +6,7 @@ using HealthQCopilot.Infrastructure.Middleware;
 using HealthQCopilot.Infrastructure.Observability;
 using HealthQCopilot.Infrastructure.Persistence;
 using HealthQCopilot.Infrastructure.Security;
+using HealthQCopilot.Infrastructure.Startup;
 using HealthQCopilot.Scheduling.BackgroundServices;
 using HealthQCopilot.Scheduling.Endpoints;
 using HealthQCopilot.Scheduling.Infrastructure;
@@ -35,6 +36,11 @@ builder.Services.AddDaprSecretProvider();
 builder.Services.AddEventHubAudit();
 builder.Services.AddDaprClient();
 builder.Services.AddScoped<HealthQCopilot.Scheduling.Services.WaitlistService>();
+builder.Services.AddOutputCache(opts =>
+{
+    opts.AddPolicy("short", b => b.Expire(TimeSpan.FromSeconds(30)).SetVaryByQuery("date", "practitionerId", "top"));
+});
+builder.Services.AddHostedService<StartupValidationService>();
 
 var app = builder.Build();
 
@@ -43,10 +49,12 @@ await app.InitializeDatabaseAsync<AuditDbContext>();
 
 app.MapOpenApi();
 app.UseCloudEvents();
+app.UseMiddleware<TenantContextMiddleware>();
 app.UseMiddleware<SecurityHeadersMiddleware>();
 app.UseMiddleware<PhiAuditMiddleware>();
 app.UseAuthentication();
 app.UseAuthorization();
+app.UseOutputCache();
 app.UseHealthcareRateLimiting();
 app.MapControllers();
 app.MapSubscribeHandler();

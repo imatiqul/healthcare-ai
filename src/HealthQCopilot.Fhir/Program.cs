@@ -8,6 +8,7 @@ using HealthQCopilot.Infrastructure.Middleware;
 using HealthQCopilot.Infrastructure.Observability;
 using HealthQCopilot.Infrastructure.Persistence;
 using HealthQCopilot.Infrastructure.Security;
+using HealthQCopilot.Infrastructure.Startup;
 using Microsoft.EntityFrameworkCore;
 
 
@@ -31,6 +32,7 @@ builder.Services.AddHealthcareDb<AuditDbContext>(builder.Configuration, "FhirDb"
 builder.Services.AddDaprSecretProvider();
 builder.Services.AddEventHubAudit();
 builder.Services.AddMemoryCache();
+builder.Services.AddHostedService<StartupValidationService>();
 
 // ── MLLP HL7 v2 Inbound Listener ─────────────────────────────────────────────
 // Listens on TCP 2575 for ADT/ORU messages from hospital EHR systems.
@@ -74,6 +76,7 @@ await app.InitializeDatabaseAsync<AuditDbContext>();
 
 app.MapOpenApi();
 app.UseCloudEvents();
+app.UseMiddleware<TenantContextMiddleware>();
 app.UseMiddleware<SecurityHeadersMiddleware>();
 app.UseMiddleware<PhiAuditMiddleware>();
 app.UseMiddleware<ConsentEnforcementMiddleware>();

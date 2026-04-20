@@ -6,6 +6,7 @@ using HealthQCopilot.Infrastructure.Middleware;
 using HealthQCopilot.Infrastructure.Observability;
 using HealthQCopilot.Infrastructure.Persistence;
 using HealthQCopilot.Infrastructure.Security;
+using HealthQCopilot.Infrastructure.Startup;
 using HealthQCopilot.RevenueCycle.Endpoints;
 using HealthQCopilot.RevenueCycle.Infrastructure;
 using HealthQCopilot.RevenueCycle.Services;
@@ -41,6 +42,11 @@ builder.Services.AddDatabaseHealthCheck<RevenueDbContext>("revenue");
 builder.Services.AddHealthcareDb<AuditDbContext>(builder.Configuration, "RevenueDb");
 builder.Services.AddDaprSecretProvider();
 builder.Services.AddEventHubAudit();
+builder.Services.AddOutputCache(opts =>
+{
+    opts.AddPolicy("short", b => b.Expire(TimeSpan.FromSeconds(30)).SetVaryByQuery("status", "top", "skip", "patientId"));
+});
+builder.Services.AddHostedService<StartupValidationService>();
 
 var app = builder.Build();
 
@@ -49,10 +55,12 @@ await app.InitializeDatabaseAsync<AuditDbContext>();
 
 app.MapOpenApi();
 app.UseCloudEvents();
+app.UseMiddleware<TenantContextMiddleware>();
 app.UseMiddleware<SecurityHeadersMiddleware>();
 app.UseMiddleware<PhiAuditMiddleware>();
 app.UseAuthentication();
 app.UseAuthorization();
+app.UseOutputCache();
 app.UseHealthcareRateLimiting();
 app.MapControllers();
 app.MapSubscribeHandler();

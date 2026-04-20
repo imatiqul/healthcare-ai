@@ -12,6 +12,7 @@ using HealthQCopilot.Infrastructure.Observability;
 using HealthQCopilot.Infrastructure.Persistence;
 using HealthQCopilot.Infrastructure.RealTime;
 using HealthQCopilot.Infrastructure.Security;
+using HealthQCopilot.Infrastructure.Startup;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.SemanticKernel;
 using Qdrant.Client;
@@ -122,6 +123,11 @@ builder.Services.AddWebPubSubService();
 
 // Azure Event Hubs — HIPAA-compliant immutable audit trail
 builder.Services.AddEventHubAudit();
+builder.Services.AddOutputCache(opts =>
+{
+    opts.AddPolicy("short", b => b.Expire(TimeSpan.FromSeconds(30)).SetVaryByQuery("top", "status"));
+});
+builder.Services.AddHostedService<StartupValidationService>();
 
 var app = builder.Build();
 
@@ -130,10 +136,12 @@ await app.InitializeDatabaseAsync<AuditDbContext>();
 
 app.MapOpenApi();
 app.UseCloudEvents();
+app.UseMiddleware<TenantContextMiddleware>();
 app.UseMiddleware<SecurityHeadersMiddleware>();
 app.UseMiddleware<PhiAuditMiddleware>();
 app.UseAuthentication();
 app.UseAuthorization();
+app.UseOutputCache();
 app.UseHealthcareRateLimiting();
 app.MapControllers();
 app.MapSubscribeHandler();

@@ -27,7 +27,7 @@ public static class RevenueEndpoints
             var query = db.CodingJobs.AsQueryable();
             if (!string.IsNullOrEmpty(status) && Enum.TryParse<CodingJobStatus>(status, true, out var s))
                 query = query.Where(j => j.Status == s);
-            var jobs = await query.OrderByDescending(j => j.CreatedAt).Take(top ?? 50)
+            var jobs = await query.OrderByDescending(j => j.CreatedAt).Take(Math.Clamp(top ?? 50, 1, 100))
                 .Select(j => new
                 {
                     j.Id,
@@ -43,7 +43,10 @@ public static class RevenueEndpoints
                 })
                 .ToListAsync(ct);
             return Results.Ok(jobs);
-        });
+        })
+        .Produces(StatusCodes.Status200OK)
+        .WithSummary("List coding jobs")
+        .WithDescription("Returns up to 100 coding jobs ordered by creation date. Filter by status (Pending/Approved/Rejected).");
 
         group.MapGet("/coding-jobs/{id:guid}", async (
             Guid id,
@@ -125,7 +128,7 @@ public static class RevenueEndpoints
                 query = query.Where(a => a.PatientId == patientId);
             if (!string.IsNullOrEmpty(status) && Enum.TryParse<PriorAuthStatus>(status, true, out var s))
                 query = query.Where(a => a.Status == s);
-            var auths = await query.OrderByDescending(a => a.CreatedAt).Take(top ?? 50)
+            var auths = await query.OrderByDescending(a => a.CreatedAt).Take(Math.Clamp(top ?? 50, 1, 100))
                 .Select(a => new
                 {
                     a.Id,

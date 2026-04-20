@@ -23,13 +23,18 @@ public static class PopHealthEndpoints
             var query = db.PatientRisks.AsQueryable();
             if (!string.IsNullOrEmpty(riskLevel) && Enum.TryParse<RiskLevel>(riskLevel, true, out var level))
                 query = query.Where(r => r.Level == level);
+            const int maxPageSize = 100;
             var risks = await query
                 .OrderByDescending(r => r.RiskScore)
-                .Take(top ?? 50)
+                .Take(Math.Clamp(top ?? 50, 1, maxPageSize))
                 .Select(r => new { r.Id, r.PatientId, Level = r.Level.ToString(), r.RiskScore, r.AssessedAt })
                 .ToListAsync(ct);
             return Results.Ok(risks);
-        });
+        })
+        .Produces(StatusCodes.Status200OK)
+        .WithSummary("List patient risk scores")
+        .WithDescription("Returns up to 100 patient risks ordered by score descending. Filter by riskLevel (Critical/High/Medium/Low).")
+        .CacheOutput("short");
 
         group.MapGet("/risks/{patientId:guid}", async (
             Guid patientId,
@@ -57,7 +62,7 @@ public static class PopHealthEndpoints
                 .Select(g => new { g.Id, g.PatientId, MeasureName = g.MeasureId, Status = g.Status.ToString(), g.IdentifiedAt })
                 .ToListAsync(ct);
             return Results.Ok(gaps);
-        });
+        }).CacheOutput("short");
 
         group.MapPost("/care-gaps/{id:guid}/address", async (
             Guid id,

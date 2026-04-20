@@ -9,6 +9,7 @@ using HealthQCopilot.Infrastructure.Middleware;
 using HealthQCopilot.Infrastructure.Observability;
 using HealthQCopilot.Infrastructure.Persistence;
 using HealthQCopilot.Infrastructure.Security;
+using HealthQCopilot.Infrastructure.Startup;
 using Microsoft.EntityFrameworkCore;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -31,6 +32,7 @@ builder.Services.AddHealthcareDb<AuditDbContext>(builder.Configuration, "Identit
 builder.Services.AddDaprSecretProvider();
 builder.Services.AddEventHubAudit();
 builder.Services.AddHostedService<BreakGlassExpiryService>();
+builder.Services.AddHostedService<StartupValidationService>();
 builder.Services.AddHttpClient("FhirService", client =>
 {
     var apiBase = builder.Configuration["Services:ApiBase"] ?? "http://localhost:5050";
@@ -52,6 +54,7 @@ await app.InitializeDatabaseAsync<AuditDbContext>();
 
 app.MapOpenApi();
 app.UseCloudEvents();
+app.UseMiddleware<TenantContextMiddleware>();
 app.UseMiddleware<SecurityHeadersMiddleware>();
 app.UseMiddleware<PhiAuditMiddleware>();
 app.UseAuthentication();

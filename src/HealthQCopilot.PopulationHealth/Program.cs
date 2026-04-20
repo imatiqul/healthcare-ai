@@ -5,6 +5,7 @@ using HealthQCopilot.Infrastructure.Middleware;
 using HealthQCopilot.Infrastructure.Observability;
 using HealthQCopilot.Infrastructure.Persistence;
 using HealthQCopilot.Infrastructure.Security;
+using HealthQCopilot.Infrastructure.Startup;
 using HealthQCopilot.PopulationHealth.Endpoints;
 using HealthQCopilot.PopulationHealth.Infrastructure;
 using HealthQCopilot.PopulationHealth.Services;
@@ -50,6 +51,12 @@ builder.Services.AddScoped<RiskTrajectoryService>();
 builder.Services.AddHealthcareDb<AuditDbContext>(builder.Configuration, "PopHealthDb");
 builder.Services.AddDaprSecretProvider();
 builder.Services.AddEventHubAudit();
+builder.Services.AddOutputCache(opts =>
+{
+    opts.AddPolicy("short", b => b.Expire(TimeSpan.FromSeconds(30)).SetVaryByQuery("riskLevel", "status", "top", "skip"));
+    opts.AddPolicy("medium", b => b.Expire(TimeSpan.FromMinutes(5)).SetVaryByQuery("*"));
+});
+builder.Services.AddHostedService<StartupValidationService>();
 
 var app = builder.Build();
 
@@ -58,10 +65,12 @@ await app.InitializeDatabaseAsync<AuditDbContext>();
 
 app.MapOpenApi();
 app.UseCloudEvents();
+app.UseMiddleware<TenantContextMiddleware>();
 app.UseMiddleware<SecurityHeadersMiddleware>();
 app.UseMiddleware<PhiAuditMiddleware>();
 app.UseAuthentication();
 app.UseAuthorization();
+app.UseOutputCache();
 app.UseHealthcareRateLimiting();
 app.MapControllers();
 app.MapSubscribeHandler();
