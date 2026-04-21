@@ -16,6 +16,7 @@ import { SessionExpiryGuard } from './components/SessionExpiryGuard'; // Phase 3
 import { PageTracker } from './components/PageTracker'; // Phase 35
 import { QuickActionsSpeedDial } from './components/QuickActionsSpeedDial'; // Phase 35
 import { AnnouncementBanner } from './components/AnnouncementBanner'; // Phase 36
+import { PatientContextBar } from './components/PatientContextBar';   // Phase 49
 import { OfflineIndicator } from './components/OfflineIndicator'; // Phase 37
 import { OnboardingWizard } from './components/OnboardingWizard'; // Phase 38
 import { TabbedPageLayout } from './components/TabbedPageLayout'; // Phase 48
@@ -174,6 +175,7 @@ export default function App() {
           <OfflineIndicator />
           <AppBreadcrumbs />
           <AnnouncementBanner />
+          <PatientContextBar />
           <Box component="main" sx={{ flex: 1, overflow: 'auto', p: { xs: 2, md: 3 }, bgcolor: 'background.default' }}>
             {/* PageTracker runs on every navigation — outside Routes so it captures all paths */}
             <PageTracker />

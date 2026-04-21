@@ -1,5 +1,6 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useGlobalStore } from '../store';
 import Box from '@mui/material/Box';
 import Typography from '@mui/material/Typography';
 import Stack from '@mui/material/Stack';
@@ -65,7 +66,8 @@ function riskChipColor(level: string): 'error' | 'warning' | 'default' | 'succes
 // ── Component ─────────────────────────────────────────────────────────────────
 
 export function PatientQuickSearch() {
-  const navigate = useNavigate();
+  const navigate          = useNavigate();
+  const setActivePatient  = useGlobalStore(s => s.setActivePatient);
   const [open, setOpen]       = useState(false);
   const [query, setQuery]     = useState('');
   const [risks, setRisks]     = useState<PatientRisk[]>([]);
@@ -116,11 +118,12 @@ export function PatientQuickSearch() {
     debounce.current = setTimeout(() => fetchRisks(val || undefined), 300);
   };
 
-  const selectPatient = useCallback((patientId: string) => {
+  const selectPatient = useCallback((patientId: string, riskLevel?: string) => {
     saveRecentPatient(patientId);
+    setActivePatient({ id: patientId, riskLevel });
     closeSearch();
     navigate(`/encounters?patientId=${encodeURIComponent(patientId)}`);
-  }, [closeSearch, navigate]);
+  }, [closeSearch, navigate, setActivePatient]);
 
   // Keyboard shortcut: Ctrl+Shift+P
   useEffect(() => {
@@ -225,7 +228,7 @@ export function PatientQuickSearch() {
                 <List dense disablePadding>
                   {displayRisks.map(r => (
                     <ListItem key={r.id} disablePadding>
-                      <ListItemButton onClick={() => selectPatient(r.patientId)} sx={{ px: 2, py: 0.75 }}>
+                      <ListItemButton onClick={() => selectPatient(r.patientId, r.level)} sx={{ px: 2, py: 0.75 }}>
                         <TrendingUpIcon fontSize="small" sx={{ mr: 1.25, color: 'text.disabled', fontSize: 16 }} />
                         <ListItemText
                           primary={r.patientId}
@@ -261,7 +264,7 @@ export function PatientQuickSearch() {
             <Divider />
             <Box sx={{ px: 2, py: 0.75 }}>
               <Typography variant="caption" color="text.disabled">
-                Selects patient → navigates to Encounters
+                Selects patient → sets active context &amp; navigates to Encounters
               </Typography>
             </Box>
           </Paper>

@@ -21,7 +21,7 @@ import CheckCircleIcon from '@mui/icons-material/CheckCircle';
 
 // ── Data ──────────────────────────────────────────────────────────────────────
 
-export const CURRENT_VERSION = 'v38';
+export const CURRENT_VERSION = 'v49';
 const SEEN_KEY = 'hq:whats-new-seen';
 
 interface FeatureEntry {
@@ -37,6 +37,36 @@ interface Release {
 }
 
 export const RELEASES: Release[] = [
+  {
+    version: 'v49',
+    title:   'Global Patient Context',
+    date:    'May 2026',
+    features: [
+      { title: 'Patient Context Bar',       description: 'Sticky banner appears whenever a patient is selected — shows name, risk badge, and quick links to Encounters, Population Health, Scheduling, Voice, and Triage.' },
+      { title: 'Persistent patient state',  description: 'Selecting a patient via Quick Search now sets a global active-patient context shared across all clinical micro-frontends.' },
+      { title: 'One-click patient dismiss', description: 'Clear the active patient at any time with the × button in the context bar.' },
+    ],
+  },
+  {
+    version: 'v48',
+    title:   'Tabbed Sub-Navigation',
+    date:    'May 2026',
+    features: [
+      { title: 'Tabbed layouts on all clinical routes', description: 'Voice, Triage, Scheduling, Population Health, Revenue, Encounters, Patient Portal, and AI Governance pages now use scrollable tab bars for faster in-section navigation.' },
+      { title: 'Session-persistent tab state',          description: 'Your last-selected tab on each page is remembered for the duration of your browser session.' },
+      { title: 'Accessible tab bar',                    description: 'Full ARIA role and keyboard navigation support (← → arrow keys) on every tab bar.' },
+    ],
+  },
+  {
+    version: 'v47',
+    title:   'Patient Quick Search & Quick Actions',
+    date:    'April 2026',
+    features: [
+      { title: 'Patient Quick Search',          description: 'Press Ctrl+Shift+P or click the search icon in the top bar to instantly search patients by ID with risk-level chips.' },
+      { title: 'Recent patients history',       description: 'Patient Quick Search remembers your last 5 patients for one-click access.' },
+      { title: 'Dashboard Quick Actions bar',   description: 'New action bar on the Dashboard gives one-click shortcuts to New Voice Session, Triage Referral, Book Appointment, and more.' },
+    ],
+  },
   {
     version: 'v38',
     title:   'Go-Live Readiness',

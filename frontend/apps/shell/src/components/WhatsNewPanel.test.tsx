@@ -84,10 +84,11 @@ describe('countUnseenFeatures', () => {
   });
 
   it('returns features from unseen releases only', () => {
-    // Mark v37 as seen → only v38 features are unseen
+    // Mark v37 as seen → all releases newer than v37 are unseen (v49, v48, v47, v38)
     localStorage.setItem(SEEN_KEY, 'v37');
-    const v38Features = RELEASES.find(r => r.version === 'v38')!.features.length;
-    expect(countUnseenFeatures()).toBe(v38Features);
+    const v37Index   = RELEASES.findIndex(r => r.version === 'v37');
+    const expected   = RELEASES.slice(0, v37Index).reduce((acc, r) => acc + r.features.length, 0);
+    expect(countUnseenFeatures()).toBe(expected);
   });
 });
 
