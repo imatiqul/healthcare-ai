@@ -59,3 +59,23 @@ test.describe('Backend ACA Health Endpoints', () => {
     });
   }
 });
+
+// ── Phase 41 — New shell routes return HTTP 200 from SWA ─────────────────────
+
+const SHELL_URL = process.env.SHELL_URL || 'https://gentle-tree-03115af0f.7.azurestaticapps.net';
+
+const PHASE41_SHELL_ROUTES = [
+  { route: '/alerts',                label: 'Clinical Alerts Center' },
+  { route: '/admin/reports',         label: 'Reports & Export Panel' },
+  { route: '/admin/practitioners',   label: 'Practitioner Manager' },
+];
+
+test.describe('Phase 41 — Shell SWA Routes Return HTTP 200', () => {
+  for (const { route, label } of PHASE41_SHELL_ROUTES) {
+    test(`${label} (${route}) returns HTTP 200`, async ({ request }) => {
+      // SWAs with client-side routing return 200 for all paths (fallback to index.html)
+      const response = await request.get(`${SHELL_URL}${route}`);
+      expect(response.status()).toBe(200);
+    });
+  }
+});

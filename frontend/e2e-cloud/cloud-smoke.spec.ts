@@ -201,3 +201,82 @@ test.describe('Phase 27 — ML Confidence Endpoint', () => {
   });
 });
 
+// ── Phase 41 — Clinical Alerts Center + Reports + Practitioner Manager ────────
+
+test.describe('Phase 41 — Clinical Alerts Center page load', () => {
+  test('navigates to /alerts and page body is non-empty', async ({ page }) => {
+    await page.route('**/api/v1/**', (route) =>
+      route.fulfill({ status: 200, contentType: 'application/json', body: '[]' }),
+    );
+    await page.goto('/alerts');
+    await expect(page.locator('body')).not.toBeEmpty();
+  });
+});
+
+test.describe('Phase 41 — Reports & Export Panel page load', () => {
+  test('navigates to /admin/reports and page body is non-empty', async ({ page }) => {
+    await page.goto('/admin/reports');
+    await expect(page.locator('body')).not.toBeEmpty();
+  });
+});
+
+test.describe('Phase 41 — Practitioner Manager page load', () => {
+  test('navigates to /admin/practitioners and page body is non-empty', async ({ page }) => {
+    await page.route('**/api/v1/identity/practitioners**', (route) =>
+      route.fulfill({ status: 200, contentType: 'application/json', body: '[]' }),
+    );
+    await page.goto('/admin/practitioners');
+    await expect(page.locator('body')).not.toBeEmpty();
+  });
+});
+
+test.describe('Phase 41 — Clinical Alerts API Endpoints', () => {
+  const GATEWAY = process.env.GATEWAY_ACA_URL;
+
+  test('risk patients endpoint is reachable', async ({ request }) => {
+    test.skip(!GATEWAY, 'GATEWAY_ACA_URL not configured');
+    const res = await request.get(`${GATEWAY}/api/v1/population-health/risks`);
+    expect(res.status()).toBeLessThan(500);
+  });
+
+  test('break-glass sessions endpoint is reachable', async ({ request }) => {
+    test.skip(!GATEWAY, 'GATEWAY_ACA_URL not configured');
+    const res = await request.get(`${GATEWAY}/api/v1/identity/break-glass`);
+    expect(res.status()).toBeLessThan(500);
+  });
+
+  test('waitlist endpoint is reachable', async ({ request }) => {
+    test.skip(!GATEWAY, 'GATEWAY_ACA_URL not configured');
+    const res = await request.get(`${GATEWAY}/api/v1/scheduling/waitlist`);
+    expect(res.status()).toBeLessThan(500);
+  });
+
+  test('denials endpoint is reachable', async ({ request }) => {
+    test.skip(!GATEWAY, 'GATEWAY_ACA_URL not configured');
+    const res = await request.get(`${GATEWAY}/api/v1/revenue/denials`);
+    expect(res.status()).toBeLessThan(500);
+  });
+});
+
+test.describe('Phase 41 — Reports Export API Endpoints', () => {
+  const GATEWAY = process.env.GATEWAY_ACA_URL;
+
+  test('audit log export endpoint is reachable', async ({ request }) => {
+    test.skip(!GATEWAY, 'GATEWAY_ACA_URL not configured');
+    const res = await request.get(`${GATEWAY}/api/v1/identity/audit-log`);
+    expect(res.status()).toBeLessThan(500);
+  });
+
+  test('denial analytics endpoint is reachable', async ({ request }) => {
+    test.skip(!GATEWAY, 'GATEWAY_ACA_URL not configured');
+    const res = await request.get(`${GATEWAY}/api/v1/revenue/denials/analytics`);
+    expect(res.status()).toBeLessThan(500);
+  });
+
+  test('practitioners list endpoint is reachable', async ({ request }) => {
+    test.skip(!GATEWAY, 'GATEWAY_ACA_URL not configured');
+    const res = await request.get(`${GATEWAY}/api/v1/identity/practitioners`);
+    expect(res.status()).toBeLessThan(500);
+  });
+});
+

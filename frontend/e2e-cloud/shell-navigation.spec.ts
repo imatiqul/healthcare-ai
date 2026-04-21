@@ -18,6 +18,19 @@ test.describe('Shell App — Cloud Navigation', () => {
     await expect(sidebar.getByText('Revenue Cycle')).toBeVisible();
   });
 
+  // Phase 41 — new sidebar nav items
+  test('sidebar shows Clinical Alerts nav item', async ({ page }) => {
+    await page.goto('/');
+    const sidebar = page.locator('aside, nav, [class*="sidebar"], [class*="Sidebar"]').first();
+    await expect(sidebar.getByText('Clinical Alerts')).toBeVisible({ timeout: 10_000 });
+  });
+
+  test('sidebar shows Reports & Export nav item', async ({ page }) => {
+    await page.goto('/');
+    const sidebar = page.locator('aside, nav, [class*="sidebar"], [class*="Sidebar"]').first();
+    await expect(sidebar.getByText('Reports & Export')).toBeVisible({ timeout: 10_000 });
+  });
+
   test('can navigate to voice page', async ({ page }) => {
     await page.goto('/');
     await page.getByText('Voice Sessions').click();
@@ -46,5 +59,26 @@ test.describe('Shell App — Cloud Navigation', () => {
     await page.goto('/');
     await page.getByText('Revenue Cycle').click();
     await expect(page).toHaveURL(/\/revenue/);
+  });
+
+  // Phase 41 — new route navigation
+  test('can navigate to Clinical Alerts page via sidebar', async ({ page }) => {
+    await page.route('**/api/v1/**', (route) =>
+      route.fulfill({ status: 200, contentType: 'application/json', body: '[]' }),
+    );
+    await page.goto('/');
+    await page.getByText('Clinical Alerts').click();
+    await expect(page).toHaveURL(/\/alerts/);
+    await expect(page.locator('body')).not.toBeEmpty();
+  });
+
+  test('can navigate to Reports & Export page via sidebar', async ({ page }) => {
+    await page.route('**/api/v1/**', (route) =>
+      route.fulfill({ status: 200, contentType: 'application/json', body: '[]' }),
+    );
+    await page.goto('/');
+    await page.getByText('Reports & Export').click();
+    await expect(page).toHaveURL(/\/admin\/reports/);
+    await expect(page.locator('body')).not.toBeEmpty();
   });
 });
