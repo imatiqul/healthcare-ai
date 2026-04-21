@@ -7,6 +7,14 @@ export default defineConfig({
   resolve: {
     alias: {
       '@': path.resolve(__dirname, 'src'),
+      // @mui/lab is not installed — stub all lab imports so ClinicalTimeline.tsx doesn't crash tests
+      '@mui/lab/Timeline':                path.resolve(__dirname, 'src/__mocks__/mui-lab.tsx'),
+      '@mui/lab/TimelineItem':            path.resolve(__dirname, 'src/__mocks__/mui-lab.tsx'),
+      '@mui/lab/TimelineSeparator':       path.resolve(__dirname, 'src/__mocks__/mui-lab.tsx'),
+      '@mui/lab/TimelineConnector':       path.resolve(__dirname, 'src/__mocks__/mui-lab.tsx'),
+      '@mui/lab/TimelineContent':         path.resolve(__dirname, 'src/__mocks__/mui-lab.tsx'),
+      '@mui/lab/TimelineDot':             path.resolve(__dirname, 'src/__mocks__/mui-lab.tsx'),
+      '@mui/lab/TimelineOppositeContent': path.resolve(__dirname, 'src/__mocks__/mui-lab.tsx'),
     },
   },
   test: {

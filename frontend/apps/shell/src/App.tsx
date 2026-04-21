@@ -71,6 +71,8 @@ const ClinicalCoderPanelPage = lazy(() => import('triage/ClinicalCoderPanel').th
 const MlConfidencePanelPage = lazy(() => import('./pages/MlConfidencePanel')); // Phase 27
 const CampaignManagerPanelPage = lazy(() => import('engagement/CampaignManagerPanel').then(m => ({ default: m.CampaignManagerPanel }))); // Phase 27
 const DemoLive = lazy(() => import('./pages/DemoLive'));
+const ClinicalAlertsCenterPage = lazy(() => import('./pages/ClinicalAlertsCenter')); // Phase 41
+const ReportsExportPanelPage   = lazy(() => import('./pages/ReportsExportPanel'));   // Phase 41
 const MedicationPanelPage = lazy(() => import('encounters/MedicationPanel').then(m => ({ default: m.MedicationPanel }))); // Phase 30
 const AllergyPanelPage = lazy(() => import('encounters/AllergyPanel').then(m => ({ default: m.AllergyPanel }))); // Phase 30
 const ProblemListPanelPage = lazy(() => import('encounters/ProblemListPanel').then(m => ({ default: m.ProblemListPanel }))); // Phase 30
@@ -318,6 +320,16 @@ export default function App() {
                 <Route path="/admin/preferences" element={
                   <MfeErrorBoundary name="Preferences">
                     <UserPreferencesPanelPage />
+                  </MfeErrorBoundary>
+                } />
+                <Route path="/alerts" element={
+                  <MfeErrorBoundary name="Clinical Alerts">
+                    <ClinicalAlertsCenterPage />
+                  </MfeErrorBoundary>
+                } />
+                <Route path="/admin/reports" element={
+                  <MfeErrorBoundary name="Reports">
+                    <ReportsExportPanelPage />
                   </MfeErrorBoundary>
                 } />
                 {/* Phase 38 — 404 catch-all (must be last) */}

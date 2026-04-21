@@ -22,6 +22,7 @@ import { WelcomeCard } from '../components/WelcomeCard';
 import { RecentPagesWidget } from '../components/RecentPagesWidget'; // Phase 35
 import { FavoritePagesWidget } from '../components/FavoritePagesWidget'; // Phase 36
 import { DashboardCustomizer, loadVisibleSections, type DashboardSection } from '../components/DashboardCustomizer'; // Phase 37
+import { ClinicalAlertsSummaryWidget } from '../components/ClinicalAlertsSummaryWidget'; // Phase 41
 
 const API_BASE = import.meta.env.VITE_API_BASE_URL || '';
 
@@ -263,6 +264,7 @@ export default function Dashboard() {
           </Stack>
         </Grid>
         <Grid item xs={12} md={3}>
+          <ClinicalAlertsSummaryWidget />
           <FavoritePagesWidget />
           <RecentPagesWidget />
         </Grid>
