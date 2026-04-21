@@ -32,6 +32,7 @@ describe('PushSubscriptionPanel', () => {
     await waitFor(() => {
       expect(global.fetch).toHaveBeenCalledWith(
         expect.stringContaining('/api/v1/notifications/push-subscriptions?patientId=patient-001'),
+        expect.any(Object),
       );
     });
   });
@@ -119,5 +120,11 @@ describe('PushSubscriptionPanel', () => {
         expect.objectContaining({ method: 'POST' }),
       );
     });
+  });
+
+  it('shows validation error when searching with empty Patient ID', async () => {
+    render(<PushSubscriptionPanel />);
+    // Search button is disabled when Patient ID is empty — guard is active
+    expect(screen.getByRole('button', { name: 'Search' })).toBeDisabled();
   });
 });

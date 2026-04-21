@@ -67,6 +67,7 @@ export function CreateEncounterModal({ patientId, onClose, onCreated }: Props) {
 
     try {
       const res = await fetch(`${API_BASE}/api/v1/fhir/encounters`, {
+        signal: AbortSignal.timeout(10_000),
         method: 'POST',
         headers: { 'Content-Type': 'application/fhir+json' },
         body: JSON.stringify(payload),

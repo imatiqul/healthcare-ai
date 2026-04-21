@@ -49,6 +49,7 @@ describe('XaiExplanationPanel', () => {
     await waitFor(() => {
       expect(global.fetch).toHaveBeenCalledWith(
         expect.stringContaining('/api/v1/agents/decisions/dec-001/explanation'),
+        expect.any(Object),
       );
     });
   });

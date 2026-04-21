@@ -86,6 +86,7 @@ export default function DemoLive() {
     setError('');
     try {
       const res = await fetch(`${DEMO_API}/${demo.sessionId}/next`, {
+        signal: AbortSignal.timeout(10_000),
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
       });
@@ -113,6 +114,7 @@ export default function DemoLive() {
     setShowFeedback(false);
     try {
       await fetch(`${DEMO_API}/${demo.sessionId}/feedback`, {
+        signal: AbortSignal.timeout(10_000),
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ step: stepInfo.step, rating, tags, comment }),
@@ -133,6 +135,7 @@ export default function DemoLive() {
     setShowOverall(false);
     try {
       await fetch(`${DEMO_API}/${demo.sessionId}/complete`, {
+        signal: AbortSignal.timeout(10_000),
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ npsScore: nps, featurePriorities: priorities, comment }),

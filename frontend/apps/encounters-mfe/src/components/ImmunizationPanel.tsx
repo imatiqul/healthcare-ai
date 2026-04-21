@@ -47,7 +47,7 @@ export function ImmunizationPanel() {
     setLoading(true);
     setError(null);
     try {
-      const res = await fetch(`${API_BASE}/api/v1/fhir/immunizations/${encodeURIComponent(id)}`);
+      const res = await fetch(`${API_BASE}/api/v1/fhir/immunizations/${encodeURIComponent(id)}`, { signal: AbortSignal.timeout(10_000) });
       if (!res.ok) throw new Error(`HTTP ${res.status}`);
       const bundle: Bundle<Immunization> = await res.json();
       setImmunizations(bundle.entry?.map(e => e.resource) ?? []);

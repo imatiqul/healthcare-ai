@@ -29,6 +29,7 @@ export function PatientProfilePanel() {
     setError(null);
     try {
       const res = await fetch(`${API_BASE}/api/v1/identity/patients/me`, {
+        signal: AbortSignal.timeout(10_000),
         headers: { Accept: 'application/json' },
       });
       if (!res.ok) {

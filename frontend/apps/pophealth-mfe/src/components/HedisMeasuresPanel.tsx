@@ -91,6 +91,7 @@ export function HedisMeasuresPanel() {
 
     try {
       const res = await fetch(`${API_BASE}/api/v1/population-health/patients/${encodeURIComponent(patientId)}/hedis`, {
+        signal: AbortSignal.timeout(10_000),
         method: 'GET',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(input),

@@ -205,6 +205,7 @@ export function VoiceSessionController() {
     setAiDone(false);
     try {
       const res = await fetch(`${API_BASE}/api/v1/voice/sessions`, {
+        signal: AbortSignal.timeout(10_000),
         method: 'POST',
         body: JSON.stringify({ patientId: '00000000-0000-0000-0000-000000000001' }),
         headers: { 'Content-Type': 'application/json' },
@@ -221,7 +222,7 @@ export function VoiceSessionController() {
   async function endSession() {
     if (!sessionId) return;
     stopRecording();
-    await fetch(`${API_BASE}/api/v1/voice/sessions/${sessionId}/end`, { method: 'POST' });
+    await fetch(`${API_BASE}/api/v1/voice/sessions/${sessionId}/end`, { signal: AbortSignal.timeout(10_000), method: 'POST' });
     setStatus('ended');
     await disconnectPubSub();
   }
@@ -235,12 +236,14 @@ export function VoiceSessionController() {
     setAiDone(false);
     try {
       await fetch(`${API_BASE}/api/v1/voice/sessions/${sessionId}/transcript`, {
+        signal: AbortSignal.timeout(10_000),
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ transcriptText }),
       });
 
       const triageRes = await fetch(`${API_BASE}/api/v1/agents/triage`, {
+        signal: AbortSignal.timeout(10_000),
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ sessionId, transcriptText }),

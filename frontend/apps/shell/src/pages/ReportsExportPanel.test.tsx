@@ -65,6 +65,7 @@ describe('ReportsExportPanel', () => {
     fireEvent.click(downloadBtn);
     await waitFor(() => expect(mockFetch).toHaveBeenCalledWith(
       expect.stringContaining('/api/v1/admin/audit/export'),
+      expect.any(Object),
     ));
   });
 

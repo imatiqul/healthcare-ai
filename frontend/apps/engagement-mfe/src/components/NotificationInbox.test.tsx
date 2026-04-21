@@ -77,7 +77,8 @@ describe('NotificationInbox', () => {
     });
 
     expect(fetchMock).toHaveBeenCalledWith(
-      expect.stringContaining('patientId=special-patient')
+      expect.stringContaining('patientId=special-patient'),
+      expect.any(Object),
     );
   });
 });

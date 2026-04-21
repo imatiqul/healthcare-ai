@@ -58,6 +58,7 @@ export function DrugInteractionChecker() {
     setError('');
     try {
       const res = await fetch(`${API_BASE}/api/v1/population-health/drug-interactions/check`, {
+        signal: AbortSignal.timeout(10_000),
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ drugs }),

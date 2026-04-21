@@ -68,7 +68,7 @@ export function CopilotChat() {
   // Load suggestions on first open
   useEffect(() => {
     if (open && suggestions.length === 0) {
-      fetch(`${AGENT_API}/suggestions`)
+      fetch(`${AGENT_API}/suggestions`, { signal: AbortSignal.timeout(10_000) })
         .then(r => r.ok ? r.json() : [])
         .then(setSuggestions)
         .catch(() => {});

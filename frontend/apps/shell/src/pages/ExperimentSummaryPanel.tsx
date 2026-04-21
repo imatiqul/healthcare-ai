@@ -50,6 +50,7 @@ export default function ExperimentSummaryPanel() {
     try {
       const res = await fetch(
         `${API_BASE}/api/v1/agents/experiments/${encodeURIComponent(experimentId.trim())}/summary`,
+        { signal: AbortSignal.timeout(10_000) },
       );
       if (!res.ok) throw new Error(`HTTP ${res.status}`);
       const data: ExperimentSummary = await res.json();

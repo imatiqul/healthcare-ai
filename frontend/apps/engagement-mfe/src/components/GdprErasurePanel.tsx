@@ -35,6 +35,7 @@ export function GdprErasurePanel() {
     setResult(null);
     try {
       const res = await fetch(`${API_BASE}/api/v1/identity/consent/erasure`, {
+        signal: AbortSignal.timeout(10_000),
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({

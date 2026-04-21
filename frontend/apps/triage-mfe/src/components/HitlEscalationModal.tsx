@@ -40,6 +40,7 @@ export function HitlEscalationModal({
     setError(null);
     try {
       const res = await fetch(`${API_BASE}/api/v1/agents/triage/${workflowId}/approve`, {
+        signal: AbortSignal.timeout(10_000),
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({

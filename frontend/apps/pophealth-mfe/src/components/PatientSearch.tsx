@@ -41,6 +41,7 @@ export function PatientSearch() {
     try {
       const res = await fetch(
         `${API_BASE}/api/v1/population-health/risks?search=${encodeURIComponent(q.trim())}&top=20`,
+        { signal: AbortSignal.timeout(10_000) },
       );
       if (res.ok) {
         const data = await res.json();

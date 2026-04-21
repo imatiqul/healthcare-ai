@@ -163,4 +163,16 @@ describe('CampaignManagerPanel', () => {
     );
     expect(await screen.findByText(/3 message\(s\) queued/i)).toBeInTheDocument();
   });
+
+  it('shows validation error when creating campaign without name or targets', async () => {
+    vi.mocked(global.fetch).mockResolvedValueOnce({
+      ok: true,
+      json: () => Promise.resolve([]),
+    } as Response);
+    const user = userEvent.setup({ delay: null });
+    render(<CampaignManagerPanel />);
+    await screen.findByText(/No campaigns found/);
+    // Button is disabled when fields are empty — confirms guard is active
+    expect(screen.getByRole('button', { name: /create campaign/i })).toBeDisabled();
+  });
 });

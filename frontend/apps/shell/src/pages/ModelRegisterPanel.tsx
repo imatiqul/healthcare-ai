@@ -77,6 +77,7 @@ export default function ModelRegisterPanel() {
     setRegistered(null);
     try {
       const res = await fetch(`${API_BASE}/api/v1/agents/governance/register`, {
+        signal: AbortSignal.timeout(10_000),
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(form),
@@ -98,7 +99,8 @@ export default function ModelRegisterPanel() {
     setDetail(null);
     try {
       const res = await fetch(
-        `${API_BASE}/api/v1/agents/governance/${encodeURIComponent(lookupId.trim())}`
+        `${API_BASE}/api/v1/agents/governance/${encodeURIComponent(lookupId.trim())}`,
+        { signal: AbortSignal.timeout(10_000) },
       );
       if (!res.ok) throw new Error(`HTTP ${res.status}`);
       const data: ModelDetail = await res.json();

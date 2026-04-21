@@ -49,7 +49,7 @@ export function VoiceSessionHistory() {
     setLoading(true);
     setError(null);
     try {
-      const res = await fetch(`${API_BASE}/api/v1/voice/sessions`);
+      const res = await fetch(`${API_BASE}/api/v1/voice/sessions`, { signal: AbortSignal.timeout(10_000) });
       if (!res.ok) throw new Error(`HTTP ${res.status}`);
       const data: VoiceSessionSummary[] = await res.json();
       setSessions(data);

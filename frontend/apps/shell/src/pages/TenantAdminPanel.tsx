@@ -69,7 +69,7 @@ export default function TenantAdminPanel() {
     setLoading(true);
     setError('');
     try {
-      const res = await fetch(`${API_BASE}/api/v1/tenants?page=1&pageSize=50`);
+      const res = await fetch(`${API_BASE}/api/v1/tenants?page=1&pageSize=50`, { signal: AbortSignal.timeout(10_000) });
       if (!res.ok) {
         setError(`Failed to load tenants — HTTP ${res.status}`);
         return;
@@ -106,6 +106,7 @@ export default function TenantAdminPanel() {
     setSubmitError('');
     try {
       const res = await fetch(`${API_BASE}/api/v1/tenants`, {
+        signal: AbortSignal.timeout(10_000),
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -135,7 +136,7 @@ export default function TenantAdminPanel() {
     setDeleteId(id);
     setDeleting(true);
     try {
-      const res = await fetch(`${API_BASE}/api/v1/tenants/${id}`, { method: 'DELETE' });
+      const res = await fetch(`${API_BASE}/api/v1/tenants/${id}`, { signal: AbortSignal.timeout(10_000), method: 'DELETE' });
       if (!res.ok && res.status !== 204) {
         setError(`Delete failed — HTTP ${res.status}`);
         return;

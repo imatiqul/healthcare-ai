@@ -111,6 +111,7 @@ describe('OcrDocumentPanel', () => {
     await waitFor(() =>
       expect(global.fetch).toHaveBeenCalledWith(
         expect.stringContaining('/api/v1/ocr/jobs?patientId=pat-1'),
+        expect.any(Object),
       ),
     );
   });

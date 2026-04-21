@@ -50,6 +50,7 @@ describe('FhirEverythingViewer', () => {
     await waitFor(() =>
       expect(global.fetch).toHaveBeenCalledWith(
         expect.stringContaining('/api/v1/fhir/patients/PAT-999/$everything'),
+        expect.any(Object),
       ),
     );
   });
@@ -68,6 +69,7 @@ describe('FhirEverythingViewer', () => {
     await waitFor(() =>
       expect(global.fetch).toHaveBeenCalledWith(
         expect.stringContaining('_type=Observation'),
+        expect.any(Object),
       ),
     );
   });

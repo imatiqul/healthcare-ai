@@ -57,7 +57,7 @@ export default function BreakGlassAccessPanel() {
     setLoading(true);
     setError(null);
     try {
-      const res = await fetch(`${API_BASE}/api/v1/identity/break-glass`);
+      const res = await fetch(`${API_BASE}/api/v1/identity/break-glass`, { signal: AbortSignal.timeout(10_000) });
       if (!res.ok) throw new Error(`HTTP ${res.status}`);
       const data: BreakGlassAccess[] = await res.json();
       setAccesses(data);
@@ -71,6 +71,14 @@ export default function BreakGlassAccessPanel() {
   useEffect(() => { fetchAccesses(); }, [fetchAccesses]);
 
   async function requestAccess() {
+    if (
+      !requestForm.requestedByUserId.trim() ||
+      !requestForm.targetPatientId.trim() ||
+      requestForm.clinicalJustification.trim().length < 20
+    ) {
+      setError('All fields are required. Clinical justification must be at least 20 characters.');
+      return;
+    }
     setRequesting(true);
     setError(null);
     try {
@@ -81,6 +89,7 @@ export default function BreakGlassAccessPanel() {
       };
       if (requestForm.durationHours) body.durationHours = Number(requestForm.durationHours);
       const res = await fetch(`${API_BASE}/api/v1/identity/break-glass`, {
+        signal: AbortSignal.timeout(10_000),
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(body),
@@ -100,7 +109,7 @@ export default function BreakGlassAccessPanel() {
     setRevokingId(id);
     setError(null);
     try {
-      const res = await fetch(`${API_BASE}/api/v1/identity/break-glass/${id}`, { method: 'DELETE' });
+      const res = await fetch(`${API_BASE}/api/v1/identity/break-glass/${id}`, { signal: AbortSignal.timeout(10_000), method: 'DELETE' });
       if (!res.ok) throw new Error(`HTTP ${res.status}`);
       await fetchAccesses();
     } catch (err) {

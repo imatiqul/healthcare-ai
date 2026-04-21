@@ -39,6 +39,7 @@ export function OtpVerificationPanel() {
       const body: { phoneNumber: string; userId?: string } = { phoneNumber };
       if (userId.trim()) body.userId = userId.trim();
       const res = await fetch(`${API_BASE}/api/v1/identity/otp/send`, {
+        signal: AbortSignal.timeout(10_000),
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(body),
@@ -65,6 +66,7 @@ export function OtpVerificationPanel() {
     setError('');
     try {
       const res = await fetch(`${API_BASE}/api/v1/identity/otp/verify`, {
+        signal: AbortSignal.timeout(10_000),
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ otpId, code }),

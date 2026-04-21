@@ -70,6 +70,7 @@ export default function ClinicianFeedbackDashboard() {
       since.setDate(since.getDate() - sinceDays);
       const res = await fetch(
         `${API_BASE}/api/v1/agents/feedback/summary?since=${since.toISOString()}`,
+        { signal: AbortSignal.timeout(10_000) },
       );
       if (!res.ok) throw new Error(`HTTP ${res.status}`);
       const data: FeedbackSummary = await res.json();
@@ -105,6 +106,7 @@ export default function ClinicianFeedbackDashboard() {
         comment: comment.trim() || undefined,
       };
       const res = await fetch(`${API_BASE}/api/v1/agents/feedback`, {
+        signal: AbortSignal.timeout(10_000),
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(payload),

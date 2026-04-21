@@ -52,6 +52,7 @@ describe('TenantAdminPanel', () => {
     await waitFor(() => {
       expect(mockFetch).toHaveBeenCalledWith(
         expect.stringContaining('/api/v1/tenants'),
+        expect.any(Object),
       );
     });
   });

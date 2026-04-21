@@ -101,8 +101,8 @@ export function DeliveryAnalyticsDashboard() {
     setError(null);
 
     Promise.all([
-      fetch(`${API_BASE}/api/v1/notifications/analytics/delivery`),
-      fetch(`${API_BASE}/api/v1/notifications/campaigns`),
+      fetch(`${API_BASE}/api/v1/notifications/analytics/delivery`, { signal: AbortSignal.timeout(10_000) }),
+      fetch(`${API_BASE}/api/v1/notifications/campaigns`, { signal: AbortSignal.timeout(10_000) }),
     ])
       .then(async ([analyticsRes, campaignsRes]) => {
         if (cancelled) return;

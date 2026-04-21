@@ -107,7 +107,7 @@ export function FhirObservationViewer() {
     try {
       const categoryParam = category ? `?category=${encodeURIComponent(category)}` : '';
       const url = `${API_BASE}/api/v1/fhir/observations/${encodeURIComponent(patientId.trim())}${categoryParam}`;
-      const res = await fetch(url);
+      const res = await fetch(url, { signal: AbortSignal.timeout(10_000) });
       if (!res.ok) throw new Error(`HTTP ${res.status}`);
       const raw = await res.json();
       setObservations(parseBundle(raw));

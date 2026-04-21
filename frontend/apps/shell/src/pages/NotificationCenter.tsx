@@ -52,9 +52,9 @@ async function fetchLiveAlerts(): Promise<Omit<NotificationRecord, 'read' | 'rec
   const alerts: Omit<NotificationRecord, 'read' | 'receivedAt'>[] = [];
   try {
     const [denialsRes, triageRes, deliveryRes] = await Promise.allSettled([
-      fetch(`${API_BASE}/api/v1/revenue/denials/analytics`).then(r => r.ok ? r.json() : null),
-      fetch(`${API_BASE}/api/v1/agents/triage?top=50`).then(r => r.ok ? r.json() : null),
-      fetch(`${API_BASE}/api/v1/notifications/analytics/delivery`).then(r => r.ok ? r.json() : null),
+      fetch(`${API_BASE}/api/v1/revenue/denials/analytics`, { signal: AbortSignal.timeout(10_000) }).then(r => r.ok ? r.json() : null),
+      fetch(`${API_BASE}/api/v1/agents/triage?top=50`, { signal: AbortSignal.timeout(10_000) }).then(r => r.ok ? r.json() : null),
+      fetch(`${API_BASE}/api/v1/notifications/analytics/delivery`, { signal: AbortSignal.timeout(10_000) }).then(r => r.ok ? r.json() : null),
     ]);
 
     const denials  = denialsRes.status  === 'fulfilled' ? denialsRes.value  : null;

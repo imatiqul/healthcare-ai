@@ -28,8 +28,8 @@ export function RiskDistributionChart() {
     async function load() {
       try {
         const [statsRes, risksRes] = await Promise.all([
-          fetch(`${API_BASE}/api/v1/population-health/stats`),
-          fetch(`${API_BASE}/api/v1/population-health/risks?top=200`),
+          fetch(`${API_BASE}/api/v1/population-health/stats`, { signal: AbortSignal.timeout(10_000) }),
+          fetch(`${API_BASE}/api/v1/population-health/risks?top=200`, { signal: AbortSignal.timeout(10_000) }),
         ]);
         if (statsRes.ok) setStats(await statsRes.json());
         if (risksRes.ok) {

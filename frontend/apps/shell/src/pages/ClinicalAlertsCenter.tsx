@@ -94,10 +94,10 @@ export default function ClinicalAlertsCenter() {
     setError('');
     try {
       const [riskRes, bgRes, wlRes, denRes] = await Promise.allSettled([
-        fetch(`${API_BASE}/api/v1/population-health/risks?top=20`),
-        fetch(`${API_BASE}/api/v1/identity/break-glass`),
-        fetch(`${API_BASE}/api/v1/scheduling/waitlist`),
-        fetch(`${API_BASE}/api/v1/revenue/denials`),
+        fetch(`${API_BASE}/api/v1/population-health/risks?top=20`, { signal: AbortSignal.timeout(10_000) }),
+        fetch(`${API_BASE}/api/v1/identity/break-glass`, { signal: AbortSignal.timeout(10_000) }),
+        fetch(`${API_BASE}/api/v1/scheduling/waitlist`, { signal: AbortSignal.timeout(10_000) }),
+        fetch(`${API_BASE}/api/v1/revenue/denials`, { signal: AbortSignal.timeout(10_000) }),
       ]);
 
       if (riskRes.status === 'fulfilled' && riskRes.value.ok)

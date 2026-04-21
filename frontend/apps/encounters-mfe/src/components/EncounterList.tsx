@@ -36,7 +36,7 @@ export function EncounterList() {
     setLoading(true);
     setError(null);
     try {
-      const res = await fetch(`${API_BASE}/api/v1/fhir/encounters/${encodeURIComponent(id)}`);
+      const res = await fetch(`${API_BASE}/api/v1/fhir/encounters/${encodeURIComponent(id)}`, { signal: AbortSignal.timeout(10_000) });
       if (!res.ok) throw new Error(`HTTP ${res.status}`);
       const bundle: Bundle<Encounter> = await res.json();
       setEncounters(bundle.entry?.map((e) => e.resource) ?? []);

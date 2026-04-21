@@ -73,6 +73,10 @@ export function CampaignManagerPanel() {
   }, []);
 
   async function handleCreate() {
+    if (!name.trim() || !targetIds.trim()) {
+      setError('Campaign name and at least one target patient ID are required.');
+      return;
+    }
     setCreating(true);
     setError(null);
     setSuccess(null);
@@ -85,6 +89,7 @@ export function CampaignManagerPanel() {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ name: name.trim(), type, targetPatientIds }),
+        signal: AbortSignal.timeout(10_000),
       });
       if (!res.ok) throw new Error(`HTTP ${res.status}`);
       setSuccess(`Campaign "${name.trim()}" created.`);

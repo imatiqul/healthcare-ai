@@ -64,7 +64,7 @@ export default function PractitionerManager() {
     setError('');
     try {
       const url = `${API_BASE}/api/v1/scheduling/practitioners/?activeOnly=${showAll ? 'false' : 'true'}`;
-      const res = await fetch(url);
+      const res = await fetch(url, { signal: AbortSignal.timeout(10_000) });
       if (!res.ok) { setError(`HTTP ${res.status}`); return; }
       const data = (await res.json()) as PractitionerSummary[];
       setPractitioners(data);
@@ -108,6 +108,7 @@ export default function PractitionerManager() {
         ? `${API_BASE}/api/v1/scheduling/practitioners/${editId}`
         : `${API_BASE}/api/v1/scheduling/practitioners/`;
       const res = await fetch(url, {
+        signal: AbortSignal.timeout(10_000),
         method: isEdit ? 'PUT' : 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(form),
@@ -129,6 +130,7 @@ export default function PractitionerManager() {
   async function handleToggleActive(p: PractitionerSummary) {
     try {
       await fetch(`${API_BASE}/api/v1/scheduling/practitioners/${p.id}`, {
+        signal: AbortSignal.timeout(10_000),
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({

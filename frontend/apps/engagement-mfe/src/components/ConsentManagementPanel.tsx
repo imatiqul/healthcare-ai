@@ -58,6 +58,7 @@ function GrantConsentDialog({ patientId, open, onClose, onGranted }: GrantDialog
     setError(null);
     try {
       const res = await fetch(`${API_BASE}/api/v1/identity/consent`, {
+        signal: AbortSignal.timeout(10_000),
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -146,6 +147,7 @@ export function ConsentManagementPanel() {
     try {
       const res = await fetch(
         `${API_BASE}/api/v1/identity/consent?patientId=${encodeURIComponent(pid)}`,
+        { signal: AbortSignal.timeout(10_000) },
       );
       if (!res.ok) throw new Error(`HTTP ${res.status}`);
       const data: ConsentRecord[] = await res.json();
@@ -165,6 +167,7 @@ export function ConsentManagementPanel() {
     setRevoking(id);
     try {
       const res = await fetch(`${API_BASE}/api/v1/identity/consent/${encodeURIComponent(id)}`, {
+        signal: AbortSignal.timeout(10_000),
         method: 'DELETE',
       });
       if (!res.ok) throw new Error(`HTTP ${res.status}`);

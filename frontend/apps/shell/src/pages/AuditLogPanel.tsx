@@ -46,7 +46,7 @@ export default function AuditLogPanel() {
     setLoading(true);
     setError(null);
     try {
-      const res = await fetch(`${API_BASE}/api/v1/admin/audit/summary?days=${days}`);
+      const res = await fetch(`${API_BASE}/api/v1/admin/audit/summary?days=${days}`, { signal: AbortSignal.timeout(10_000) });
       if (!res.ok) throw new Error(`HTTP ${res.status}`);
       const data: AuditSummaryResponse = await res.json();
       setSummary(data.summary);
@@ -67,7 +67,7 @@ export default function AuditLogPanel() {
       const params = new URLSearchParams({ format: 'csv' });
       if (exportFrom) params.set('from', exportFrom);
       if (exportTo) params.set('to', exportTo);
-      const res = await fetch(`${API_BASE}/api/v1/admin/audit/export?${params.toString()}`);
+      const res = await fetch(`${API_BASE}/api/v1/admin/audit/export?${params.toString()}`, { signal: AbortSignal.timeout(10_000) });
       if (!res.ok) throw new Error(`HTTP ${res.status}`);
       const blob = await res.blob();
       const url = URL.createObjectURL(blob);

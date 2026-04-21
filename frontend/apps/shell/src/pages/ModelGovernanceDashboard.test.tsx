@@ -47,7 +47,8 @@ describe('ModelGovernanceDashboard', () => {
     render(<ModelGovernanceDashboard />);
     await waitFor(() =>
       expect(global.fetch).toHaveBeenCalledWith(
-        expect.stringContaining('/api/v1/agents/governance/history')
+        expect.stringContaining('/api/v1/agents/governance/history'),
+        expect.any(Object),
       )
     );
   });

@@ -59,7 +59,7 @@ export function ProblemListPanel() {
     setError(null);
     try {
       const url = `${API_BASE}/api/v1/fhir/conditions/${encodeURIComponent(id)}?clinicalStatus=${encodeURIComponent(status)}`;
-      const res = await fetch(url);
+      const res = await fetch(url, { signal: AbortSignal.timeout(10_000) });
       if (!res.ok) throw new Error(`HTTP ${res.status}`);
       const bundle: Bundle<Condition> = await res.json();
       setConditions(bundle.entry?.map(e => e.resource) ?? []);
@@ -75,6 +75,7 @@ export function ProblemListPanel() {
     try {
       const body = JSON.parse(newConditionJson);
       const res = await fetch(`${API_BASE}/api/v1/fhir/conditions`, {
+        signal: AbortSignal.timeout(10_000),
         method: 'POST',
         headers: { 'Content-Type': 'application/fhir+json' },
         body: JSON.stringify(body),

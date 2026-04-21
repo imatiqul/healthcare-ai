@@ -62,11 +62,15 @@ export function CostPredictionPanel() {
   };
 
   const handleSubmit = async () => {
-    if (!patientId.trim()) return;
+    if (!patientId.trim()) {
+      setError('Patient ID is required.');
+      return;
+    }
     setLoading(true);
     setError('');
     try {
       const res = await fetch(`${API_BASE}/api/v1/population-health/cost-prediction`, {
+        signal: AbortSignal.timeout(10_000),
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -90,6 +94,7 @@ export function CostPredictionPanel() {
     try {
       const res = await fetch(
         `${API_BASE}/api/v1/population-health/cost-prediction/${encodeURIComponent(patientId.trim())}`,
+        { signal: AbortSignal.timeout(10_000) },
       );
       if (res.ok) setPrediction(await res.json());
     } catch {

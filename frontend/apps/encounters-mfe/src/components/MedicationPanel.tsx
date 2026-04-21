@@ -55,7 +55,7 @@ export function MedicationPanel() {
     setLoading(true);
     setError(null);
     try {
-      const res = await fetch(`${API_BASE}/api/v1/fhir/medications/${encodeURIComponent(id)}`);
+      const res = await fetch(`${API_BASE}/api/v1/fhir/medications/${encodeURIComponent(id)}`, { signal: AbortSignal.timeout(10_000) });
       if (!res.ok) throw new Error(`HTTP ${res.status}`);
       const bundle: Bundle<MedicationRequest> = await res.json();
       setMedications(bundle.entry?.map(e => e.resource) ?? []);
@@ -68,7 +68,7 @@ export function MedicationPanel() {
 
   async function handleDiscontinue(medId: string) {
     try {
-      await fetch(`${API_BASE}/api/v1/fhir/medications/${encodeURIComponent(medId)}`, { method: 'DELETE' });
+      await fetch(`${API_BASE}/api/v1/fhir/medications/${encodeURIComponent(medId)}`, { signal: AbortSignal.timeout(10_000), method: 'DELETE' });
       if (patientId) void fetchMedications(patientId);
     } catch {
       // non-critical — UI refresh will reflect current state
@@ -80,6 +80,7 @@ export function MedicationPanel() {
     try {
       const body = JSON.parse(newMedJson);
       const res = await fetch(`${API_BASE}/api/v1/fhir/medications`, {
+        signal: AbortSignal.timeout(10_000),
         method: 'POST',
         headers: { 'Content-Type': 'application/fhir+json' },
         body: JSON.stringify(body),

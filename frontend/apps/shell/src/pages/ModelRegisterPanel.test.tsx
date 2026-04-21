@@ -104,7 +104,8 @@ describe('ModelRegisterPanel', () => {
 
     await waitFor(() => {
       expect(global.fetch).toHaveBeenCalledWith(
-        expect.stringContaining('/api/v1/agents/governance/reg-002')
+        expect.stringContaining('/api/v1/agents/governance/reg-002'),
+        expect.any(Object),
       );
     });
   });

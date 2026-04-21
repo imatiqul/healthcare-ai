@@ -80,7 +80,7 @@ export function FhirEverythingViewer() {
       if (typeFilter) params.set('_type', typeFilter);
       const qs = params.toString() ? `?${params.toString()}` : '';
       const url = `${API_BASE}/api/v1/fhir/patients/${encodeURIComponent(patientId.trim())}/$everything${qs}`;
-      const res = await fetch(url);
+      const res = await fetch(url, { signal: AbortSignal.timeout(10_000) });
       if (!res.ok) {
         setError(`FHIR $everything failed (HTTP ${res.status})`);
         return;

@@ -61,6 +61,7 @@ describe('ModelEvaluationPanel', () => {
     await waitFor(() => {
       expect(mockFetch).toHaveBeenCalledWith(
         expect.stringContaining('/api/v1/agents/governance/evaluate/history'),
+        expect.any(Object),
       );
     });
   });

@@ -44,7 +44,7 @@ export function EscalationQueue() {
     setLoading(true);
     setError(null);
     try {
-      const res = await fetch(`${API_BASE}/api/v1/agents/escalations`);
+      const res = await fetch(`${API_BASE}/api/v1/agents/escalations`, { signal: AbortSignal.timeout(10_000) });
       if (!res.ok) throw new Error(`HTTP ${res.status}`);
       const data = await res.json() as EscalationItem[];
       setItems(data);
@@ -65,6 +65,7 @@ export function EscalationQueue() {
     setActionError(null);
     try {
       const res = await fetch(`${API_BASE}/api/v1/agents/escalations/${id}/claim`, {
+        signal: AbortSignal.timeout(10_000),
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ clinicianId: 'clinician-' + Date.now() }),
@@ -85,6 +86,7 @@ export function EscalationQueue() {
     setActionError(null);
     try {
       const res = await fetch(`${API_BASE}/api/v1/agents/escalations/${id}/resolve`, {
+        signal: AbortSignal.timeout(10_000),
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ clinicalNote: note.trim() }),
@@ -102,6 +104,7 @@ export function EscalationQueue() {
     setActionError(null);
     try {
       const res = await fetch(`${API_BASE}/api/v1/agents/escalations/${id}/dismiss`, {
+        signal: AbortSignal.timeout(10_000),
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ clinicalNote: 'Dismissed by clinician' }),

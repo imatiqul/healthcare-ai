@@ -82,6 +82,7 @@ export default function MlConfidencePanel() {
     setResult(null);
     try {
       const res = await fetch(`${API_BASE}/api/v1/agents/decisions/ml-confidence`, {
+        signal: AbortSignal.timeout(10_000),
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ probability: probNum, featureValues }),

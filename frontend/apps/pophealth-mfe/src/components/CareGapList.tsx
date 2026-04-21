@@ -21,14 +21,14 @@ export function CareGapList() {
 
   async function fetchGaps() {
     try {
-      const res = await fetch(`${API_BASE}/api/v1/population-health/care-gaps?status=Open`);
+      const res = await fetch(`${API_BASE}/api/v1/population-health/care-gaps?status=Open`, { signal: AbortSignal.timeout(10_000) });
       const data = await res.json();
       setGaps(data);
     } catch { /* no-op */ }
   }
 
   async function addressGap(id: string) {
-    await fetch(`${API_BASE}/api/v1/population-health/care-gaps/${id}/address`, { method: 'POST' });
+    await fetch(`${API_BASE}/api/v1/population-health/care-gaps/${id}/address`, { signal: AbortSignal.timeout(10_000), method: 'POST' });
     fetchGaps();
   }
 

@@ -178,4 +178,35 @@ describe('WaitlistPanel', () => {
       expect(screen.getByText(/conflict detected/i)).toBeInTheDocument();
     });
   });
+
+  it('shows validation error when enqueuing without Patient ID or Practitioner ID', async () => {
+    vi.spyOn(globalThis, 'fetch').mockResolvedValueOnce({
+      ok: true,
+      json: async () => [],
+    } as Response);
+
+    render(<WaitlistPanel />);
+    const submitBtn = screen.getByRole('button', { name: /add to waitlist/i });
+    const form = submitBtn.closest('form')!;
+    fireEvent.submit(form);
+
+    await waitFor(() => {
+      expect(screen.getByText(/Patient ID and Practitioner ID are required/i)).toBeInTheDocument();
+    });
+  });
+
+  it('shows validation error when checking conflicts without IDs', async () => {
+    vi.spyOn(globalThis, 'fetch').mockResolvedValueOnce({
+      ok: true,
+      json: async () => [],
+    } as Response);
+
+    const user = userEvent.setup({ delay: null });
+    render(<WaitlistPanel />);
+    await user.click(screen.getByRole('button', { name: /check conflict/i }));
+
+    await waitFor(() => {
+      expect(screen.getByText(/Enter Patient ID and Practitioner ID before checking conflicts/i)).toBeInTheDocument();
+    });
+  });
 });

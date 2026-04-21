@@ -72,7 +72,8 @@ describe('AppointmentHistory', () => {
     });
 
     expect(fetchMock).toHaveBeenCalledWith(
-      expect.stringContaining('patientId=my-patient-123')
+      expect.stringContaining('patientId=my-patient-123'),
+      expect.any(Object),
     );
   });
 

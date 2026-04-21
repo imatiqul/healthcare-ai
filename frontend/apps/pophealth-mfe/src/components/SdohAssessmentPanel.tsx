@@ -80,6 +80,7 @@ export function SdohAssessmentPanel() {
     try {
       const res = await fetch(
         `${API_BASE}/api/v1/population-health/sdoh/${encodeURIComponent(pid)}`,
+        { signal: AbortSignal.timeout(10_000) },
       );
       if (res.ok) setResult(await res.json());
     } catch {
@@ -88,11 +89,15 @@ export function SdohAssessmentPanel() {
   }, []);
 
   const handleSubmit = async () => {
-    if (!patientId.trim()) return;
+    if (!patientId.trim()) {
+      setError('Patient ID is required.');
+      return;
+    }
     setLoading(true);
     setError('');
     try {
       const res = await fetch(`${API_BASE}/api/v1/population-health/sdoh`, {
+        signal: AbortSignal.timeout(10_000),
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({

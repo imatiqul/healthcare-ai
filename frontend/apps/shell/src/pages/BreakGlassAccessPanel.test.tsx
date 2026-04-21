@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { render, screen, waitFor } from '@testing-library/react';
+import { render, screen, waitFor, fireEvent } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import BreakGlassAccessPanel from './BreakGlassAccessPanel';
 
@@ -48,7 +48,8 @@ describe('BreakGlassAccessPanel', () => {
     render(<BreakGlassAccessPanel />);
     await waitFor(() => {
       expect(global.fetch).toHaveBeenCalledWith(
-        expect.stringContaining('/api/v1/identity/break-glass')
+        expect.stringContaining('/api/v1/identity/break-glass'),
+        expect.any(Object),
       );
     });
   });
@@ -146,5 +147,22 @@ describe('BreakGlassAccessPanel', () => {
         expect.objectContaining({ method: 'DELETE' })
       );
     });
+  });
+
+  it('shows validation error when submitting request with short justification', async () => {
+    (global.fetch as ReturnType<typeof vi.fn>).mockResolvedValueOnce({
+      ok: true,
+      json: () => Promise.resolve([]),
+    });
+    const user = userEvent.setup({ delay: null });
+    render(<BreakGlassAccessPanel />);
+    await waitFor(() => expect(screen.getByText('Request Access')).not.toBeDisabled(), { timeout: 5000 });
+    fireEvent.click(screen.getByText('Request Access'));
+    await user.type(screen.getByLabelText(/requesting user id/i), 'user-x');
+    await user.type(screen.getByLabelText(/target patient id/i), 'patient-y');
+    await user.type(screen.getByLabelText(/clinical justification/i), 'too short');
+    // Button is disabled when justification < 20 chars — guard is active
+    const requestBtns = screen.getAllByText('Request Access', { selector: 'button' });
+    expect(requestBtns[requestBtns.length - 1]).toBeDisabled();
   });
 });

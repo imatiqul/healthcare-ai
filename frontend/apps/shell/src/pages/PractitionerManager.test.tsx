@@ -49,6 +49,7 @@ describe('PractitionerManager', () => {
     render(<PractitionerManager />);
     await waitFor(() => expect(mockFetch).toHaveBeenCalledWith(
       expect.stringContaining('activeOnly=true'),
+      expect.any(Object),
     ));
   });
 
@@ -109,6 +110,7 @@ describe('PractitionerManager', () => {
 
     await waitFor(() => expect(mockFetch).toHaveBeenLastCalledWith(
       expect.stringContaining('activeOnly=false'),
+      expect.any(Object),
     ));
   });
 

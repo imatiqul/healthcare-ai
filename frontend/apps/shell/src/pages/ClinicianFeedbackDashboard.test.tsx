@@ -31,6 +31,7 @@ describe('ClinicianFeedbackDashboard', () => {
     await waitFor(() => {
       expect(global.fetch).toHaveBeenCalledWith(
         expect.stringContaining('/api/v1/agents/feedback/summary?since='),
+        expect.any(Object),
       );
     });
   });

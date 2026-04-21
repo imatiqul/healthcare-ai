@@ -76,7 +76,7 @@ export default function IdentityUserAdminPanel() {
     setLoading(true);
     setError(null);
     try {
-      const res = await fetch(`${API_BASE}/api/v1/identity/users?page=1&pageSize=50`);
+      const res = await fetch(`${API_BASE}/api/v1/identity/users?page=1&pageSize=50`, { signal: AbortSignal.timeout(10_000) });
       if (!res.ok) throw new Error(`HTTP ${res.status}`);
       const data: UsersResponse = await res.json();
       setUsers(data.users);
@@ -95,6 +95,7 @@ export default function IdentityUserAdminPanel() {
     setError(null);
     try {
       const res = await fetch(`${API_BASE}/api/v1/identity/users`, {
+        signal: AbortSignal.timeout(10_000),
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(createForm),
@@ -116,6 +117,7 @@ export default function IdentityUserAdminPanel() {
     setError(null);
     try {
       const res = await fetch(`${API_BASE}/api/v1/identity/users/${editUser.id}`, {
+        signal: AbortSignal.timeout(10_000),
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(editForm),
@@ -135,6 +137,7 @@ export default function IdentityUserAdminPanel() {
     setError(null);
     try {
       const res = await fetch(`${API_BASE}/api/v1/identity/users/${id}/deactivate`, {
+        signal: AbortSignal.timeout(10_000),
         method: 'POST',
       });
       if (!res.ok) throw new Error(`HTTP ${res.status}`);

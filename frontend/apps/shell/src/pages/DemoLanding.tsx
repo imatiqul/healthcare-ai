@@ -45,6 +45,7 @@ export default function DemoLanding() {
     setLoading(true);
     try {
       const res = await fetch(`${DEMO_API}/start`, {
+        signal: AbortSignal.timeout(10_000),
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ clientName, company, email: email || null }),

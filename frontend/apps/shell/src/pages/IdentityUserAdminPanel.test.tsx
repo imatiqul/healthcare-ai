@@ -48,7 +48,8 @@ describe('IdentityUserAdminPanel', () => {
     render(<IdentityUserAdminPanel />);
     await waitFor(() => {
       expect(global.fetch).toHaveBeenCalledWith(
-        expect.stringContaining('/api/v1/identity/users?page=1&pageSize=50')
+        expect.stringContaining('/api/v1/identity/users?page=1&pageSize=50'),
+        expect.any(Object),
       );
     });
   });

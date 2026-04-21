@@ -42,6 +42,7 @@ export default function XaiExplanationPanel() {
     try {
       const res = await fetch(
         `${API_BASE}/api/v1/agents/decisions/${encodeURIComponent(decisionId.trim())}/explanation`,
+        { signal: AbortSignal.timeout(10_000) },
       );
       if (!res.ok) throw new Error(`${res.status} ${res.statusText}`);
       const data = await res.json();

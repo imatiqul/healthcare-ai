@@ -45,6 +45,7 @@ describe('ExperimentSummaryPanel', () => {
     await waitFor(() => {
       expect(global.fetch).toHaveBeenCalledWith(
         expect.stringContaining('/api/v1/agents/experiments/triage-prompt-v2/summary'),
+        expect.any(Object),
       );
     });
   });

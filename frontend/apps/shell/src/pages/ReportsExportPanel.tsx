@@ -123,7 +123,7 @@ function ReportRow({ report }: { report: ReportDef }) {
     try {
       const qs = new URLSearchParams({ format: state.format, ...state.params }).toString();
       const url = `${API_BASE}${report.endpoint}?${qs}`;
-      const res = await fetch(url);
+      const res = await fetch(url, { signal: AbortSignal.timeout(10_000) });
       if (!res.ok) {
         setState(s => ({ ...s, downloading: false, error: `HTTP ${res.status}` }));
         return;

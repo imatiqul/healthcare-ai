@@ -111,7 +111,8 @@ describe('PriorAuthStatus', () => {
     });
 
     expect(fetchMock).toHaveBeenCalledWith(
-      expect.stringContaining('patientId=auth-patient-99')
+      expect.stringContaining('patientId=auth-patient-99'),
+      expect.any(Object),
     );
   });
 });

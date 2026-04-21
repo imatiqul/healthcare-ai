@@ -46,7 +46,8 @@ describe('VoiceSessionHistory', () => {
     ) as unknown as typeof fetch;
     render(<VoiceSessionHistory />);
     await waitFor(() => expect(global.fetch).toHaveBeenCalledWith(
-      expect.stringContaining('/api/v1/voice/sessions')
+      expect.stringContaining('/api/v1/voice/sessions'),
+      expect.any(Object),
     ));
   });
 

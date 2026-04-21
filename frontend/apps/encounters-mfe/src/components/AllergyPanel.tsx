@@ -55,7 +55,7 @@ export function AllergyPanel() {
     setLoading(true);
     setError(null);
     try {
-      const res = await fetch(`${API_BASE}/api/v1/fhir/allergies/${encodeURIComponent(id)}`);
+      const res = await fetch(`${API_BASE}/api/v1/fhir/allergies/${encodeURIComponent(id)}`, { signal: AbortSignal.timeout(10_000) });
       if (!res.ok) throw new Error(`HTTP ${res.status}`);
       const bundle: Bundle<AllergyIntolerance> = await res.json();
       setAllergies(bundle.entry?.map(e => e.resource) ?? []);
@@ -68,7 +68,7 @@ export function AllergyPanel() {
 
   async function handleDelete(allergyId: string) {
     try {
-      await fetch(`${API_BASE}/api/v1/fhir/allergies/${encodeURIComponent(allergyId)}`, { method: 'DELETE' });
+      await fetch(`${API_BASE}/api/v1/fhir/allergies/${encodeURIComponent(allergyId)}`, { signal: AbortSignal.timeout(10_000), method: 'DELETE' });
       if (patientId) void fetchAllergies(patientId);
     } catch {
       // non-critical
@@ -80,6 +80,7 @@ export function AllergyPanel() {
     try {
       const body = JSON.parse(newAllergyJson);
       const res = await fetch(`${API_BASE}/api/v1/fhir/allergies`, {
+        signal: AbortSignal.timeout(10_000),
         method: 'POST',
         headers: { 'Content-Type': 'application/fhir+json' },
         body: JSON.stringify(body),

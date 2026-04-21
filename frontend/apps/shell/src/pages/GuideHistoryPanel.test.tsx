@@ -40,6 +40,7 @@ describe('GuideHistoryPanel', () => {
     await waitFor(() => {
       expect(global.fetch).toHaveBeenCalledWith(
         expect.stringContaining('/api/v1/agents/guide/history/sess-abc-123'),
+        expect.any(Object),
       );
     });
   });

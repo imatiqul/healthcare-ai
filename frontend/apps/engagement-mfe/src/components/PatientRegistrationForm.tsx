@@ -36,6 +36,7 @@ export function PatientRegistrationForm({ onRegistered }: Props) {
     try {
       // Use email as externalId for demo (in production this would be Entra B2C object ID)
       const res = await fetch(`${API_BASE}/api/v1/identity/patients/register`, {
+        signal: AbortSignal.timeout(10_000),
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({

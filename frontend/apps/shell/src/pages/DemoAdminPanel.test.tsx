@@ -53,6 +53,7 @@ describe('DemoAdminPanel', () => {
     await waitFor(() => {
       expect(global.fetch).toHaveBeenCalledWith(
         expect.stringContaining('/api/v1/agents/demo/sessions'),
+        expect.any(Object),
       );
     });
   });

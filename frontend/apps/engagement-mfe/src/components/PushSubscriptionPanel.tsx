@@ -57,6 +57,7 @@ export function PushSubscriptionPanel() {
     try {
       const res = await fetch(
         `${API_BASE}/api/v1/notifications/push-subscriptions?patientId=${encodeURIComponent(pid)}`,
+        { signal: AbortSignal.timeout(10_000) },
       );
       if (!res.ok) throw new Error(`HTTP ${res.status}`);
       const data: PushSubscription[] = await res.json();
@@ -74,11 +75,19 @@ export function PushSubscriptionPanel() {
 
   function handleSearch() {
     const pid = patientIdInput.trim();
-    if (pid) setPatientId(pid);
+    if (!pid) {
+      setError('Enter a Patient ID to search.');
+      return;
+    }
+    setError(null);
+    setPatientId(pid);
   }
 
   async function handleRegister() {
-    if (!endpoint.trim() || !p256dh.trim() || !auth.trim()) return;
+    if (!endpoint.trim() || !p256dh.trim() || !auth.trim()) {
+      setRegisterError('Endpoint URL, P256DH key, and Auth secret are all required.');
+      return;
+    }
     setRegistering(true);
     setRegisterError(null);
     try {
@@ -89,6 +98,7 @@ export function PushSubscriptionPanel() {
         auth: auth.trim(),
       };
       const res = await fetch(`${API_BASE}/api/v1/notifications/push-subscriptions`, {
+        signal: AbortSignal.timeout(10_000),
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(payload),
@@ -111,7 +121,7 @@ export function PushSubscriptionPanel() {
     try {
       const res = await fetch(
         `${API_BASE}/api/v1/notifications/push-subscriptions/${encodeURIComponent(id)}`,
-        { method: 'DELETE' },
+        { signal: AbortSignal.timeout(10_000), method: 'DELETE' },
       );
       if (!res.ok) throw new Error(`HTTP ${res.status}`);
       if (patientId) fetchSubscriptions(patientId);

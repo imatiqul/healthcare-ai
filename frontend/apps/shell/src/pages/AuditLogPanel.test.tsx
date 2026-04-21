@@ -34,7 +34,8 @@ describe('AuditLogPanel', () => {
     render(<AuditLogPanel />);
     await waitFor(() => {
       expect(global.fetch).toHaveBeenCalledWith(
-        expect.stringContaining('/api/v1/admin/audit/summary?days=30')
+        expect.stringContaining('/api/v1/admin/audit/summary?days=30'),
+        expect.any(Object),
       );
     });
   });
@@ -80,7 +81,8 @@ describe('AuditLogPanel', () => {
 
     await waitFor(() => {
       expect(global.fetch).toHaveBeenCalledWith(
-        expect.stringContaining('/api/v1/admin/audit/export')
+        expect.stringContaining('/api/v1/admin/audit/export'),
+        expect.any(Object),
       );
     });
   });

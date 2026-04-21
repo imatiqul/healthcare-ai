@@ -53,6 +53,7 @@ describe('ConsentManagementPanel', () => {
     await waitFor(() =>
       expect(global.fetch).toHaveBeenCalledWith(
         expect.stringContaining('/api/v1/identity/consent?patientId=pat-uuid-1'),
+        expect.any(Object),
       )
     );
   });

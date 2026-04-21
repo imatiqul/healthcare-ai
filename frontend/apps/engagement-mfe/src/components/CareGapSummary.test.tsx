@@ -116,7 +116,8 @@ describe('CareGapSummary', () => {
     });
 
     expect(fetchMock).toHaveBeenCalledWith(
-      expect.stringContaining('patientId=gap-patient-xyz')
+      expect.stringContaining('patientId=gap-patient-xyz'),
+      expect.any(Object),
     );
   });
 });

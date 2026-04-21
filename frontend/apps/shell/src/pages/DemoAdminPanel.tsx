@@ -45,7 +45,7 @@ export default function DemoAdminPanel() {
     setLoadingSessions(true);
     setSessionsError(null);
     try {
-      const res = await fetch(`${API_BASE}/api/v1/agents/demo/sessions`);
+      const res = await fetch(`${API_BASE}/api/v1/agents/demo/sessions`, { signal: AbortSignal.timeout(10_000) });
       if (!res.ok) throw new Error(`${res.status} ${res.statusText}`);
       const data = await res.json();
       setSessions(data);
@@ -63,7 +63,7 @@ export default function DemoAdminPanel() {
     setInsightError(null);
     setInsight(null);
     try {
-      const res = await fetch(`${API_BASE}/api/v1/agents/demo/insights`, { method: 'POST' });
+      const res = await fetch(`${API_BASE}/api/v1/agents/demo/insights`, { signal: AbortSignal.timeout(10_000), method: 'POST' });
       if (!res.ok) throw new Error(`${res.status} ${res.statusText}`);
       const data = await res.json();
       setInsight(data);

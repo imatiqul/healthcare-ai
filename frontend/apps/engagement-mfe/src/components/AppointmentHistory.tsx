@@ -37,7 +37,7 @@ export function AppointmentHistory({ patientId }: Props) {
   useEffect(() => {
     setLoading(true);
     setError(null);
-    fetch(`${API_BASE}/api/v1/scheduling/appointments?patientId=${encodeURIComponent(patientId)}`)
+    fetch(`${API_BASE}/api/v1/scheduling/appointments?patientId=${encodeURIComponent(patientId)}`, { signal: AbortSignal.timeout(10_000) })
       .then((res) => {
         if (!res.ok) throw new Error(`HTTP ${res.status}`);
         return res.json() as Promise<Appointment[]>;

@@ -62,6 +62,7 @@ export function OcrDocumentPanel() {
     setCreatedJob(null);
     try {
       const res = await fetch(`${API_BASE}/api/v1/ocr/jobs`, {
+        signal: AbortSignal.timeout(10_000),
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -94,6 +95,7 @@ export function OcrDocumentPanel() {
     setProcessError(null);
     try {
       const res = await fetch(`${API_BASE}/api/v1/ocr/jobs/${createdJob.id}/process`, {
+        signal: AbortSignal.timeout(10_000),
         method: 'POST',
       });
       if (!res.ok) {
@@ -119,6 +121,7 @@ export function OcrDocumentPanel() {
     try {
       const res = await fetch(
         `${API_BASE}/api/v1/ocr/jobs?patientId=${encodeURIComponent(historyPatientId.trim())}`,
+        { signal: AbortSignal.timeout(10_000) },
       );
       if (!res.ok) {
         setHistoryError(`Failed to load history (HTTP ${res.status})`);

@@ -72,6 +72,10 @@ export function WaitlistPanel() {
 
   const handleEnqueue = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (!patientId.trim() || !practitionerId.trim()) {
+      setActionError('Patient ID and Practitioner ID are required.');
+      return;
+    }
     setSubmitting(true);
     setConflictResult(null);
     setActionError(null);
@@ -118,7 +122,10 @@ export function WaitlistPanel() {
   };
 
   const handleConflictCheck = async () => {
-    if (!patientId || !practitionerId) return;
+    if (!patientId.trim() || !practitionerId.trim()) {
+      setActionError('Enter Patient ID and Practitioner ID before checking conflicts.');
+      return;
+    }
     setActionError(null);
     try {
       const res = await fetch(`${API_BASE}/api/v1/scheduling/waitlist/conflict-check`, {
