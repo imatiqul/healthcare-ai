@@ -61,6 +61,7 @@ app.MapSubscribeHandler();
 app.MapDefaultEndpoints();
 app.MapSchedulingEndpoints();
 app.MapWaitlistEndpoints();
+app.MapPractitionerEndpoints();
 
 app.MapPost("/api/v1/scheduling/seed", async (SchedulingDbContext db) =>
 {

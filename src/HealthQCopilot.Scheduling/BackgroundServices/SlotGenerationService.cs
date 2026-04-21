@@ -5,12 +5,13 @@ using Microsoft.EntityFrameworkCore;
 namespace HealthQCopilot.Scheduling.BackgroundServices;
 
 /// <summary>
-/// Ensures appointment slots exist for the next 7 days for all practitioners.
+/// Ensures appointment slots exist for the next 7 days for all active practitioners.
+/// Practitioners are loaded from the database; falls back to default seed data when the
+/// practitioners table is empty so the service remains functional on a fresh deployment.
 /// Runs on startup and then once per hour.
 /// </summary>
 public sealed class SlotGenerationService : BackgroundService
 {
-    private static readonly string[] Practitioners = ["DR-001", "DR-002", "DR-003"];
     private const int DaysAhead = 7;
 
     private readonly IServiceScopeFactory _scopeFactory;
@@ -46,29 +47,41 @@ public sealed class SlotGenerationService : BackgroundService
             using var scope = _scopeFactory.CreateScope();
             var db = scope.ServiceProvider.GetRequiredService<SchedulingDbContext>();
 
+            // Load active practitioners from database; seed defaults if the table is empty.
+            var practitioners = await db.Practitioners
+                .Where(p => p.IsActive)
+                .ToListAsync(ct);
+
+            if (practitioners.Count == 0)
+            {
+                await SeedDefaultPractitionersAsync(db, ct);
+                practitioners = await db.Practitioners.Where(p => p.IsActive).ToListAsync(ct);
+            }
+
             var today = DateTime.UtcNow.Date;
             var newSlots = new List<Slot>();
 
-            foreach (var practitioner in Practitioners)
+            foreach (var practitioner in practitioners)
             {
+                var availStart = practitioner.AvailabilityStart.Hour;
+                var availEnd = practitioner.AvailabilityEnd.Hour;
+
                 for (var dayOffset = 0; dayOffset < DaysAhead; dayOffset++)
                 {
                     var date = today.AddDays(dayOffset);
 
-                    // Check if slots already exist for this practitioner on this date
                     var hasSlots = await db.Slots
-                        .AnyAsync(s => s.PractitionerId == practitioner
+                        .AnyAsync(s => s.PractitionerId == practitioner.PractitionerId
                             && s.StartTime >= date
                             && s.StartTime < date.AddDays(1), ct);
 
                     if (hasSlots) continue;
 
-                    // Generate 30-minute slots from 09:00 to 17:00 (16 slots per practitioner per day)
-                    for (var hour = 9; hour < 17; hour++)
+                    for (var hour = availStart; hour < availEnd; hour++)
                     {
-                        newSlots.Add(Slot.Create(Guid.NewGuid(), practitioner,
+                        newSlots.Add(Slot.Create(Guid.NewGuid(), practitioner.PractitionerId,
                             date.AddHours(hour), date.AddHours(hour).AddMinutes(30)));
-                        newSlots.Add(Slot.Create(Guid.NewGuid(), practitioner,
+                        newSlots.Add(Slot.Create(Guid.NewGuid(), practitioner.PractitionerId,
                             date.AddHours(hour).AddMinutes(30), date.AddHours(hour + 1)));
                     }
                 }
@@ -85,5 +98,20 @@ public sealed class SlotGenerationService : BackgroundService
         {
             _logger.LogError(ex, "Error generating appointment slots");
         }
+    }
+
+    private static async Task SeedDefaultPractitionersAsync(SchedulingDbContext db, CancellationToken ct)
+    {
+        var defaults = new[]
+        {
+            Practitioner.Create("DR-001", "Dr. Alice Johnson", "Internal Medicine", "alice.johnson@healthq.local",
+                new TimeOnly(9, 0), new TimeOnly(17, 0)),
+            Practitioner.Create("DR-002", "Dr. Bob Williams", "Cardiology", "bob.williams@healthq.local",
+                new TimeOnly(9, 0), new TimeOnly(17, 0)),
+            Practitioner.Create("DR-003", "Dr. Carol Lee", "Pediatrics", "carol.lee@healthq.local",
+                new TimeOnly(9, 0), new TimeOnly(17, 0)),
+        };
+        db.Practitioners.AddRange(defaults);
+        await db.SaveChangesAsync(ct);
     }
 }

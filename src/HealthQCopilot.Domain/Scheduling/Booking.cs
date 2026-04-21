@@ -44,6 +44,12 @@ public class Booking : AggregateRoot<Guid>
         return Result.Success();
     }
 
+    public void Reschedule(Guid newSlotId, DateTime newAppointmentTime)
+    {
+        SlotId = newSlotId;
+        AppointmentTime = newAppointmentTime;
+    }
+
     public void LinkFhirAppointment(string fhirAppointmentId) =>
         FhirAppointmentId = fhirAppointmentId;
 }

@@ -16,6 +16,10 @@ export default defineConfig({
         './DrugInteractionChecker': './src/components/DrugInteractionChecker.tsx',
         './FhirObservationViewer': './src/components/FhirObservationViewer.tsx',
         './FhirEverythingViewer': './src/components/FhirEverythingViewer.tsx',     // Phase 22
+        './MedicationPanel': './src/components/MedicationPanel.tsx',              // Phase 30
+        './AllergyPanel': './src/components/AllergyPanel.tsx',                    // Phase 30
+        './ProblemListPanel': './src/components/ProblemListPanel.tsx',            // Phase 30
+        './ImmunizationPanel': './src/components/ImmunizationPanel.tsx',          // Phase 30
       },
       shared: {
         react: { singleton: true },

@@ -137,9 +137,101 @@ public static class SchedulingEndpoints
             return Results.Ok(stats);
         });
 
+        // ── Booking reschedule (Phase 30) ────────────────────────────────────
+        group.MapPut("/bookings/{id:guid}/reschedule", async (
+            Guid id,
+            RescheduleBookingRequest request,
+            SchedulingDbContext db,
+            DaprClient dapr,
+            IDistributedCache cache,
+            CancellationToken ct) =>
+        {
+            var booking = await db.Bookings.FindAsync([id], ct);
+            if (booking is null) return Results.NotFound("Booking not found");
+            if (booking.Status == BookingStatus.Cancelled)
+                return Results.BadRequest(new { error = "Cannot reschedule a cancelled booking" });
+
+            var newSlot = await db.Slots.FindAsync([request.NewSlotId], ct);
+            if (newSlot is null) return Results.NotFound("New slot not found");
+            if (newSlot.Status != SlotStatus.Available)
+                return Results.Conflict(new { error = "The requested slot is not available" });
+
+            // Release old slot
+            var oldSlot = await db.Slots.FindAsync([booking.SlotId], ct);
+            oldSlot?.Release();
+
+            // Reserve and book new slot
+            newSlot.Reserve(booking.PatientId);
+            newSlot.Book();
+
+            // Update the booking
+            booking.Reschedule(request.NewSlotId, newSlot.StartTime);
+
+            await db.SaveChangesAsync(ct);
+            await cache.RemoveAsync("healthq:scheduling:stats", ct);
+
+            _ = Task.Run(async () =>
+            {
+                try
+                {
+                    await dapr.PublishEventAsync("pubsub", "scheduling.booking.rescheduled", new
+                    {
+                        BookingId = booking.Id,
+                        NewSlotId = request.NewSlotId,
+                        PatientId = booking.PatientId,
+                        PractitionerId = booking.PractitionerId,
+                        NewAppointmentTime = newSlot.StartTime,
+                    });
+                }
+                catch { /* non-critical */ }
+            }, CancellationToken.None);
+
+            return Results.Ok(new { booking.Id, booking.SlotId, AppointmentTime = newSlot.StartTime });
+        }).WithSummary("Reschedule a booking to a new slot");
+
+        // ── Booking cancel (Phase 30) ────────────────────────────────────────
+        group.MapDelete("/bookings/{id:guid}", async (
+            Guid id,
+            SchedulingDbContext db,
+            DaprClient dapr,
+            IDistributedCache cache,
+            CancellationToken ct) =>
+        {
+            var booking = await db.Bookings.FindAsync([id], ct);
+            if (booking is null) return Results.NotFound();
+
+            var cancelResult = booking.Cancel();
+            if (!cancelResult.IsSuccess)
+                return Results.BadRequest(new { error = cancelResult.Error });
+
+            // Release the slot back to available
+            var slot = await db.Slots.FindAsync([booking.SlotId], ct);
+            slot?.Release();
+
+            await db.SaveChangesAsync(ct);
+            await cache.RemoveAsync("healthq:scheduling:stats", ct);
+
+            _ = Task.Run(async () =>
+            {
+                try
+                {
+                    await dapr.PublishEventAsync("pubsub", "scheduling.booking.cancelled", new
+                    {
+                        BookingId = booking.Id,
+                        PatientId = booking.PatientId,
+                        PractitionerId = booking.PractitionerId,
+                    });
+                }
+                catch { /* non-critical */ }
+            }, CancellationToken.None);
+
+            return Results.NoContent();
+        }).WithSummary("Cancel a booking");
+
         return app;
     }
 }
 
 public record CreateBookingRequest(Guid SlotId, Guid PatientId, Guid PractitionerId);
 public record ReserveSlotRequest(Guid PatientId);
+public record RescheduleBookingRequest(Guid NewSlotId);

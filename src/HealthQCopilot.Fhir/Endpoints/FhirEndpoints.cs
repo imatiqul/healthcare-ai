@@ -227,6 +227,253 @@ public static class FhirEndpoints
             return Results.Content(result, "application/fhir+json");
         });
 
+        // ── MedicationRequest (Phase 30 — USCDI v2 / US Core 6) ─────────────
+        group.MapGet("/medications/{patientId}", async (
+            string patientId,
+            string? status,
+            IHttpClientFactory httpClientFactory,
+            CancellationToken ct) =>
+        {
+            var client = httpClientFactory.CreateClient("FhirServer");
+            var query = $"MedicationRequest?patient={Uri.EscapeDataString(patientId)}";
+            if (!string.IsNullOrWhiteSpace(status))
+                query += $"&status={Uri.EscapeDataString(status)}";
+            var response = await client.GetAsync(query, ct);
+            var content = await response.Content.ReadAsStringAsync(ct);
+            return Results.Content(content, "application/fhir+json");
+        }).WithSummary("Search MedicationRequest resources by patient");
+
+        group.MapGet("/medications/resource/{id}", async (
+            string id,
+            IHttpClientFactory httpClientFactory,
+            CancellationToken ct) =>
+        {
+            var client = httpClientFactory.CreateClient("FhirServer");
+            var response = await client.GetAsync($"MedicationRequest/{Uri.EscapeDataString(id)}", ct);
+            var content = await response.Content.ReadAsStringAsync(ct);
+            return Results.Content(content, "application/fhir+json");
+        }).WithSummary("Get a MedicationRequest resource by ID");
+
+        group.MapPost("/medications", async (
+            HttpRequest request,
+            IHttpClientFactory httpClientFactory,
+            CancellationToken ct) =>
+        {
+            var client = httpClientFactory.CreateClient("FhirServer");
+            var body = await new StreamReader(request.Body).ReadToEndAsync(ct);
+            if (string.IsNullOrWhiteSpace(body))
+                return Results.BadRequest(new { error = "Request body is required" });
+            var content = new StringContent(body, System.Text.Encoding.UTF8, "application/fhir+json");
+            var response = await client.PostAsync("MedicationRequest", content, ct);
+            var responseBody = await response.Content.ReadAsStringAsync(ct);
+            return Results.Content(responseBody, "application/fhir+json", statusCode: (int)response.StatusCode);
+        }).WithSummary("Create a MedicationRequest resource");
+
+        group.MapPut("/medications/{id}", async (
+            string id,
+            HttpRequest request,
+            IHttpClientFactory httpClientFactory,
+            CancellationToken ct) =>
+        {
+            var client = httpClientFactory.CreateClient("FhirServer");
+            var body = await new StreamReader(request.Body).ReadToEndAsync(ct);
+            if (string.IsNullOrWhiteSpace(body))
+                return Results.BadRequest(new { error = "Request body is required" });
+            var content = new StringContent(body, System.Text.Encoding.UTF8, "application/fhir+json");
+            var response = await client.PutAsync($"MedicationRequest/{Uri.EscapeDataString(id)}", content, ct);
+            var responseBody = await response.Content.ReadAsStringAsync(ct);
+            return Results.Content(responseBody, "application/fhir+json", statusCode: (int)response.StatusCode);
+        }).WithSummary("Update a MedicationRequest resource");
+
+        group.MapDelete("/medications/{id}", async (
+            string id,
+            IHttpClientFactory httpClientFactory,
+            CancellationToken ct) =>
+        {
+            var client = httpClientFactory.CreateClient("FhirServer");
+            var response = await client.DeleteAsync($"MedicationRequest/{Uri.EscapeDataString(id)}", ct);
+            return Results.StatusCode((int)response.StatusCode);
+        }).WithSummary("Delete (discontinue) a MedicationRequest resource");
+
+        // ── AllergyIntolerance (Phase 30 — USCDI v2 / US Core 6) ────────────
+        group.MapGet("/allergies/{patientId}", async (
+            string patientId,
+            string? clinicalStatus,
+            IHttpClientFactory httpClientFactory,
+            CancellationToken ct) =>
+        {
+            var client = httpClientFactory.CreateClient("FhirServer");
+            var query = $"AllergyIntolerance?patient={Uri.EscapeDataString(patientId)}";
+            if (!string.IsNullOrWhiteSpace(clinicalStatus))
+                query += $"&clinical-status={Uri.EscapeDataString(clinicalStatus)}";
+            var response = await client.GetAsync(query, ct);
+            var content = await response.Content.ReadAsStringAsync(ct);
+            return Results.Content(content, "application/fhir+json");
+        }).WithSummary("Search AllergyIntolerance resources by patient");
+
+        group.MapGet("/allergies/resource/{id}", async (
+            string id,
+            IHttpClientFactory httpClientFactory,
+            CancellationToken ct) =>
+        {
+            var client = httpClientFactory.CreateClient("FhirServer");
+            var response = await client.GetAsync($"AllergyIntolerance/{Uri.EscapeDataString(id)}", ct);
+            var content = await response.Content.ReadAsStringAsync(ct);
+            return Results.Content(content, "application/fhir+json");
+        }).WithSummary("Get an AllergyIntolerance resource by ID");
+
+        group.MapPost("/allergies", async (
+            HttpRequest request,
+            IHttpClientFactory httpClientFactory,
+            CancellationToken ct) =>
+        {
+            var client = httpClientFactory.CreateClient("FhirServer");
+            var body = await new StreamReader(request.Body).ReadToEndAsync(ct);
+            if (string.IsNullOrWhiteSpace(body))
+                return Results.BadRequest(new { error = "Request body is required" });
+            var content = new StringContent(body, System.Text.Encoding.UTF8, "application/fhir+json");
+            var response = await client.PostAsync("AllergyIntolerance", content, ct);
+            var responseBody = await response.Content.ReadAsStringAsync(ct);
+            return Results.Content(responseBody, "application/fhir+json", statusCode: (int)response.StatusCode);
+        }).WithSummary("Create an AllergyIntolerance resource");
+
+        group.MapPut("/allergies/{id}", async (
+            string id,
+            HttpRequest request,
+            IHttpClientFactory httpClientFactory,
+            CancellationToken ct) =>
+        {
+            var client = httpClientFactory.CreateClient("FhirServer");
+            var body = await new StreamReader(request.Body).ReadToEndAsync(ct);
+            if (string.IsNullOrWhiteSpace(body))
+                return Results.BadRequest(new { error = "Request body is required" });
+            var content = new StringContent(body, System.Text.Encoding.UTF8, "application/fhir+json");
+            var response = await client.PutAsync($"AllergyIntolerance/{Uri.EscapeDataString(id)}", content, ct);
+            var responseBody = await response.Content.ReadAsStringAsync(ct);
+            return Results.Content(responseBody, "application/fhir+json", statusCode: (int)response.StatusCode);
+        }).WithSummary("Update an AllergyIntolerance resource");
+
+        group.MapDelete("/allergies/{id}", async (
+            string id,
+            IHttpClientFactory httpClientFactory,
+            CancellationToken ct) =>
+        {
+            var client = httpClientFactory.CreateClient("FhirServer");
+            var response = await client.DeleteAsync($"AllergyIntolerance/{Uri.EscapeDataString(id)}", ct);
+            return Results.StatusCode((int)response.StatusCode);
+        }).WithSummary("Delete an AllergyIntolerance resource");
+
+        // ── Condition / Problem List (Phase 30 — USCDI v2 / US Core 6) ──────
+        group.MapGet("/conditions/{patientId}", async (
+            string patientId,
+            string? clinicalStatus,
+            string? category,
+            IHttpClientFactory httpClientFactory,
+            CancellationToken ct) =>
+        {
+            var client = httpClientFactory.CreateClient("FhirServer");
+            var query = $"Condition?patient={Uri.EscapeDataString(patientId)}";
+            if (!string.IsNullOrWhiteSpace(clinicalStatus))
+                query += $"&clinical-status={Uri.EscapeDataString(clinicalStatus)}";
+            if (!string.IsNullOrWhiteSpace(category))
+                query += $"&category={Uri.EscapeDataString(category)}";
+            var response = await client.GetAsync(query, ct);
+            var content = await response.Content.ReadAsStringAsync(ct);
+            return Results.Content(content, "application/fhir+json");
+        }).WithSummary("Search Condition resources by patient");
+
+        group.MapGet("/conditions/resource/{id}", async (
+            string id,
+            IHttpClientFactory httpClientFactory,
+            CancellationToken ct) =>
+        {
+            var client = httpClientFactory.CreateClient("FhirServer");
+            var response = await client.GetAsync($"Condition/{Uri.EscapeDataString(id)}", ct);
+            var content = await response.Content.ReadAsStringAsync(ct);
+            return Results.Content(content, "application/fhir+json");
+        }).WithSummary("Get a Condition resource by ID");
+
+        group.MapPost("/conditions", async (
+            HttpRequest request,
+            IHttpClientFactory httpClientFactory,
+            CancellationToken ct) =>
+        {
+            var client = httpClientFactory.CreateClient("FhirServer");
+            var body = await new StreamReader(request.Body).ReadToEndAsync(ct);
+            if (string.IsNullOrWhiteSpace(body))
+                return Results.BadRequest(new { error = "Request body is required" });
+            var content = new StringContent(body, System.Text.Encoding.UTF8, "application/fhir+json");
+            var response = await client.PostAsync("Condition", content, ct);
+            var responseBody = await response.Content.ReadAsStringAsync(ct);
+            return Results.Content(responseBody, "application/fhir+json", statusCode: (int)response.StatusCode);
+        }).WithSummary("Create a Condition resource");
+
+        group.MapPut("/conditions/{id}", async (
+            string id,
+            HttpRequest request,
+            IHttpClientFactory httpClientFactory,
+            CancellationToken ct) =>
+        {
+            var client = httpClientFactory.CreateClient("FhirServer");
+            var body = await new StreamReader(request.Body).ReadToEndAsync(ct);
+            if (string.IsNullOrWhiteSpace(body))
+                return Results.BadRequest(new { error = "Request body is required" });
+            var content = new StringContent(body, System.Text.Encoding.UTF8, "application/fhir+json");
+            var response = await client.PutAsync($"Condition/{Uri.EscapeDataString(id)}", content, ct);
+            var responseBody = await response.Content.ReadAsStringAsync(ct);
+            return Results.Content(responseBody, "application/fhir+json", statusCode: (int)response.StatusCode);
+        }).WithSummary("Update a Condition resource");
+
+        group.MapDelete("/conditions/{id}", async (
+            string id,
+            IHttpClientFactory httpClientFactory,
+            CancellationToken ct) =>
+        {
+            var client = httpClientFactory.CreateClient("FhirServer");
+            var response = await client.DeleteAsync($"Condition/{Uri.EscapeDataString(id)}", ct);
+            return Results.StatusCode((int)response.StatusCode);
+        }).WithSummary("Delete a Condition resource");
+
+        // ── Immunization (Phase 30 — USCDI v2 / US Core 6) ──────────────────
+        group.MapGet("/immunizations/{patientId}", async (
+            string patientId,
+            IHttpClientFactory httpClientFactory,
+            CancellationToken ct) =>
+        {
+            var client = httpClientFactory.CreateClient("FhirServer");
+            var response = await client.GetAsync($"Immunization?patient={Uri.EscapeDataString(patientId)}", ct);
+            var content = await response.Content.ReadAsStringAsync(ct);
+            return Results.Content(content, "application/fhir+json");
+        }).WithSummary("Search Immunization resources by patient");
+
+        // ── DiagnosticReport (Phase 30 — USCDI v2) ──────────────────────────
+        group.MapGet("/diagnostic-reports/{patientId}", async (
+            string patientId,
+            string? category,
+            IHttpClientFactory httpClientFactory,
+            CancellationToken ct) =>
+        {
+            var client = httpClientFactory.CreateClient("FhirServer");
+            var query = $"DiagnosticReport?patient={Uri.EscapeDataString(patientId)}";
+            if (!string.IsNullOrWhiteSpace(category))
+                query += $"&category={Uri.EscapeDataString(category)}";
+            var response = await client.GetAsync(query, ct);
+            var content = await response.Content.ReadAsStringAsync(ct);
+            return Results.Content(content, "application/fhir+json");
+        }).WithSummary("Search DiagnosticReport resources by patient");
+
+        // ── CareTeam (Phase 30 — USCDI v2) ──────────────────────────────────
+        group.MapGet("/care-teams/{patientId}", async (
+            string patientId,
+            IHttpClientFactory httpClientFactory,
+            CancellationToken ct) =>
+        {
+            var client = httpClientFactory.CreateClient("FhirServer");
+            var response = await client.GetAsync($"CareTeam?patient={Uri.EscapeDataString(patientId)}", ct);
+            var content = await response.Content.ReadAsStringAsync(ct);
+            return Results.Content(content, "application/fhir+json");
+        }).WithSummary("Search CareTeam resources by patient");
+
         return app;
     }
 }

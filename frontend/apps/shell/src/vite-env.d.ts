@@ -109,4 +109,16 @@ declare module 'triage/ClinicalCoderPanel' {
 declare module 'engagement/CampaignManagerPanel' {
   export const CampaignManagerPanel: React.ComponentType;
 }
+declare module 'encounters/MedicationPanel' {
+  export const MedicationPanel: React.ComponentType;
+}
+declare module 'encounters/AllergyPanel' {
+  export const AllergyPanel: React.ComponentType;
+}
+declare module 'encounters/ProblemListPanel' {
+  export const ProblemListPanel: React.ComponentType;
+}
+declare module 'encounters/ImmunizationPanel' {
+  export const ImmunizationPanel: React.ComponentType;
+}
 }

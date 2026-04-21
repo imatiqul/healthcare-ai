@@ -55,6 +55,11 @@ const ClinicalCoderPanelPage = lazy(() => import('triage/ClinicalCoderPanel').th
 const MlConfidencePanelPage = lazy(() => import('./pages/MlConfidencePanel')); // Phase 27
 const CampaignManagerPanelPage = lazy(() => import('engagement/CampaignManagerPanel').then(m => ({ default: m.CampaignManagerPanel }))); // Phase 27
 const DemoLive = lazy(() => import('./pages/DemoLive'));
+const MedicationPanelPage = lazy(() => import('encounters/MedicationPanel').then(m => ({ default: m.MedicationPanel }))); // Phase 30
+const AllergyPanelPage = lazy(() => import('encounters/AllergyPanel').then(m => ({ default: m.AllergyPanel }))); // Phase 30
+const ProblemListPanelPage = lazy(() => import('encounters/ProblemListPanel').then(m => ({ default: m.ProblemListPanel }))); // Phase 30
+const ImmunizationPanelPage = lazy(() => import('encounters/ImmunizationPanel').then(m => ({ default: m.ImmunizationPanel }))); // Phase 30
+const PractitionerManagerPage = lazy(() => import('./pages/PractitionerManager')); // Phase 30
 
 function Loading() {
   return (
@@ -168,6 +173,10 @@ export default function App() {
                     <DrugInteractionCheckerPage />
                     <FhirObservationViewerPage />
                     <FhirEverythingViewerPage />
+                    <MedicationPanelPage />
+                    <AllergyPanelPage />
+                    <ProblemListPanelPage />
+                    <ImmunizationPanelPage />
                   </MfeErrorBoundary>
                 } />
                 <Route path="/patient-portal" element={
@@ -227,6 +236,11 @@ export default function App() {
                 <Route path="/admin/demo" element={
                   <MfeErrorBoundary name="Demo Admin">
                     <DemoAdminPanelPage />
+                  </MfeErrorBoundary>
+                } />
+                <Route path="/admin/practitioners" element={
+                  <MfeErrorBoundary name="Practitioners">
+                    <PractitionerManagerPage />
                   </MfeErrorBoundary>
                 } />
               </Routes>

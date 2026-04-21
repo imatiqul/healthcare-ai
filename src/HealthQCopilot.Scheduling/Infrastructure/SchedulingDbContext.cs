@@ -9,6 +9,7 @@ public class SchedulingDbContext : OutboxDbContext
     public DbSet<Slot> Slots => Set<Slot>();
     public DbSet<Booking> Bookings => Set<Booking>();
     public DbSet<WaitlistEntry> WaitlistEntries => Set<WaitlistEntry>();
+    public DbSet<Practitioner> Practitioners => Set<Practitioner>();
 
     public SchedulingDbContext(DbContextOptions<SchedulingDbContext> options) : base(options) { }
 
@@ -41,6 +42,19 @@ public class SchedulingDbContext : OutboxDbContext
             b.Property(e => e.PractitionerId).HasMaxLength(128).IsRequired();
             b.HasIndex(e => new { e.PatientId, e.Status });
             b.HasIndex(e => new { e.PractitionerId, e.Status });
+        });
+
+        modelBuilder.Entity<Practitioner>(b =>
+        {
+            b.ToTable("practitioners");
+            b.HasKey(e => e.Id);
+            b.Property(e => e.PractitionerId).HasMaxLength(128).IsRequired();
+            b.HasIndex(e => e.PractitionerId).IsUnique();
+            b.Property(e => e.Name).HasMaxLength(256).IsRequired();
+            b.Property(e => e.Specialty).HasMaxLength(128).IsRequired();
+            b.Property(e => e.Email).HasMaxLength(256).IsRequired();
+            b.Property(e => e.TimeZoneId).HasMaxLength(64).IsRequired();
+            b.HasIndex(e => e.IsActive);
         });
     }
 }
