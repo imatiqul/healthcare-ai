@@ -34,6 +34,7 @@ import BadgeIcon from '@mui/icons-material/Badge';
 import ApartmentIcon from '@mui/icons-material/Apartment';
 import SlideshowIcon from '@mui/icons-material/Slideshow';
 import HistoryIcon from '@mui/icons-material/History';
+import NotificationsIcon from '@mui/icons-material/Notifications';
 import { useMediaQuery, useTheme } from '@mui/material';
 import { useTranslation } from 'react-i18next';
 
@@ -83,7 +84,8 @@ const navGroups: NavGroup[] = [
   {
     groupKey: 'nav.group.main',
     items: [
-      { href: '/',                  labelKey: 'nav.dashboard',   label: 'Dashboard',         icon: <DashboardIcon /> },
+      { href: '/',               labelKey: 'nav.dashboard',     label: 'Dashboard',          icon: <DashboardIcon /> },
+      { href: '/notifications',  labelKey: 'nav.notifications', label: 'Notifications',      icon: <NotificationsIcon /> },
     ],
   },
   {

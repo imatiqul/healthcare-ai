@@ -11,10 +11,13 @@ import { CopilotChat } from './components/CopilotChat';
 import { CommandPalette, useCommandPalette } from './components/CommandPalette';
 import { ToastProvider } from './components/ToastProvider';
 import { KeyboardShortcutsModal, useKeyboardShortcutsModal } from './components/KeyboardShortcutsModal';
+import { AppBreadcrumbs } from './components/AppBreadcrumbs'; // Phase 34
+import { SessionExpiryGuard } from './components/SessionExpiryGuard'; // Phase 34
 import Dashboard from './pages/Dashboard';
 import DemoLanding from './pages/DemoLanding';
 const AdminSettingsPage = lazy(() => import('./pages/AdminSettings')); // Phase 33
 const UserProfilePage   = lazy(() => import('./pages/UserProfile'));   // Phase 33
+const NotificationCenterPage = lazy(() => import('./pages/NotificationCenter')); // Phase 34
 
 const VoicePage = lazy(() => import('voice/VoiceSessionController').then(m => ({ default: m.VoiceSessionController })));
 const TriagePage = lazy(() => import('triage/TriageViewer').then(m => ({ default: m.TriageViewer })));
@@ -158,10 +161,16 @@ export default function App() {
         <Sidebar />
         <Box sx={{ flex: 1, display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
           <TopNav onOpenSearch={openPalette} />
+          <AppBreadcrumbs />
           <Box component="main" sx={{ flex: 1, overflow: 'auto', p: { xs: 2, md: 3 }, bgcolor: 'background.default' }}>
             <Suspense fallback={<Loading />}>
               <Routes>
                 <Route path="/" element={<Dashboard />} />
+                <Route path="/notifications" element={
+                  <MfeErrorBoundary name="Notification Center">
+                    <NotificationCenterPage />
+                  </MfeErrorBoundary>
+                } />
                 <Route path="/business" element={
                   <MfeErrorBoundary name="Business KPIs">
                     <BusinessKpiDashboardPage />
@@ -302,6 +311,7 @@ export default function App() {
         <CopilotChat />
         <CommandPalette open={paletteOpen} onClose={closePalette} />
         <KeyboardShortcutsModal open={shortcutsOpen} onClose={closeShortcuts} />
+        <SessionExpiryGuard />
       </Box>
     </SidebarProvider>
   );

@@ -242,8 +242,8 @@ export function TopNav({ onOpenSearch }: TopNavProps) {
                 )}
                 <Divider />
                 <Box sx={{ px: 2, py: 1, textAlign: 'center' }}>
-                  <Typography variant="caption" color="primary.main" sx={{ cursor: 'pointer' }} onClick={() => { closeNotif(); navigate('/admin/health'); }}>
-                    View platform health →
+                  <Typography variant="caption" color="primary.main" sx={{ cursor: 'pointer' }} onClick={() => { closeNotif(); navigate('/notifications'); }}>
+                    View all notifications →
                   </Typography>
                 </Box>
               </Menu>
