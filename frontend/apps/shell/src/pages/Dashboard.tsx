@@ -21,6 +21,7 @@ import { createGlobalHub } from '@healthcare/signalr-client';
 import { WelcomeCard } from '../components/WelcomeCard';
 import { RecentPagesWidget } from '../components/RecentPagesWidget'; // Phase 35
 import { FavoritePagesWidget } from '../components/FavoritePagesWidget'; // Phase 36
+import { DashboardCustomizer, loadVisibleSections, type DashboardSection } from '../components/DashboardCustomizer'; // Phase 37
 
 const API_BASE = import.meta.env.VITE_API_BASE_URL || '';
 
@@ -157,6 +158,7 @@ export default function Dashboard() {
   const { t } = useTranslation();
   const [stats, setStats] = useState<DashboardStats[]>([]);
   const [loading, setLoading] = useState(true);
+  const [visibleSections, setVisibleSections] = useState<DashboardSection[]>(loadVisibleSections); // Phase 37
 
   const applyPushUpdate = useCallback((payload: RawDashboardPayload) => {
     setStats(prev => prev.map(s => {
@@ -217,7 +219,10 @@ export default function Dashboard() {
   if (loading) {
     return (
       <Box sx={{ p: 3 }}>
-        <Typography variant="h5" fontWeight={700} mb={3}>{t('dashboard.title', 'Dashboard')}</Typography>
+        <Stack direction="row" alignItems="center" justifyContent="space-between" mb={3}>
+          <Typography variant="h5" fontWeight={700}>{t('dashboard.title', 'Dashboard')}</Typography>
+          <DashboardCustomizer onChange={setVisibleSections} />
+        </Stack>
         <SkeletonStatGrid count={8} />
       </Box>
     );
@@ -225,12 +230,16 @@ export default function Dashboard() {
 
   return (
     <Box>
-      <Typography variant="h5" fontWeight={700} mb={3}>{t('dashboard.title', 'Dashboard')}</Typography>
+      <Stack direction="row" alignItems="center" justifyContent="space-between" mb={3}>
+        <Typography variant="h5" fontWeight={700}>{t('dashboard.title', 'Dashboard')}</Typography>
+        <DashboardCustomizer onChange={setVisibleSections} />
+      </Stack>
       <WelcomeCard />
       <Grid container spacing={3}>
         <Grid item xs={12} md={9}>
           <Stack spacing={4}>
             {sections.map((section) => {
+              if (!visibleSections.includes(section)) return null;
               const sectionStats = stats.filter(s => s.section === section);
               const meta = sectionMeta[section];
               return (

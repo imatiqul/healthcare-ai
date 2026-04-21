@@ -16,6 +16,7 @@ import { SessionExpiryGuard } from './components/SessionExpiryGuard'; // Phase 3
 import { PageTracker } from './components/PageTracker'; // Phase 35
 import { QuickActionsSpeedDial } from './components/QuickActionsSpeedDial'; // Phase 35
 import { AnnouncementBanner } from './components/AnnouncementBanner'; // Phase 36
+import { OfflineIndicator } from './components/OfflineIndicator'; // Phase 37
 import Dashboard from './pages/Dashboard';
 import DemoLanding from './pages/DemoLanding';
 const AdminSettingsPage = lazy(() => import('./pages/AdminSettings')); // Phase 33
@@ -165,6 +166,7 @@ export default function App() {
         <Sidebar />
         <Box sx={{ flex: 1, display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
           <TopNav onOpenSearch={openPalette} />
+          <OfflineIndicator />
           <AppBreadcrumbs />
           <AnnouncementBanner />
           <Box component="main" sx={{ flex: 1, overflow: 'auto', p: { xs: 2, md: 3 }, bgcolor: 'background.default' }}>

@@ -24,11 +24,13 @@ import SearchIcon from '@mui/icons-material/Search';
 import WarningAmberIcon from '@mui/icons-material/WarningAmber';
 import ErrorOutlineIcon from '@mui/icons-material/ErrorOutline';
 import SmartToyIcon from '@mui/icons-material/SmartToy';
+import HelpOutlineIcon from '@mui/icons-material/HelpOutline';
 import { Button } from '@healthcare/design-system';
 import { useColorMode } from '@healthcare/design-system';
 import { useAuth } from '@healthcare/auth-client';
 import { SidebarMenuButton } from './Sidebar';
 import { useTranslation } from 'react-i18next';
+import { ContextualHelpPanel } from './ContextualHelpPanel'; // Phase 37
 
 const API_BASE = import.meta.env.VITE_API_BASE_URL || '';
 
@@ -116,6 +118,7 @@ export function TopNav({ onOpenSearch }: TopNavProps) {
   const [userMenuAnchor, setUserMenuAnchor] = useState<null | HTMLElement>(null);
   const [notifAnchor, setNotifAnchor]       = useState<null | HTMLElement>(null);
   const [alerts, setAlerts]                 = useState<LiveAlert[]>([]);
+  const [helpOpen, setHelpOpen]             = useState(false); // Phase 37
 
   const openUserMenu  = (e: React.MouseEvent<HTMLElement>) => setUserMenuAnchor(e.currentTarget);
   const closeUserMenu = () => setUserMenuAnchor(null);
@@ -188,6 +191,13 @@ export function TopNav({ onOpenSearch }: TopNavProps) {
           <Tooltip title={mode === 'dark' ? t('topnav.lightMode', 'Light mode') : t('topnav.darkMode', 'Dark mode')}>
             <IconButton size="small" onClick={toggleMode} aria-label="toggle colour mode">
               {mode === 'dark' ? <LightModeIcon fontSize="small" /> : <DarkModeIcon fontSize="small" />}
+            </IconButton>
+          </Tooltip>
+
+          {/* Contextual help */}
+          <Tooltip title="Help">
+            <IconButton size="small" onClick={() => setHelpOpen(true)} aria-label="Open help panel">
+              <HelpOutlineIcon fontSize="small" />
             </IconButton>
           </Tooltip>
 
@@ -297,5 +307,6 @@ export function TopNav({ onOpenSearch }: TopNavProps) {
         </Stack>
       </Toolbar>
     </AppBar>
+    <ContextualHelpPanel open={helpOpen} onClose={() => setHelpOpen(false)} />
   );
 }
