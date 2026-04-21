@@ -53,6 +53,7 @@ export default function PractitionerManager() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [showAll, setShowAll] = useState(false);
+  const [searchQuery, setSearchQuery] = useState('');
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editId, setEditId] = useState<string | null>(null);
   const [form, setForm] = useState<FormState>(EMPTY_FORM);
@@ -163,11 +164,21 @@ export default function PractitionerManager() {
         Practitioner Management
       </Typography>
 
-      <Stack direction="row" justifyContent="space-between" alignItems="center" mb={2}>
-        <FormControlLabel
-          control={<Switch checked={showAll} onChange={e => setShowAll(e.target.checked)} />}
-          label="Show inactive"
-        />
+      <Stack direction="row" justifyContent="space-between" alignItems="center" mb={2} gap={2} flexWrap="wrap">
+        <Stack direction="row" spacing={2} alignItems="center" flexWrap="wrap">
+          <FormControlLabel
+            control={<Switch checked={showAll} onChange={e => setShowAll(e.target.checked)} />}
+            label="Show inactive"
+          />
+          <TextField
+            size="small"
+            placeholder="Search by name, specialty or email…"
+            value={searchQuery}
+            onChange={e => setSearchQuery(e.target.value)}
+            sx={{ minWidth: 260 }}
+            inputProps={{ 'aria-label': 'Search practitioners' }}
+          />
+        </Stack>
         <Button onClick={openCreate}>+ Add Practitioner</Button>
       </Stack>
 
@@ -175,7 +186,18 @@ export default function PractitionerManager() {
       {error && <Alert severity="error" sx={{ mb: 2 }}>{error}</Alert>}
 
       <Stack gap={2}>
-        {practitioners.map(p => (
+        {practitioners
+          .filter(p => {
+            if (!searchQuery.trim()) return true;
+            const q = searchQuery.toLowerCase();
+            return (
+              p.name.toLowerCase().includes(q) ||
+              (p.specialty ?? '').toLowerCase().includes(q) ||
+              (p.email ?? '').toLowerCase().includes(q) ||
+              p.practitionerId.toLowerCase().includes(q)
+            );
+          })
+          .map(p => (
           <Card key={p.id}>
             <CardHeader>
               <Stack direction="row" justifyContent="space-between" alignItems="center">
@@ -219,9 +241,13 @@ export default function PractitionerManager() {
           </Card>
         ))}
 
-        {!loading && practitioners.length === 0 && (
+        {!loading && practitioners.filter(p => {
+            if (!searchQuery.trim()) return true;
+            const q = searchQuery.toLowerCase();
+            return p.name.toLowerCase().includes(q) || (p.specialty ?? '').toLowerCase().includes(q) || (p.email ?? '').toLowerCase().includes(q) || p.practitionerId.toLowerCase().includes(q);
+          }).length === 0 && (
           <Typography variant="body2" color="text.secondary">
-            No practitioners found. Add one to get started.
+            {searchQuery.trim() ? 'No practitioners match your search.' : 'No practitioners found. Add one to get started.'}
           </Typography>
         )}
       </Stack>

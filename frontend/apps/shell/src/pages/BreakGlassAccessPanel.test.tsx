@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { render, screen, waitFor, fireEvent } from '@testing-library/react';
+import { render, screen, waitFor, fireEvent, act } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import BreakGlassAccessPanel from './BreakGlassAccessPanel';
 
@@ -113,12 +113,12 @@ describe('BreakGlassAccessPanel', () => {
     const user = userEvent.setup({ delay: null });
     render(<BreakGlassAccessPanel />);
     await waitFor(() => expect(screen.getByText('Request Access')).not.toBeDisabled(), { timeout: 5000 });
-    await user.click(screen.getByText('Request Access'));
+    fireEvent.click(screen.getByText('Request Access'));
     await user.type(screen.getByLabelText(/requesting user id/i), 'user-aaa');
     await user.type(screen.getByLabelText(/target patient id/i), 'patient-bbb');
     await user.type(screen.getByLabelText(/clinical justification/i), 'Patient unconscious, need emergency medical history access');
     const requestBtns = screen.getAllByText('Request Access', { selector: 'button' });
-    await user.click(requestBtns[requestBtns.length - 1]);
+    await act(async () => { fireEvent.click(requestBtns[requestBtns.length - 1]); });
 
     await waitFor(() => {
       expect(global.fetch).toHaveBeenCalledWith(

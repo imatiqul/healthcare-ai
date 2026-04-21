@@ -141,4 +141,43 @@ describe('NotificationCenter', () => {
       expect(screen.getByText(/3 claim denials near deadline/i)).toBeInTheDocument();
     });
   });
+
+  it('severity filter chips are rendered', async () => {
+    renderPage();
+    await waitFor(() => screen.getByText('Notification Center'));
+    expect(screen.getByText('All')).toBeInTheDocument();
+    expect(screen.getByText(/Critical/)).toBeInTheDocument();
+    expect(screen.getByText(/Warning/)).toBeInTheDocument();
+    expect(screen.getByText(/Info/)).toBeInTheDocument();
+    expect(screen.getByText('Unread only')).toBeInTheDocument();
+  });
+
+  it('severity filter hides non-matching notifications', async () => {
+    const records = [
+      { id: 'e1', title: 'Error Alert', subtitle: '', severity: 'error', href: '/', read: false, receivedAt: new Date().toISOString() },
+      { id: 'w1', title: 'Warning Alert', subtitle: '', severity: 'warning', href: '/', read: false, receivedAt: new Date().toISOString() },
+    ];
+    localStorage.setItem('hq:notification-history', JSON.stringify(records));
+    renderPage();
+    await waitFor(() => screen.getByText('Error Alert'));
+
+    // Click Warning filter — chip label includes count: "Warning (1)"
+    fireEvent.click(screen.getByText('Warning (1)'));
+    expect(screen.getByText('Warning Alert')).toBeInTheDocument();
+    expect(screen.queryByText('Error Alert')).toBeNull();
+  });
+
+  it('Unread only filter hides read notifications', async () => {
+    const records = [
+      { id: 'r1', title: 'Read Alert', subtitle: '', severity: 'info', href: '/', read: true, receivedAt: new Date().toISOString() },
+      { id: 'u1', title: 'Unread Alert', subtitle: '', severity: 'info', href: '/', read: false, receivedAt: new Date().toISOString() },
+    ];
+    localStorage.setItem('hq:notification-history', JSON.stringify(records));
+    renderPage();
+    await waitFor(() => screen.getByText('Unread Alert'));
+
+    fireEvent.click(screen.getByText('Unread only'));
+    expect(screen.getByText('Unread Alert')).toBeInTheDocument();
+    expect(screen.queryByText('Read Alert')).toBeNull();
+  });
 });

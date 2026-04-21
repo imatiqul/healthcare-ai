@@ -129,6 +129,8 @@ export default function NotificationCenter() {
   const navigate = useNavigate();
   const [records, setRecords] = useState<NotificationRecord[]>([]);
   const [loading, setLoading] = useState(true);
+  const [filterSeverity, setFilterSeverity] = useState<'all' | 'error' | 'warning' | 'info'>('all');
+  const [unreadOnly, setUnreadOnly] = useState(false);
 
   const refresh = useCallback(async () => {
     setLoading(true);
@@ -169,6 +171,16 @@ export default function NotificationCenter() {
   };
 
   const unreadCount = records.filter(r => !r.read).length;
+
+  const visibleRecords = records.filter(r => {
+    if (filterSeverity !== 'all' && r.severity !== filterSeverity) return false;
+    if (unreadOnly && r.read) return false;
+    return true;
+  });
+
+  const errorCount   = records.filter(r => r.severity === 'error').length;
+  const warningCount = records.filter(r => r.severity === 'warning').length;
+  const infoCount    = records.filter(r => r.severity === 'info').length;
 
   return (
     <Box sx={{ maxWidth: 760, mx: 'auto' }}>
@@ -226,6 +238,44 @@ export default function NotificationCenter() {
         </Stack>
       </Stack>
 
+      {/* ── Filter bar ── */}
+      <Stack direction="row" spacing={1} sx={{ mb: 2, flexWrap: 'wrap', gap: 0.5 }}>
+        <Chip
+          label="All"
+          size="small"
+          variant={filterSeverity === 'all' ? 'filled' : 'outlined'}
+          onClick={() => setFilterSeverity('all')}
+        />
+        <Chip
+          label={`Critical${errorCount > 0 ? ` (${errorCount})` : ''}`}
+          size="small"
+          color="error"
+          variant={filterSeverity === 'error' ? 'filled' : 'outlined'}
+          onClick={() => setFilterSeverity('error')}
+        />
+        <Chip
+          label={`Warning${warningCount > 0 ? ` (${warningCount})` : ''}`}
+          size="small"
+          color="warning"
+          variant={filterSeverity === 'warning' ? 'filled' : 'outlined'}
+          onClick={() => setFilterSeverity('warning')}
+        />
+        <Chip
+          label={`Info${infoCount > 0 ? ` (${infoCount})` : ''}`}
+          size="small"
+          color="info"
+          variant={filterSeverity === 'info' ? 'filled' : 'outlined'}
+          onClick={() => setFilterSeverity('info')}
+        />
+        <Chip
+          label="Unread only"
+          size="small"
+          color={unreadOnly ? 'primary' : 'default'}
+          variant={unreadOnly ? 'filled' : 'outlined'}
+          onClick={() => setUnreadOnly(v => !v)}
+        />
+      </Stack>
+
       {/* ── Body ── */}
       {loading ? (
         <Box sx={{ display: 'flex', justifyContent: 'center', py: 8 }}>
@@ -241,6 +291,12 @@ export default function NotificationCenter() {
             Live platform alerts will appear here automatically
           </Typography>
         </Box>
+      ) : visibleRecords.length === 0 ? (
+        <Box sx={{ textAlign: 'center', py: 6 }}>
+          <Typography variant="body2" color="text.secondary">
+            No notifications match the selected filter
+          </Typography>
+        </Box>
       ) : (
         <Box
           sx={{
@@ -251,7 +307,7 @@ export default function NotificationCenter() {
             overflow: 'hidden',
           }}
         >
-          {records.map((record, idx) => (
+          {visibleRecords.map((record, idx) => (
             <Box key={record.id}>
               {idx > 0 && <Divider />}
               <Box

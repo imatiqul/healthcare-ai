@@ -1,4 +1,4 @@
-import { lazy, Suspense, Component, type ReactNode, type ErrorInfo } from 'react';
+import { lazy, Suspense, Component, useEffect, type ReactNode, type ErrorInfo } from 'react';
 import { Routes, Route, useLocation } from 'react-router-dom';
 import Box from '@mui/material/Box';
 import Typography from '@mui/material/Typography';
@@ -153,6 +153,27 @@ export default function App() {
   const isDemoRoute = location.pathname.startsWith('/demo');
   const { open: paletteOpen, openPalette, closePalette }         = useCommandPalette();
   const { open: shortcutsOpen, closeModal: closeShortcuts } = useKeyboardShortcutsModal();
+
+  // Phase 56 — keep browser tab title in sync with unread notification count
+  useEffect(() => {
+    const NOTIF_KEY = 'hq:notification-history';
+    function syncTitle() {
+      try {
+        const stored = JSON.parse(localStorage.getItem(NOTIF_KEY) ?? '[]') as Array<{ read: boolean }>;
+        const unread = stored.filter(r => !r.read).length;
+        document.title = unread > 0 ? `(${unread}) HealthQ Copilot` : 'HealthQ Copilot';
+      } catch {
+        document.title = 'HealthQ Copilot';
+      }
+    }
+    syncTitle();
+    window.addEventListener('storage', syncTitle);
+    window.addEventListener('hq:notifications-updated', syncTitle);
+    return () => {
+      window.removeEventListener('storage', syncTitle);
+      window.removeEventListener('hq:notifications-updated', syncTitle);
+    };
+  }, []);
 
   // Demo routes render without shell chrome (no sidebar, topnav, or copilot)
   if (isDemoRoute) {

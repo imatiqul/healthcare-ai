@@ -124,4 +124,36 @@ describe('PractitionerManager', () => {
     expect(screen.getByText('Edit Practitioner')).toBeInTheDocument();
     expect(screen.getByDisplayValue('Dr. Alice Morgan')).toBeInTheDocument();
   });
+
+  it('search bar filters practitioners by name', async () => {
+    render(<PractitionerManager />);
+    await waitFor(() => screen.getByText('Dr. Alice Morgan'));
+
+    const searchInput = screen.getByRole('textbox', { name: /search practitioners/i });
+    fireEvent.change(searchInput, { target: { value: 'alice' } });
+
+    expect(screen.getByText('Dr. Alice Morgan')).toBeInTheDocument();
+    expect(screen.queryByText('Dr. Ben Carter')).toBeNull();
+  });
+
+  it('search bar filters practitioners by specialty', async () => {
+    render(<PractitionerManager />);
+    await waitFor(() => screen.getByText('Dr. Alice Morgan'));
+
+    const searchInput = screen.getByRole('textbox', { name: /search practitioners/i });
+    fireEvent.change(searchInput, { target: { value: 'radiology' } });
+
+    expect(screen.queryByText('Dr. Alice Morgan')).toBeNull();
+    expect(screen.getByText('Dr. Ben Carter')).toBeInTheDocument();
+  });
+
+  it('shows no-match message when search has no results', async () => {
+    render(<PractitionerManager />);
+    await waitFor(() => screen.getByText('Dr. Alice Morgan'));
+
+    const searchInput = screen.getByRole('textbox', { name: /search practitioners/i });
+    fireEvent.change(searchInput, { target: { value: 'zzznomatch' } });
+
+    expect(screen.getByText(/no practitioners match your search/i)).toBeInTheDocument();
+  });
 });

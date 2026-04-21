@@ -6,11 +6,14 @@ import Alert from '@mui/material/Alert';
 import CircularProgress from '@mui/material/CircularProgress';
 import IconButton from '@mui/material/IconButton';
 import RefreshIcon from '@mui/icons-material/Refresh';
+import TextField from '@mui/material/TextField';
+import InputAdornment from '@mui/material/InputAdornment';
+import SearchIcon from '@mui/icons-material/Search';
+import TablePagination from '@mui/material/TablePagination';
 import Dialog from '@mui/material/Dialog';
 import DialogTitle from '@mui/material/DialogTitle';
 import DialogContent from '@mui/material/DialogContent';
 import DialogActions from '@mui/material/DialogActions';
-import TextField from '@mui/material/TextField';
 import Grid from '@mui/material/Grid';
 import Table from '@mui/material/Table';
 import TableHead from '@mui/material/TableHead';
@@ -18,6 +21,7 @@ import TableBody from '@mui/material/TableBody';
 import TableRow from '@mui/material/TableRow';
 import TableCell from '@mui/material/TableCell';
 import { Card, CardHeader, CardTitle, CardContent, Button, Badge } from '@healthcare/design-system';
+import { loadPreferences } from './UserPreferencesPanel'; // Phase 57
 
 const API_BASE = import.meta.env.VITE_API_BASE_URL || '';
 
@@ -52,6 +56,13 @@ export default function BreakGlassAccessPanel() {
   });
   const [requesting, setRequesting] = useState(false);
   const [revokingId, setRevokingId] = useState<string | null>(null);
+  const [searchQuery, setSearchQuery] = useState('');
+  const [statusFilter, setStatusFilter] = useState<'all' | 'active' | 'expired' | 'revoked'>('all');
+  const [page, setPage] = useState(0);
+  const rowsPerPage = loadPreferences().rowsPerPage;
+
+  // Reset page whenever filters change
+  useEffect(() => { setPage(0); }, [searchQuery, statusFilter]);
 
   const fetchAccesses = useCallback(async () => {
     setLoading(true);
@@ -126,6 +137,23 @@ export default function BreakGlassAccessPanel() {
     requestForm.targetPatientId.trim() &&
     requestForm.clinicalJustification.trim().length >= 20;
 
+  const filteredAccesses = accesses.filter(a => {
+    if (searchQuery.trim()) {
+      const q = searchQuery.toLowerCase();
+      if (
+        !a.requestedByUserId.toLowerCase().includes(q) &&
+        !a.targetPatientId.toLowerCase().includes(q) &&
+        !a.clinicalJustification.toLowerCase().includes(q)
+      ) return false;
+    }
+    if (statusFilter === 'active' && (a.isRevoked || isExpired(a.expiresAt))) return false;
+    if (statusFilter === 'expired' && (!isExpired(a.expiresAt) || a.isRevoked)) return false;
+    if (statusFilter === 'revoked' && !a.isRevoked) return false;
+    return true;
+  });
+
+  const pagedAccesses = filteredAccesses.slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage);
+
   return (
     <Stack spacing={3}>
       <Stack direction="row" justifyContent="space-between" alignItems="center">
@@ -150,14 +178,49 @@ export default function BreakGlassAccessPanel() {
         Use only for genuine clinical emergencies.
       </Alert>
 
+      <Stack direction="row" spacing={2} alignItems="center" flexWrap="wrap" sx={{ gap: 1 }}>
+        <TextField
+          size="small"
+          placeholder="Search by user, patient or justification…"
+          value={searchQuery}
+          onChange={e => setSearchQuery(e.target.value)}
+          sx={{ minWidth: 280, flex: 1 }}
+          InputProps={{
+            startAdornment: (
+              <InputAdornment position="start">
+                <SearchIcon fontSize="small" />
+              </InputAdornment>
+            ),
+          }}
+          inputProps={{ 'aria-label': 'Search break-glass records' }}
+        />
+        <Stack direction="row" spacing={0.5}>
+          {(['all', 'active', 'expired', 'revoked'] as const).map(s => (
+            <Chip
+              key={s}
+              label={s.charAt(0).toUpperCase() + s.slice(1)}
+              size="small"
+              variant={statusFilter === s ? 'filled' : 'outlined'}
+              color={s === 'active' ? 'success' : s === 'expired' ? 'warning' : s === 'revoked' ? 'error' : 'default'}
+              onClick={() => setStatusFilter(s)}
+            />
+          ))}
+        </Stack>
+      </Stack>
+
       <Card>
         <CardHeader><CardTitle>Access Records</CardTitle></CardHeader>
         <CardContent>
           {loading && <CircularProgress size={24} />}
-          {!loading && accesses.length === 0 && (
-            <Alert severity="info">No break-glass access records found.</Alert>
+          {!loading && filteredAccesses.length === 0 && (
+            <Alert severity="info">
+              {accesses.length === 0
+                ? 'No break-glass access records found.'
+                : 'No records match the current filter.'}
+            </Alert>
           )}
-          {!loading && accesses.length > 0 && (
+          {!loading && filteredAccesses.length > 0 && (
+            <>
             <Table size="small">
               <TableHead>
                 <TableRow>
@@ -171,7 +234,7 @@ export default function BreakGlassAccessPanel() {
                 </TableRow>
               </TableHead>
               <TableBody>
-                {accesses.map((a) => (
+                {pagedAccesses.map((a) => (
                   <TableRow key={a.id}>
                     <TableCell>
                       <Typography variant="caption" fontFamily="monospace">{a.requestedByUserId}</Typography>
@@ -219,6 +282,15 @@ export default function BreakGlassAccessPanel() {
                 ))}
               </TableBody>
             </Table>
+            <TablePagination
+              component="div"
+              count={filteredAccesses.length}
+              page={page}
+              rowsPerPage={rowsPerPage}
+              rowsPerPageOptions={[rowsPerPage]}
+              onPageChange={(_, newPage) => setPage(newPage)}
+            />
+            </>
           )}
         </CardContent>
       </Card>
