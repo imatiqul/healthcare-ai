@@ -49,6 +49,12 @@ export function ClinicalAlertsSummaryWidget() {
         fetchCount(`${API_BASE}/api/v1/revenue/denials`),
       ]);
       setCounts({ criticalRisk: risks, activeBreakGlass: breakGlass, urgentWaitlist: waitlist, nearDeadlineDenials: denials });
+      // Persist total for the sidebar alert badge (Phase 53)
+      try {
+        const total = risks + breakGlass + waitlist + denials;
+        localStorage.setItem('hq:alerts-count', String(total));
+        window.dispatchEvent(new CustomEvent('hq:alerts-updated'));
+      } catch { /* ignore */ }
     }
     void load();
   }, []);

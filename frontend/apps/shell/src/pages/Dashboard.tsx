@@ -24,6 +24,7 @@ import { FavoritePagesWidget } from '../components/FavoritePagesWidget'; // Phas
 import { DashboardCustomizer, loadVisibleSections, type DashboardSection } from '../components/DashboardCustomizer'; // Phase 37
 import { ClinicalAlertsSummaryWidget } from '../components/ClinicalAlertsSummaryWidget'; // Phase 41
 import { DashboardQuickActions } from '../components/DashboardQuickActions'; // Phase 47
+import { ActivityFeedWidget } from '../components/ActivityFeedWidget'; // Phase 53
 
 const API_BASE = import.meta.env.VITE_API_BASE_URL || '';
 
@@ -269,6 +270,7 @@ export default function Dashboard() {
         </Grid>
         <Grid item xs={12} md={3}>
           <ClinicalAlertsSummaryWidget />
+          <ActivityFeedWidget />
           <FavoritePagesWidget />
           <RecentPagesWidget />
         </Grid>

@@ -51,6 +51,7 @@ const SIDEBAR_WIDTH = 256;
 const SIDEBAR_COLLAPSED = 64;
 const GROUPS_STORAGE_KEY = 'hq:sidebar-groups';
 const NOTIF_STORAGE_KEY  = 'hq:notification-history';
+const ALERTS_STORAGE_KEY = 'hq:alerts-count';
 
 function defaultExpanded(): Record<string, boolean> {
   return {
@@ -62,6 +63,28 @@ function defaultExpanded(): Record<string, boolean> {
     'nav.group.governance':  true,
     'nav.group.admin':       false, // Admin starts collapsed — 12 items, not always needed
   };
+}
+
+function useAlertCount(): number {
+  const [count, setCount] = useState<number>(() => {
+    try {
+      return parseInt(localStorage.getItem(ALERTS_STORAGE_KEY) ?? '0', 10) || 0;
+    } catch { return 0; }
+  });
+  useEffect(() => {
+    const refresh = () => {
+      try {
+        setCount(parseInt(localStorage.getItem(ALERTS_STORAGE_KEY) ?? '0', 10) || 0);
+      } catch { setCount(0); }
+    };
+    window.addEventListener('storage', refresh);
+    window.addEventListener('hq:alerts-updated', refresh);
+    return () => {
+      window.removeEventListener('storage', refresh);
+      window.removeEventListener('hq:alerts-updated', refresh);
+    };
+  }, []);
+  return count;
 }
 
 function useUnreadCount(): number {
@@ -222,6 +245,7 @@ function SidebarContent({ onClose, collapsed = false }: { onClose?: () => void; 
   const { toggleCollapse, expandedGroups, toggleGroup } = useSidebar();
   const theme = useTheme();
   const unreadCount = useUnreadCount();
+  const alertCount  = useAlertCount();
 
   return (
     <Box sx={{ width: collapsed ? SIDEBAR_COLLAPSED : SIDEBAR_WIDTH, display: 'flex', flexDirection: 'column', height: '100%', overflow: 'hidden', transition: 'width 0.22s ease' }}>
@@ -308,9 +332,13 @@ function SidebarContent({ onClose, collapsed = false }: { onClose?: () => void; 
                   {group.items.map((item) => {
                     const isActive = pathname === item.href || (item.href !== '/' && pathname.startsWith(item.href));
                     const isNotificationsItem = item.href === '/notifications';
-                    const iconEl = isNotificationsItem && unreadCount > 0
-                      ? <Badge badgeContent={unreadCount > 99 ? '99+' : unreadCount} color="error" sx={{ '& .MuiBadge-badge': { fontSize: 10, height: 16, minWidth: 16 } }}>{item.icon}</Badge>
-                      : item.icon;
+                    const isAlertsItem         = item.href === '/alerts';
+                    let iconEl = item.icon;
+                    if (isNotificationsItem && unreadCount > 0) {
+                      iconEl = <Badge badgeContent={unreadCount > 99 ? '99+' : unreadCount} color="error" sx={{ '& .MuiBadge-badge': { fontSize: 10, height: 16, minWidth: 16 } }}>{item.icon}</Badge>;
+                    } else if (isAlertsItem && alertCount > 0) {
+                      iconEl = <Badge badgeContent={alertCount > 99 ? '99+' : alertCount} color="error" sx={{ '& .MuiBadge-badge': { fontSize: 10, height: 16, minWidth: 16 } }}>{item.icon}</Badge>;
+                    }
                     const btn = (
                       <ListItemButton
                         key={item.href}
@@ -367,7 +395,7 @@ function SidebarContent({ onClose, collapsed = false }: { onClose?: () => void; 
       {!collapsed && (
         <Box sx={{ px: 2, py: 1.5, borderTop: 1, borderColor: 'divider' }}>
           <Typography variant="caption" color="text.disabled">
-            HealthQ Copilot v2.51
+            HealthQ Copilot v2.53
           </Typography>
         </Box>
       )}

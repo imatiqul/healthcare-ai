@@ -114,4 +114,17 @@ describe('Sidebar', () => {
     renderSidebar();
     expect(screen.queryByText(/^[0-9]+$|^99\+$/)).not.toBeInTheDocument();
   });
+
+  it('shows an alert badge on Clinical Alerts when hq:alerts-count is non-zero', () => {
+    localStorage.setItem('hq:alerts-count', '7');
+    renderSidebar();
+    expect(screen.getByText('7')).toBeInTheDocument();
+  });
+
+  it('shows no alert badge when hq:alerts-count is zero', () => {
+    localStorage.setItem('hq:alerts-count', '0');
+    renderSidebar();
+    // No badge text from the alerts key
+    expect(screen.queryByText('0')).not.toBeInTheDocument();
+  });
 });

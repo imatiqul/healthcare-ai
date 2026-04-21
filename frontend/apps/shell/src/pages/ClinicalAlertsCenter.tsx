@@ -149,6 +149,14 @@ export default function ClinicalAlertsCenter() {
     summary.urgentWaitlistCount +
     summary.nearDeadlineDenialsCount;
 
+  // Persist active alert count for the sidebar badge (Phase 53)
+  useEffect(() => {
+    try {
+      localStorage.setItem('hq:alerts-count', String(totalAlerts));
+      window.dispatchEvent(new CustomEvent('hq:alerts-updated'));
+    } catch { /* ignore */ }
+  }, [totalAlerts]);
+
   return (
     <Box sx={{ p: 3 }}>
       {/* ── Header ── */}
