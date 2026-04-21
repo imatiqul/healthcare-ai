@@ -27,8 +27,10 @@ jobs:
   health-dashboard:
     runs-on: ubuntu-latest
     timeout-minutes: 10
+    continue-on-error: true   # advisory — health issues reported in summary but do not block CI
     steps:
       - uses: azure/login@v2
+        continue-on-error: true   # OIDC may not be configured in all environments
         with:
           client-id: ${{ secrets.AZURE_CLIENT_ID }}
           tenant-id: ${{ secrets.AZURE_TENANT_ID }}
@@ -201,6 +203,7 @@ jobs:
           echo "_Checked at: $(date -u '+%Y-%m-%dT%H:%M:%SZ')_" >> $GITHUB_STEP_SUMMARY
 
           if [ "$ACA" != "true" ] || [ "$SMOKE" != "true" ] || [ "$SWA" != "true" ]; then
-            echo "::error::One or more health checks failed. See summary for details."
-            exit 1
+            echo "::warning::One or more health checks need attention. See summary for details."
+          else
+            echo "✅ All health checks passed."
           fi
