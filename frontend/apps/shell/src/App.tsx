@@ -18,6 +18,7 @@ import { QuickActionsSpeedDial } from './components/QuickActionsSpeedDial'; // P
 import { AnnouncementBanner } from './components/AnnouncementBanner'; // Phase 36
 import { OfflineIndicator } from './components/OfflineIndicator'; // Phase 37
 import { OnboardingWizard } from './components/OnboardingWizard'; // Phase 38
+import { TabbedPageLayout } from './components/TabbedPageLayout'; // Phase 48
 const NotFoundPage = lazy(() => import('./pages/NotFoundPage')); // Phase 38
 import Dashboard from './pages/Dashboard';
 import DemoLanding from './pages/DemoLanding';
@@ -191,75 +192,115 @@ export default function App() {
                 } />
                 <Route path="/voice" element={
                   <MfeErrorBoundary name="Voice">
-                    <VoicePage />
-                    <VoiceSessionHistoryPage />
+                    <TabbedPageLayout
+                      title="Voice Sessions"
+                      storageKey="hq:tab-voice"
+                      tabs={[
+                        { label: 'Voice Session',    content: <VoicePage /> },
+                        { label: 'Session History',  content: <VoiceSessionHistoryPage /> },
+                      ]}
+                    />
                   </MfeErrorBoundary>
                 } />
                 <Route path="/triage" element={
                   <MfeErrorBoundary name="Triage">
-                    <TriagePage />
-                    <ClinicalCoderPanelPage />
+                    <TabbedPageLayout
+                      title="Triage"
+                      storageKey="hq:tab-triage"
+                      tabs={[
+                        { label: 'AI Triage',       content: <TriagePage /> },
+                        { label: 'Clinical Coding', content: <ClinicalCoderPanelPage /> },
+                      ]}
+                    />
                   </MfeErrorBoundary>
                 } />
                 <Route path="/scheduling" element={
                   <MfeErrorBoundary name="Scheduling">
-                    <SchedulingPage />
-                    <BookingFormPage />
-                    <WaitlistPanelPage />
+                    <TabbedPageLayout
+                      title="Scheduling"
+                      storageKey="hq:tab-scheduling"
+                      tabs={[
+                        { label: 'Calendar',         content: <SchedulingPage /> },
+                        { label: 'Book Appointment', content: <BookingFormPage /> },
+                        { label: 'Waitlist',         content: <WaitlistPanelPage /> },
+                      ]}
+                    />
                   </MfeErrorBoundary>
                 } />
                 <Route path="/population-health" element={
                   <MfeErrorBoundary name="Population Health">
-                    <PopHealthPage />
-                    <CareGapListPage />
-                    <RiskTrajectoryPanelPage />
-                    <SdohAssessmentPanelPage />
-                    <CostPredictionPanelPage />
-                    <HedisMeasuresPanelPage />
+                    <TabbedPageLayout
+                      title="Population Health"
+                      storageKey="hq:tab-population-health"
+                      tabs={[
+                        { label: 'Risk Overview',    content: <PopHealthPage /> },
+                        { label: 'Care Gaps',        content: <CareGapListPage /> },
+                        { label: 'Risk Trajectory',  content: <RiskTrajectoryPanelPage /> },
+                        { label: 'SDOH',             content: <SdohAssessmentPanelPage /> },
+                        { label: 'Cost Prediction',  content: <CostPredictionPanelPage /> },
+                        { label: 'HEDIS Measures',   content: <HedisMeasuresPanelPage /> },
+                      ]}
+                    />
                   </MfeErrorBoundary>
                 } />
                 <Route path="/revenue" element={
                   <MfeErrorBoundary name="Revenue">
-                    <RevenuePage />
-                    <PriorAuthTrackerPage />
-                    <DenialManagerPage />
+                    <TabbedPageLayout
+                      title="Revenue Cycle"
+                      storageKey="hq:tab-revenue"
+                      tabs={[
+                        { label: 'Coding Queue', content: <RevenuePage /> },
+                        { label: 'Prior Auth',   content: <PriorAuthTrackerPage /> },
+                        { label: 'Denials',      content: <DenialManagerPage /> },
+                      ]}
+                    />
                   </MfeErrorBoundary>
                 } />
                 <Route path="/encounters" element={
                   <MfeErrorBoundary name="Encounters">
-                    <EncountersPage />
-                    <LabDeltaFlagsPanelPage />
-                    <DrugInteractionCheckerPage />
-                    <FhirObservationViewerPage />
-                    <FhirEverythingViewerPage />
-                    <MedicationPanelPage />
-                    <AllergyPanelPage />
-                    <ProblemListPanelPage />
-                    <ImmunizationPanelPage />
+                    <TabbedPageLayout
+                      title="Encounters"
+                      storageKey="hq:tab-encounters"
+                      tabs={[
+                        { label: 'Overview',              content: <EncountersPage /> },
+                        { label: 'Medications & Allergies', content: <Box sx={{ display: 'flex', flexDirection: 'column', gap: 3 }}><MedicationPanelPage /><AllergyPanelPage /></Box> },
+                        { label: 'Clinical Records',       content: <Box sx={{ display: 'flex', flexDirection: 'column', gap: 3 }}><ProblemListPanelPage /><ImmunizationPanelPage /></Box> },
+                        { label: 'FHIR & Labs',            content: <Box sx={{ display: 'flex', flexDirection: 'column', gap: 3 }}><FhirObservationViewerPage /><FhirEverythingViewerPage /><LabDeltaFlagsPanelPage /></Box> },
+                        { label: 'Drug Interactions',      content: <DrugInteractionCheckerPage /> },
+                      ]}
+                    />
                   </MfeErrorBoundary>
                 } />
                 <Route path="/patient-portal" element={
                   <MfeErrorBoundary name="Patient Portal">
-                    <EngagementPage />
-                    <DeliveryAnalyticsDashboardPage />
-                    <ConsentManagementPanelPage />
-                    <PatientProfilePanelPage />
-                    <PatientRegistrationPanelPage />
-                    <OcrDocumentPanelPage />
-                    <OtpVerificationPanelPage />
-                    <PushSubscriptionPanelPage />
-                    <GdprErasurePanelPage />
-                    <CampaignManagerPanelPage />
+                    <TabbedPageLayout
+                      title="Patient Portal"
+                      storageKey="hq:tab-patient-portal"
+                      tabs={[
+                        { label: 'Portal',         content: <Box sx={{ display: 'flex', flexDirection: 'column', gap: 3 }}><EngagementPage /><PatientProfilePanelPage /></Box> },
+                        { label: 'Registration',   content: <Box sx={{ display: 'flex', flexDirection: 'column', gap: 3 }}><PatientRegistrationPanelPage /><OtpVerificationPanelPage /></Box> },
+                        { label: 'Documents',      content: <OcrDocumentPanelPage /> },
+                        { label: 'Notifications',  content: <Box sx={{ display: 'flex', flexDirection: 'column', gap: 3 }}><DeliveryAnalyticsDashboardPage /><PushSubscriptionPanelPage /></Box> },
+                        { label: 'Consent & GDPR', content: <Box sx={{ display: 'flex', flexDirection: 'column', gap: 3 }}><ConsentManagementPanelPage /><GdprErasurePanelPage /></Box> },
+                        { label: 'Campaigns',      content: <CampaignManagerPanelPage /> },
+                      ]}
+                    />
                   </MfeErrorBoundary>
                 } />
                 <Route path="/governance" element={
                   <MfeErrorBoundary name="Governance">
-                    <ModelGovernanceDashboardPage />
-                    <ModelEvaluationPanelPage />
-                    <ModelRegisterPanelPage />
-                    <ExperimentSummaryPanelPage />
-                    <XaiExplanationPanelPage />
-                    <MlConfidencePanelPage />
+                    <TabbedPageLayout
+                      title="AI Governance"
+                      storageKey="hq:tab-governance"
+                      tabs={[
+                        { label: 'Overview',       content: <ModelGovernanceDashboardPage /> },
+                        { label: 'Evaluate',       content: <ModelEvaluationPanelPage /> },
+                        { label: 'Register Model', content: <ModelRegisterPanelPage /> },
+                        { label: 'Experiments',    content: <ExperimentSummaryPanelPage /> },
+                        { label: 'XAI',            content: <XaiExplanationPanelPage /> },
+                        { label: 'ML Confidence',  content: <MlConfidencePanelPage /> },
+                      ]}
+                    />
                   </MfeErrorBoundary>
                 } />
                 <Route path="/tenants" element={
