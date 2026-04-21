@@ -25,12 +25,14 @@ import WarningAmberIcon from '@mui/icons-material/WarningAmber';
 import ErrorOutlineIcon from '@mui/icons-material/ErrorOutline';
 import SmartToyIcon from '@mui/icons-material/SmartToy';
 import HelpOutlineIcon from '@mui/icons-material/HelpOutline';
+import AutoAwesomeIcon from '@mui/icons-material/AutoAwesome';
 import { Button } from '@healthcare/design-system';
 import { useColorMode } from '@healthcare/design-system';
 import { useAuth } from '@healthcare/auth-client';
 import { SidebarMenuButton } from './Sidebar';
 import { useTranslation } from 'react-i18next';
 import { ContextualHelpPanel } from './ContextualHelpPanel'; // Phase 37
+import { WhatsNewPanel, useWhatsNewBadge } from './WhatsNewPanel'; // Phase 38
 
 const API_BASE = import.meta.env.VITE_API_BASE_URL || '';
 
@@ -119,6 +121,8 @@ export function TopNav({ onOpenSearch }: TopNavProps) {
   const [notifAnchor, setNotifAnchor]       = useState<null | HTMLElement>(null);
   const [alerts, setAlerts]                 = useState<LiveAlert[]>([]);
   const [helpOpen, setHelpOpen]             = useState(false); // Phase 37
+  const [whatsNewOpen, setWhatsNewOpen]     = useState(false); // Phase 38
+  const whatsNewCount                       = useWhatsNewBadge();  // Phase 38
 
   const openUserMenu  = (e: React.MouseEvent<HTMLElement>) => setUserMenuAnchor(e.currentTarget);
   const closeUserMenu = () => setUserMenuAnchor(null);
@@ -198,6 +202,19 @@ export function TopNav({ onOpenSearch }: TopNavProps) {
           <Tooltip title="Help">
             <IconButton size="small" onClick={() => setHelpOpen(true)} aria-label="Open help panel">
               <HelpOutlineIcon fontSize="small" />
+            </IconButton>
+          </Tooltip>
+
+          {/* What's New */}
+          <Tooltip title="What's New">
+            <IconButton size="small" onClick={() => setWhatsNewOpen(true)} aria-label="Open what's new panel">
+              <Badge
+                badgeContent={whatsNewCount || null}
+                color="primary"
+                sx={{ '& .MuiBadge-badge': { fontSize: 9, minWidth: 16, height: 16 } }}
+              >
+                <AutoAwesomeIcon fontSize="small" />
+              </Badge>
             </IconButton>
           </Tooltip>
 
@@ -308,5 +325,6 @@ export function TopNav({ onOpenSearch }: TopNavProps) {
       </Toolbar>
     </AppBar>
     <ContextualHelpPanel open={helpOpen} onClose={() => setHelpOpen(false)} />
+    <WhatsNewPanel open={whatsNewOpen} onClose={() => setWhatsNewOpen(false)} /> {/* Phase 38 */}
   );
 }

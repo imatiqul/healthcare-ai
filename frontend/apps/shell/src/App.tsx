@@ -17,6 +17,8 @@ import { PageTracker } from './components/PageTracker'; // Phase 35
 import { QuickActionsSpeedDial } from './components/QuickActionsSpeedDial'; // Phase 35
 import { AnnouncementBanner } from './components/AnnouncementBanner'; // Phase 36
 import { OfflineIndicator } from './components/OfflineIndicator'; // Phase 37
+import { OnboardingWizard } from './components/OnboardingWizard'; // Phase 38
+const NotFoundPage = lazy(() => import('./pages/NotFoundPage')); // Phase 38
 import Dashboard from './pages/Dashboard';
 import DemoLanding from './pages/DemoLanding';
 const AdminSettingsPage = lazy(() => import('./pages/AdminSettings')); // Phase 33
@@ -170,9 +172,10 @@ export default function App() {
           <AppBreadcrumbs />
           <AnnouncementBanner />
           <Box component="main" sx={{ flex: 1, overflow: 'auto', p: { xs: 2, md: 3 }, bgcolor: 'background.default' }}>
+            {/* PageTracker runs on every navigation — outside Routes so it captures all paths */}
+            <PageTracker />
             <Suspense fallback={<Loading />}>
               <Routes>
-                <Route path="*" element={<PageTracker />} />
                 <Route path="/" element={<Dashboard />} />
                 <Route path="/notifications" element={
                   <MfeErrorBoundary name="Notification Center">
@@ -317,6 +320,8 @@ export default function App() {
                     <UserPreferencesPanelPage />
                   </MfeErrorBoundary>
                 } />
+                {/* Phase 38 — 404 catch-all (must be last) */}
+                <Route path="*" element={<NotFoundPage />} />
               </Routes>
             </Suspense>
           </Box>
@@ -326,6 +331,7 @@ export default function App() {
         <KeyboardShortcutsModal open={shortcutsOpen} onClose={closeShortcuts} />
         <SessionExpiryGuard />
         <QuickActionsSpeedDial />
+        <OnboardingWizard /> {/* Phase 38 — first-run onboarding */}
       </Box>
     </SidebarProvider>
   );
