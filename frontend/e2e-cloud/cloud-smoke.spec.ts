@@ -6,46 +6,46 @@ import { test, expect } from '@playwright/test';
  */
 
 test.describe('Cloud — Shell SWA', () => {
-  test('shell loads and renders dashboard', async ({ page }) => {
+  test('shell loads and renders dashboard @smoke', async ({ page }) => {
     await page.goto('/');
     await expect(page).toHaveTitle(/HealthQ|Healthcare/i);
     await expect(page.locator('body')).not.toBeEmpty();
   });
 
-  test('shell renders navigation sidebar', async ({ page }) => {
+  test('shell renders navigation sidebar @smoke', async ({ page }) => {
     await page.goto('/');
     const nav = page.locator('aside, nav, [class*="sidebar"], [class*="Sidebar"]').first();
     await expect(nav).toBeVisible({ timeout: 10000 });
   });
 
-  test('shell renders header', async ({ page }) => {
+  test('shell renders header @smoke', async ({ page }) => {
     await page.goto('/');
     await expect(page.getByText(/Healthcare|HealthQ/i).first()).toBeVisible({ timeout: 10000 });
   });
 });
 
 test.describe('Cloud — MFE Navigation', () => {
-  test('navigates to voice page', async ({ page }) => {
+  test('navigates to voice page @smoke', async ({ page }) => {
     await page.goto('/voice');
     await expect(page.locator('body')).not.toBeEmpty();
   });
 
-  test('navigates to triage page', async ({ page }) => {
+  test('navigates to triage page @smoke', async ({ page }) => {
     await page.goto('/triage');
     await expect(page.locator('body')).not.toBeEmpty();
   });
 
-  test('navigates to scheduling page', async ({ page }) => {
+  test('navigates to scheduling page @smoke', async ({ page }) => {
     await page.goto('/scheduling');
     await expect(page.locator('body')).not.toBeEmpty();
   });
 
-  test('navigates to population health page', async ({ page }) => {
+  test('navigates to population health page @smoke', async ({ page }) => {
     await page.goto('/population-health');
     await expect(page.locator('body')).not.toBeEmpty();
   });
 
-  test('navigates to revenue page', async ({ page }) => {
+  test('navigates to revenue page @smoke', async ({ page }) => {
     await page.goto('/revenue');
     await expect(page.locator('body')).not.toBeEmpty();
   });

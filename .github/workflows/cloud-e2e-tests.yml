@@ -8,7 +8,17 @@ on:
       - "Frontend MFE CI/CD"
     types: [completed]
     branches: [main]
+  # Also run on a daily schedule to catch environment drift
+  schedule:
+    - cron: '0 7 * * *'   # 07:00 UTC — before business hours
   workflow_dispatch:
+    inputs:
+      smoke_only:
+        description: 'Run @smoke tests only (fast gate, < 60s)'
+        required: false
+        default: 'false'
+        type: choice
+        options: ['false', 'true']
 
 permissions:
   contents: read
@@ -17,14 +27,39 @@ defaults:
   run:
     working-directory: frontend
 
+# ── Shared URL env vars used by all jobs ──────────────────────────────────────
+env:
+  SHELL_URL: https://gentle-tree-03115af0f.7.azurestaticapps.net
+  VOICE_URL: https://happy-smoke-0ba02780f.7.azurestaticapps.net
+  TRIAGE_URL: https://brave-hill-0d76ab10f.7.azurestaticapps.net
+  SCHEDULING_URL: https://yellow-smoke-0e7b6b70f.7.azurestaticapps.net
+  POPHEALTH_URL: https://orange-bay-00f28280f.7.azurestaticapps.net
+  REVENUE_URL: https://lemon-pond-067d2f40f.7.azurestaticapps.net
+  VOICE_ACA_URL: https://voice.gentletree-fe920881.eastus2.azurecontainerapps.io
+  AGENT_ACA_URL: https://ai-agent.gentletree-fe920881.eastus2.azurecontainerapps.io
+  FHIR_ACA_URL: https://fhir.gentletree-fe920881.eastus2.azurecontainerapps.io
+  IDENTITY_ACA_URL: https://identity.gentletree-fe920881.eastus2.azurecontainerapps.io
+  OCR_ACA_URL: https://ocr.gentletree-fe920881.eastus2.azurecontainerapps.io
+  SCHEDULING_ACA_URL: https://scheduling.gentletree-fe920881.eastus2.azurecontainerapps.io
+  NOTIFICATION_ACA_URL: https://notification.gentletree-fe920881.eastus2.azurecontainerapps.io
+  POPHEALTH_ACA_URL: https://pop-health.gentletree-fe920881.eastus2.azurecontainerapps.io
+  REVENUE_ACA_URL: https://revenue.gentletree-fe920881.eastus2.azurecontainerapps.io
+  GATEWAY_ACA_URL: https://gateway.gentletree-fe920881.eastus2.azurecontainerapps.io
+  API_BASE_URL: https://healthq-copilot-apim.azure-api.net
+
 jobs:
-  cloud-e2e:
+  # ── Job 1: Fast @smoke gate — runs first, blocks the full suite if it fails ──
+  smoke-gate:
+    name: Smoke Gate (@smoke tests only)
     runs-on: ubuntu-latest
-    timeout-minutes: 20
-    # Only run if triggered manually, or if the upstream workflow succeeded
+    timeout-minutes: 5
+    # Only run after a successful upstream deploy, or always on schedule/manual
     if: >
       github.event_name == 'workflow_dispatch' ||
+      github.event_name == 'schedule' ||
       github.event.workflow_run.conclusion == 'success'
+    outputs:
+      smoke_passed: ${{ steps.smoke.outcome == 'success' }}
     steps:
       - uses: actions/checkout@v4
 
@@ -44,32 +79,122 @@ jobs:
       - name: Install Playwright browsers
         run: npx playwright install --with-deps chromium
 
-      - name: Run cloud E2E tests
-        run: npx playwright test --config=playwright.cloud.config.ts
-        env:
-          SHELL_URL: https://gentle-tree-03115af0f.7.azurestaticapps.net
-          VOICE_URL: https://happy-smoke-0ba02780f.7.azurestaticapps.net
-          TRIAGE_URL: https://brave-hill-0d76ab10f.7.azurestaticapps.net
-          SCHEDULING_URL: https://yellow-smoke-0e7b6b70f.7.azurestaticapps.net
-          POPHEALTH_URL: https://orange-bay-00f28280f.7.azurestaticapps.net
-          REVENUE_URL: https://lemon-pond-067d2f40f.7.azurestaticapps.net
-          ENCOUNTERS_URL: ${{ secrets.ENCOUNTERS_SWA_URL || 'https://calm-river-02bddc70f.7.azurestaticapps.net' }}
-          ENGAGEMENT_URL: ${{ secrets.ENGAGEMENT_SWA_URL || 'https://agreeable-hill-0d3115b0f.7.azurestaticapps.net' }}
-          VOICE_ACA_URL: https://voice.gentletree-fe920881.eastus2.azurecontainerapps.io
-          AGENT_ACA_URL: https://ai-agent.gentletree-fe920881.eastus2.azurecontainerapps.io
-          FHIR_ACA_URL: https://fhir.gentletree-fe920881.eastus2.azurecontainerapps.io
-          IDENTITY_ACA_URL: https://identity.gentletree-fe920881.eastus2.azurecontainerapps.io
-          OCR_ACA_URL: https://ocr.gentletree-fe920881.eastus2.azurecontainerapps.io
-          SCHEDULING_ACA_URL: https://scheduling.gentletree-fe920881.eastus2.azurecontainerapps.io
-          NOTIFICATION_ACA_URL: https://notification.gentletree-fe920881.eastus2.azurecontainerapps.io
-          POPHEALTH_ACA_URL: https://pop-health.gentletree-fe920881.eastus2.azurecontainerapps.io
-          REVENUE_ACA_URL: https://revenue.gentletree-fe920881.eastus2.azurecontainerapps.io
-          GATEWAY_ACA_URL: https://gateway.gentletree-fe920881.eastus2.azurecontainerapps.io
-          API_BASE_URL: https://healthq-copilot-apim.azure-api.net
+      # Wait up to 60 s for the shell SWA to respond — SWAs occasionally need
+      # a few seconds to warm up after a new deployment propagates globally.
+      - name: Wait for shell SWA warmup
+        run: |
+          echo "Waiting for shell SWA to respond..."
+          for i in $(seq 1 6); do
+            STATUS=$(curl -s -o /dev/null -w '%{http_code}' "$SHELL_URL" || echo 000)
+            echo "  Attempt $i: HTTP $STATUS"
+            [ "$STATUS" = "200" ] && break
+            sleep 10
+          done
+          echo "Warmup complete."
 
-      - uses: actions/upload-artifact@v4
+      - name: Run @smoke tests
+        id: smoke
+        run: npx playwright test --config=playwright.cloud.config.ts --grep "@smoke" --reporter=list,github
+        env:
+          ENCOUNTERS_URL: https://calm-river-02bddc70f.7.azurestaticapps.net
+          ENGAGEMENT_URL: https://agreeable-hill-0d3115b0f.7.azurestaticapps.net
+
+      - name: Write smoke summary
+        if: always()
+        run: |
+          echo "## Smoke Gate — @smoke tests" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          if [ "${{ steps.smoke.outcome }}" = "success" ]; then
+            echo "✅ All @smoke tests passed — safe to proceed to full suite." >> $GITHUB_STEP_SUMMARY
+          else
+            echo "❌ @smoke tests FAILED — deployment may be broken." >> $GITHUB_STEP_SUMMARY
+            echo "" >> $GITHUB_STEP_SUMMARY
+            echo "| URL | Status |" >> $GITHUB_STEP_SUMMARY
+            echo "|-----|--------|" >> $GITHUB_STEP_SUMMARY
+            for swa in shell voice triage scheduling pophealth revenue; do
+              URL_VAR="${swa^^}_URL"
+              STATUS=$(curl -s -o /dev/null -w '%{http_code}' "${!URL_VAR}" 2>/dev/null || echo ERR)
+              echo "| ${swa} | HTTP $STATUS |" >> $GITHUB_STEP_SUMMARY
+            done
+          fi
+
+  # ── Job 2: Full E2E suite — runs only when smoke gate passes ─────────────────
+  full-e2e:
+    name: Full E2E Suite
+    needs: smoke-gate
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    # Skip if user requested smoke_only
+    if: >
+      needs.smoke-gate.result == 'success' &&
+      github.event.inputs.smoke_only != 'true'
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 9
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: pnpm
+          cache-dependency-path: frontend/pnpm-lock.yaml
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Install Playwright browsers
+        run: npx playwright install --with-deps chromium
+
+      - name: Run full cloud E2E suite
+        id: e2e
+        run: npx playwright test --config=playwright.cloud.config.ts --reporter=list,github,html
+        env:
+          ENCOUNTERS_URL: https://calm-river-02bddc70f.7.azurestaticapps.net
+          ENGAGEMENT_URL: https://agreeable-hill-0d3115b0f.7.azurestaticapps.net
+
+      - name: Write E2E summary
+        if: always()
+        run: |
+          echo "## Full E2E Suite Results" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          OUTCOME="${{ steps.e2e.outcome }}"
+          if [ "$OUTCOME" = "success" ]; then
+            echo "✅ All cloud E2E tests passed." >> $GITHUB_STEP_SUMMARY
+          elif [ "$OUTCOME" = "failure" ]; then
+            echo "⚠️ Some E2E tests failed — check the HTML report artifact below." >> $GITHUB_STEP_SUMMARY
+          else
+            echo "⏭️ E2E suite was skipped or cancelled." >> $GITHUB_STEP_SUMMARY
+          fi
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "Trigger: \`${{ github.event_name }}\` | Branch: \`${{ github.ref_name }}\` | SHA: \`${{ github.sha }}\`" >> $GITHUB_STEP_SUMMARY
+
+      - name: Upload E2E HTML report
+        uses: actions/upload-artifact@v4
         if: ${{ !cancelled() }}
         with:
-          name: cloud-e2e-report
+          name: cloud-e2e-report-${{ github.run_number }}
           path: frontend/playwright-report/
-          retention-days: 14
+          retention-days: 30
+
+      # Notify Slack on failure — configure SLACK_WEBHOOK_URL as a repo secret
+      - name: Notify Slack on failure
+        if: failure() && env.SLACK_WEBHOOK_URL != ''
+        run: |
+          RUN_URL="https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}"
+          curl -s -X POST "$SLACK_WEBHOOK_URL" \
+            -H 'Content-Type: application/json' \
+            -d "{
+              \"text\": \"❌ *HealthQ Copilot — Cloud E2E Tests FAILED* on \`${{ github.ref_name }}\`\",
+              \"attachments\": [{
+                \"color\": \"danger\",
+                \"fields\": [
+                  {\"title\": \"Trigger\", \"value\": \"${{ github.event_name }}\", \"short\": true},
+                  {\"title\": \"Commit\", \"value\": \"\`${{ github.sha }}\`\", \"short\": true},
+                  {\"title\": \"Run\", \"value\": \"<$RUN_URL|View report>\", \"short\": false}
+                ]
+              }]
+            }"
+        env:
+          SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}

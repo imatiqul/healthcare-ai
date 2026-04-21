@@ -136,3 +136,27 @@ jobs:
           app_location: frontend/apps/${{ matrix.app }}/dist
           output_location: ''
           skip_app_build: true
+
+      # ── Post-deploy smoke: verify shell SWA returns HTTP 200 ─────────────────
+      # Only applies to the shell app (the host that loads all MFEs). Runs after
+      # every successful deploy on main so we catch broken deployments immediately.
+      - name: Post-deploy smoke check (shell only)
+        if: >
+          matrix.app == 'shell' &&
+          (matrix.changed == 'true' || github.event_name == 'workflow_dispatch') &&
+          github.ref == 'refs/heads/main'
+        run: |
+          SWA_URL="https://gentle-tree-03115af0f.7.azurestaticapps.net"
+          echo "Waiting for SWA propagation..."
+          for i in $(seq 1 9); do
+            STATUS=$(curl -s -o /dev/null -w '%{http_code}' "$SWA_URL" || echo 000)
+            echo "  Attempt $i/9: HTTP $STATUS"
+            [ "$STATUS" = "200" ] && break
+            sleep 10
+          done
+          if [ "$STATUS" != "200" ]; then
+            echo "::error::Shell SWA did not return HTTP 200 after deploy (last status: $STATUS)"
+            exit 1
+          fi
+          echo "✅ Shell SWA is live (HTTP 200)" >> $GITHUB_STEP_SUMMARY
+

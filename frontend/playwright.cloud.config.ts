@@ -9,13 +9,16 @@ export default defineConfig({
   fullyParallel: true,
   forbidOnly: !!process.env.CI,
   retries: process.env.CI ? 2 : 1,
-  workers: process.env.CI ? 2 : undefined,
-  reporter: process.env.CI ? 'github' : 'html',
-  timeout: 30_000,
+  workers: process.env.CI ? 4 : undefined,
+  reporter: process.env.CI
+    ? [['github'], ['html', { open: 'never' }], ['list']]
+    : [['html'], ['list']],
+  timeout: 45_000,   // 45 s — cloud SWAs can be slower than localhost
   use: {
     baseURL: process.env.SHELL_URL || 'https://gentle-tree-03115af0f.7.azurestaticapps.net',
     trace: 'on-first-retry',
     screenshot: 'only-on-failure',
+    video: 'on-first-retry',   // capture video on first retry for easier debugging
   },
   projects: [
     {
