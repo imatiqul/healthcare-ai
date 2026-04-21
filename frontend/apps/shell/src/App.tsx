@@ -8,6 +8,7 @@ import { SkeletonStatGrid } from '@healthcare/design-system';
 import { Sidebar, SidebarProvider } from './components/Sidebar';
 import { TopNav } from './components/TopNav';
 import { CopilotChat } from './components/CopilotChat';
+import { CommandPalette, useCommandPalette } from './components/CommandPalette';
 import Dashboard from './pages/Dashboard';
 import DemoLanding from './pages/DemoLanding';
 
@@ -132,6 +133,7 @@ class MfeErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundaryState>
 export default function App() {
   const location = useLocation();
   const isDemoRoute = location.pathname.startsWith('/demo');
+  const { open: paletteOpen, openPalette, closePalette } = useCommandPalette();
 
   // Demo routes render without shell chrome (no sidebar, topnav, or copilot)
   if (isDemoRoute) {
@@ -150,7 +152,7 @@ export default function App() {
       <Box sx={{ display: 'flex', height: '100vh' }}>
         <Sidebar />
         <Box sx={{ flex: 1, display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
-          <TopNav />
+          <TopNav onOpenSearch={openPalette} />
           <Box component="main" sx={{ flex: 1, overflow: 'auto', p: { xs: 2, md: 3 }, bgcolor: 'background.default' }}>
             <Suspense fallback={<Loading />}>
               <Routes>
@@ -283,6 +285,7 @@ export default function App() {
           </Box>
         </Box>
         <CopilotChat />
+        <CommandPalette open={paletteOpen} onClose={closePalette} />
       </Box>
     </SidebarProvider>
   );

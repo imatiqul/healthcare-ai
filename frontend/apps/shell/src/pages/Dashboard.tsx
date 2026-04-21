@@ -1,4 +1,5 @@
 import { useState, useEffect, useCallback } from 'react';
+import { useNavigate } from 'react-router-dom';
 import Grid from '@mui/material/Grid';
 import Typography from '@mui/material/Typography';
 import Box from '@mui/material/Box';
@@ -17,6 +18,7 @@ import GavelIcon from '@mui/icons-material/Gavel';
 import { Card, CardContent, SkeletonStatGrid } from '@healthcare/design-system';
 import { useTranslation } from 'react-i18next';
 import { createGlobalHub } from '@healthcare/signalr-client';
+import { WelcomeCard } from '../components/WelcomeCard';
 
 const API_BASE = import.meta.env.VITE_API_BASE_URL || '';
 
@@ -27,6 +29,7 @@ interface DashboardStats {
   icon:      React.ReactNode;
   section:   'clinical' | 'scheduling' | 'population' | 'revenue';
   trend?:    number; // positive = up, negative = down
+  href:      string;
 }
 
 interface RawDashboardPayload {
@@ -58,14 +61,14 @@ function buildStats(
   revenue:    { codingQueue: number; priorAuthsPending: number }
 ): DashboardStats[] {
   return [
-    { labelKey: 'dashboard.pendingTriage',    value: agents.pendingTriage + agents.awaitingReview, color: 'warning.main',   icon: <WarningAmberIcon />,         section: 'clinical',    trend: -5  },
-    { labelKey: 'dashboard.triageCompleted',  value: agents.completed,                             color: 'success.main',   icon: <CheckCircleOutlineIcon />,   section: 'clinical',    trend: 12  },
-    { labelKey: 'dashboard.availableSlots',   value: scheduling.availableToday,                    color: 'primary.main',   icon: <CalendarTodayIcon />,        section: 'scheduling',  trend: 0   },
-    { labelKey: 'dashboard.bookedToday',      value: scheduling.bookedToday,                       color: 'success.main',   icon: <EventAvailableIcon />,       section: 'scheduling',  trend: 8   },
-    { labelKey: 'dashboard.highRiskPatients', value: popHealth.highRiskPatients,                   color: 'error.main',     icon: <MonitorHeartIcon />,         section: 'population',  trend: 2   },
-    { labelKey: 'dashboard.openCareGaps',     value: popHealth.openCareGaps,                       color: 'warning.main',   icon: <GapAnalysisIcon />,          section: 'population',  trend: -3  },
-    { labelKey: 'dashboard.codingQueue',      value: revenue.codingQueue,                          color: 'secondary.main', icon: <CodeIcon />,                 section: 'revenue',     trend: 15  },
-    { labelKey: 'dashboard.priorAuthPending', value: revenue.priorAuthsPending,                    color: 'info.main',      icon: <GavelIcon />,                section: 'revenue',     trend: -7  },
+    { labelKey: 'dashboard.pendingTriage',    value: agents.pendingTriage + agents.awaitingReview, color: 'warning.main',   icon: <WarningAmberIcon />,         section: 'clinical',    trend: -5,  href: '/triage'           },
+    { labelKey: 'dashboard.triageCompleted',  value: agents.completed,                             color: 'success.main',   icon: <CheckCircleOutlineIcon />,   section: 'clinical',    trend: 12,  href: '/triage'           },
+    { labelKey: 'dashboard.availableSlots',   value: scheduling.availableToday,                    color: 'primary.main',   icon: <CalendarTodayIcon />,        section: 'scheduling',  trend: 0,   href: '/scheduling'       },
+    { labelKey: 'dashboard.bookedToday',      value: scheduling.bookedToday,                       color: 'success.main',   icon: <EventAvailableIcon />,       section: 'scheduling',  trend: 8,   href: '/scheduling'       },
+    { labelKey: 'dashboard.highRiskPatients', value: popHealth.highRiskPatients,                   color: 'error.main',     icon: <MonitorHeartIcon />,         section: 'population',  trend: 2,   href: '/population-health'},
+    { labelKey: 'dashboard.openCareGaps',     value: popHealth.openCareGaps,                       color: 'warning.main',   icon: <GapAnalysisIcon />,          section: 'population',  trend: -3,  href: '/population-health'},
+    { labelKey: 'dashboard.codingQueue',      value: revenue.codingQueue,                          color: 'secondary.main', icon: <CodeIcon />,                 section: 'revenue',     trend: 15,  href: '/revenue'          },
+    { labelKey: 'dashboard.priorAuthPending', value: revenue.priorAuthsPending,                    color: 'info.main',      icon: <GavelIcon />,                section: 'revenue',     trend: -7,  href: '/revenue'          },
   ];
 }
 
@@ -102,8 +105,15 @@ function TrendBadge({ trend }: { trend: number }) {
 
 function StatCard({ stat }: { stat: DashboardStats }) {
   const { t } = useTranslation();
+  const navigate = useNavigate();
   return (
-    <Card interactive sx={{ height: '100%' }}>
+    <Card
+      interactive
+      sx={{ height: '100%', cursor: 'pointer', transition: 'transform 0.12s, box-shadow 0.12s', '&:hover': { transform: 'translateY(-2px)' } }}
+      onClick={() => navigate(stat.href)}
+      role="link"
+      aria-label={`${t(stat.labelKey)}: ${stat.value} — navigate to ${stat.href}`}
+    >
       <CardContent>
         <Stack direction="row" alignItems="flex-start" justifyContent="space-between" mb={1.5}>
           <Typography variant="body2" color="text.secondary" fontWeight={500} lineHeight={1.3}>
@@ -131,8 +141,9 @@ function StatCard({ stat }: { stat: DashboardStats }) {
           {stat.value}
         </Typography>
         {stat.trend !== undefined && (
-          <Box mt={1}>
+          <Box mt={1} sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
             <TrendBadge trend={stat.trend} />
+            <Typography variant="caption" color="text.disabled" sx={{ fontSize: '0.65rem' }}>Go →</Typography>
           </Box>
         )}
       </CardContent>
@@ -213,6 +224,7 @@ export default function Dashboard() {
   return (
     <Box>
       <Typography variant="h5" fontWeight={700} mb={3}>{t('dashboard.title', 'Dashboard')}</Typography>
+      <WelcomeCard />
       <Stack spacing={4}>
         {sections.map((section) => {
           const sectionStats = stats.filter(s => s.section === section);
