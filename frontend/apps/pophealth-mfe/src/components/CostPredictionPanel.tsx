@@ -138,6 +138,7 @@ export function CostPredictionPanel() {
                   key={c}
                   label={c}
                   onDelete={() => setConditions(prev => prev.filter(x => x !== c))}
+                  deleteIcon={<span role="button" aria-label={`Remove ${c}`}>✕</span>}
                   size="small"
                 />
               ))}

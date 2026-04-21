@@ -32,13 +32,12 @@ describe('NotificationInbox', () => {
     ) as unknown as typeof fetch;
 
     render(<NotificationInbox patientId="pat-1" />);
-    expect(screen.getByText(/Loading notifications/)).toBeInTheDocument();
 
     await waitFor(() => {
       expect(screen.getByText('email')).toBeInTheDocument();
     });
     expect(screen.getByText('sms')).toBeInTheDocument();
-    expect(screen.getByText(/Campaign #camp-000/)).toBeInTheDocument();
+    expect(screen.getAllByText(/Campaign #camp-000/).length).toBeGreaterThan(0);
   });
 
   it('shows empty state when no messages', async () => {

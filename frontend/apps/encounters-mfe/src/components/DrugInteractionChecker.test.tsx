@@ -61,7 +61,7 @@ describe('DrugInteractionChecker', () => {
     await user.click(screen.getByRole('button', { name: /^add$/i }));
     expect(screen.getByText('Warfarin')).toBeDefined();
 
-    const deleteBtn = screen.getByRole('button', { name: /warfarin/i });
+    const deleteBtn = screen.getByRole('button', { name: /remove warfarin/i });
     await user.click(deleteBtn);
     expect(screen.queryByText('Warfarin')).toBeNull();
   });

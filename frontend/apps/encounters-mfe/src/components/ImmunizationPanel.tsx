@@ -83,7 +83,7 @@ export function ImmunizationPanel() {
           <Typography variant="body2" color="text.secondary">Enter a patient ID to load immunization records.</Typography>
         )}
         {patientId && !loading && immunizations.length === 0 && !error && (
-          <Typography variant="body2" color="text.secondary">No immunization records found.</Typography>
+          <Typography variant="body2" color="text.secondary">No immunizations recorded.</Typography>
         )}
 
         <Stack gap={1}>

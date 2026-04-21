@@ -41,7 +41,7 @@ describe('CostPredictionPanel', () => {
     expect(screen.getByText('CKD Stage 3')).toBeDefined();
 
     // remove chip
-    const deleteBtn = screen.getByRole('button', { name: /ckd stage 3/i });
+    const deleteBtn = screen.getByRole('button', { name: /remove ckd stage 3/i });
     await user.click(deleteBtn);
     expect(screen.queryByText('CKD Stage 3')).toBeNull();
   });

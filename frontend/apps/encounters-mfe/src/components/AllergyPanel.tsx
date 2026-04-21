@@ -126,7 +126,7 @@ export function AllergyPanel() {
             <Typography variant="body2" color="text.secondary">Enter a patient ID to load allergies.</Typography>
           )}
           {patientId && !loading && allergies.length === 0 && !error && (
-            <Typography variant="body2" color="text.secondary">No known allergies recorded.</Typography>
+            <Typography variant="body2" color="text.secondary">No allergies recorded.</Typography>
           )}
 
           <Stack gap={1}>
@@ -134,12 +134,13 @@ export function AllergyPanel() {
               const name = allergy.code?.text ?? allergy.code?.coding?.[0]?.display ?? 'Unknown substance';
               const status = allergy.clinicalStatus?.coding?.[0]?.code ?? '—';
               const reaction = allergy.reaction?.[0]?.description;
+              const reactionText = reaction;
               return (
                 <Stack key={allergy.id ?? i} direction="row" justifyContent="space-between" alignItems="center"
                   sx={{ p: 1.5, border: '1px solid', borderColor: 'divider', borderRadius: 1 }}>
                   <Stack>
                     <Typography variant="body2" fontWeight="bold">{name}</Typography>
-                    {reaction && <Typography variant="caption" color="text.secondary">Reaction: {reaction}</Typography>}
+                    {reactionText && <Typography variant="caption" color="text.secondary">Reaction: <span>{reactionText}</span></Typography>}
                     {allergy.recordedDate && (
                       <Typography variant="caption" color="text.secondary">
                         Recorded: {new Date(allergy.recordedDate).toLocaleDateString()}

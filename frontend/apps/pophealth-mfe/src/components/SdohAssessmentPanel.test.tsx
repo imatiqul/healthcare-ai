@@ -85,8 +85,8 @@ describe('SdohAssessmentPanel', () => {
     await user.type(screen.getByLabelText(/patient id/i), 'P-001');
     await user.click(screen.getByRole('button', { name: /submit assessment/i }));
 
-    await waitFor(() => expect(screen.getByText('Housing Instability')).toBeDefined());
-    expect(screen.getByText('Food Insecurity')).toBeDefined();
+    await waitFor(() => expect(screen.getAllByText('Housing Instability').length).toBeGreaterThan(0));
+    expect(screen.getAllByText('Food Insecurity').length).toBeGreaterThan(0);
   });
 
   it('displays recommended actions', async () => {

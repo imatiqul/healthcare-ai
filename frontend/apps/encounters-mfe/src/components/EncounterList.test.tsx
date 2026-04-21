@@ -18,7 +18,7 @@ beforeEach(() => {
 describe('EncounterList', () => {
   it('renders the patient ID search form', () => {
     render(<EncounterList />);
-    expect(screen.getByPlaceholderText(/patient id/i)).toBeInTheDocument();
+    expect(screen.getByLabelText(/patient id/i)).toBeInTheDocument();
     expect(screen.getByRole('button', { name: /load/i })).toBeInTheDocument();
   });
 
@@ -51,7 +51,7 @@ describe('EncounterList', () => {
     ) as unknown as typeof fetch;
 
     render(<EncounterList />);
-    const input = screen.getByPlaceholderText(/patient id/i);
+    const input = screen.getByLabelText(/patient id/i);
     await user.type(input, 'PAT-123');
     await user.click(screen.getByRole('button', { name: /load/i }));
 
@@ -67,7 +67,7 @@ describe('EncounterList', () => {
     global.fetch = vi.fn(() => Promise.resolve({ ok: false, status: 500 })) as unknown as typeof fetch;
 
     render(<EncounterList />);
-    await user.type(screen.getByPlaceholderText(/patient id/i), 'PAT-999');
+    await user.type(screen.getByLabelText(/patient id/i), 'PAT-999');
     await user.click(screen.getByRole('button', { name: /load/i }));
 
     await waitFor(() => {
@@ -91,7 +91,7 @@ describe('EncounterList', () => {
     ) as unknown as typeof fetch;
 
     render(<EncounterList />);
-    await user.type(screen.getByPlaceholderText(/patient id/i), 'PAT-123');
+    await user.type(screen.getByLabelText(/patient id/i), 'PAT-123');
     await user.click(screen.getByRole('button', { name: /load/i }));
     await waitFor(() => screen.getByText('finished'));
 
@@ -100,8 +100,8 @@ describe('EncounterList', () => {
   });
 
   it('has no accessibility violations', async () => {
-    render(<EncounterList />);
-    const results = await axe(document.body);
+    const { container } = render(<main><EncounterList /></main>);
+    const results = await axe(container);
     expect(results).toHaveNoViolations();
   });
 });

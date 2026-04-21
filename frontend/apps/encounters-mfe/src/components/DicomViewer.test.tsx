@@ -32,9 +32,9 @@ describe('DicomViewer', () => {
     it('renders fallback card when ohifBaseUrl is not provided', () => {
       render(<DicomViewer studyId="study-123" study={mockStudy} />);
 
-      expect(screen.getByRole('term', { hidden: true }) || screen.getByText('CT')).toBeTruthy();
+      expect(screen.getAllByRole('term', { hidden: true }).length).toBeGreaterThan(0);
       expect(screen.getByText('CT Chest with Contrast')).toBeInTheDocument();
-      expect(screen.getByText(/study-123/i)).toBeInTheDocument();
+      expect(screen.getByText('Study ID: study-123')).toBeInTheDocument();
     });
 
     it('shows study metadata fields in fallback card', () => {

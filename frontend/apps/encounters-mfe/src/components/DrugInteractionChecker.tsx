@@ -84,6 +84,7 @@ export function DrugInteractionChecker() {
                 key={d}
                 label={d}
                 onDelete={() => removeDrug(d)}
+                deleteIcon={<span role="button" aria-label={`Remove ${d}`}>✕</span>}
                 color="primary"
                 variant="outlined"
                 size="small"

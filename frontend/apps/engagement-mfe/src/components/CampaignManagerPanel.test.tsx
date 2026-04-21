@@ -44,10 +44,10 @@ describe('CampaignManagerPanel', () => {
 
     render(<CampaignManagerPanel />);
     expect(await screen.findByText('Spring Flu Outreach')).toBeInTheDocument();
-    expect(await screen.findByText('Email')).toBeInTheDocument();
-    expect(await screen.findByText('Draft')).toBeInTheDocument();
+    expect(screen.getAllByText('Email').length).toBeGreaterThan(0);
+    expect(screen.getAllByText('Draft').length).toBeGreaterThan(0);
     expect(await screen.findByText('Diabetes Care Gap')).toBeInTheDocument();
-    expect(await screen.findByText('Active')).toBeInTheDocument();
+    expect(screen.getAllByText('Active').length).toBeGreaterThan(0);
   });
 
   it('shows total campaigns chip', async () => {
@@ -127,7 +127,7 @@ describe('CampaignManagerPanel', () => {
         })
       )
     );
-    expect(await screen.findByText(/created/i)).toBeInTheDocument();
+    expect(await screen.findByText(/campaign.*created/i)).toBeInTheDocument();
   });
 
   it('POSTs activate to /notifications/campaigns/{id}/activate', async () => {

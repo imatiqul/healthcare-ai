@@ -134,7 +134,7 @@ export function ProblemListPanel() {
             <Typography variant="body2" color="text.secondary">Enter a patient ID to load the problem list.</Typography>
           )}
           {patientId && !loading && conditions.length === 0 && !error && (
-            <Typography variant="body2" color="text.secondary">No {statusFilter} problems recorded.</Typography>
+            <Typography variant="body2" color="text.secondary">No conditions recorded.</Typography>
           )}
 
           <Stack gap={1}>

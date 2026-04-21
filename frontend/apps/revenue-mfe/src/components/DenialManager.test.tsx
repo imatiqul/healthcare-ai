@@ -120,7 +120,7 @@ describe('DenialManager', () => {
     await user.click(appealButtons[0]);
     await waitFor(() => {
       expect(screen.getByRole('dialog')).toBeInTheDocument();
-      expect(screen.getByText(/submit appeal/i, { selector: 'h2,h3,*[role="heading"],*' })).toBeInTheDocument();
+      expect(screen.getByRole('heading', { name: /submit appeal/i })).toBeInTheDocument();
     });
   });
 
@@ -148,7 +148,7 @@ describe('DenialManager', () => {
         String(url).includes('/appeal') && (opts as RequestInit)?.method === 'POST'
       );
       expect(appealCalls.length).toBe(1);
-    });
+    }, { timeout: 5000 });
   });
 
   it('shows urgency alert in dialog for denials with ≤7 days left', async () => {

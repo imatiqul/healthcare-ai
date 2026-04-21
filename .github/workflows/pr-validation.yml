@@ -94,7 +94,7 @@ jobs:
         # Run Vitest across all 8 MFE workspaces so every app's test suite is gated on every PR.
         # The recursive --filter covers: shell, voice-mfe, triage-mfe, scheduling-mfe,
         # pophealth-mfe, revenue-mfe, encounters-mfe, engagement-mfe.
-        run: pnpm --filter "./apps/*" run test -- --coverage --reporter=verbose
+        run: pnpm --filter "./apps/*" --workspace-concurrency 1 run test -- --coverage --reporter=verbose
         working-directory: frontend
       - run: pnpm build
         working-directory: frontend

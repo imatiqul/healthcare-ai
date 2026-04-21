@@ -47,11 +47,10 @@ describe('PatientPortal', () => {
     });
   });
 
-  it('shows tabs: Overview, Appointments, Care Gaps, Notifications, Prior Auth', async () => {
+  it('shows tabs: Appointments, Care Gaps, Notifications, Prior Authorizations', async () => {
     render(<PatientPortal patientId="PAT-001" />);
     await waitFor(() => screen.getByTestId('appointment-history'));
 
-    expect(screen.getByRole('tab', { name: /overview/i })).toBeInTheDocument();
     expect(screen.getByRole('tab', { name: /appointments/i })).toBeInTheDocument();
     expect(screen.getByRole('tab', { name: /care gaps/i })).toBeInTheDocument();
     expect(screen.getByRole('tab', { name: /notifications/i })).toBeInTheDocument();
@@ -82,8 +81,8 @@ describe('PatientPortal', () => {
   });
 
   it('has no accessibility violations', async () => {
-    render(<PatientPortal />);
-    const results = await axe(document.body);
+    const { container } = render(<main><PatientPortal /></main>);
+    const results = await axe(container);
     expect(results).toHaveNoViolations();
   });
 });

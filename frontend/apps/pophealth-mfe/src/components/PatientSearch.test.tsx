@@ -44,10 +44,10 @@ describe('PatientSearch', () => {
     await user.type(screen.getByPlaceholderText(/search by patient/i), 'alice');
 
     await waitFor(
-      () => expect(screen.getByText('PAT-001-ABCDE')).toBeInTheDocument(),
+      () => expect(screen.getByText('Alice Smith')).toBeInTheDocument(),
       { timeout: 1500 },
     );
-    expect(screen.getByText('PAT-002-FGHIJ')).toBeInTheDocument();
+    expect(screen.getByText('Bob Jones')).toBeInTheDocument();
   });
 
   it('shows risk badges for each result', async () => {

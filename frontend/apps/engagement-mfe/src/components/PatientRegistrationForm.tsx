@@ -67,7 +67,7 @@ export function PatientRegistrationForm({ onRegistered }: Props) {
         {open ? 'Cancel Registration' : '+ Register New Patient'}
       </Button>
 
-      <Collapse in={open}>
+      <Collapse in={open} unmountOnExit>
         <Stack spacing={2} sx={{ pt: 1, pl: 1, borderLeft: 3, borderColor: 'primary.main' }}>
           <Typography variant="body2" color="text.secondary">
             Create a patient account to access the portal.
@@ -95,7 +95,7 @@ export function PatientRegistrationForm({ onRegistered }: Props) {
             variant="contained"
             size="small"
             onClick={() => void handleRegister()}
-            disabled={submitting || !fullName.trim() || !email.trim()}
+            disabled={submitting}
             sx={{ alignSelf: 'flex-start' }}
           >
             {submitting ? 'Registering…' : 'Register Patient'}
