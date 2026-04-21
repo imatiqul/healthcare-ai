@@ -32,10 +32,25 @@
 
 import { test, expect } from '@playwright/test';
 
+// Phase 51: dismiss onboarding wizard + expand admin sidebar group before tests that navigate the UI.
+const SIDEBAR_GROUPS_ALL_OPEN = JSON.stringify({
+  'nav.group.main':       true,
+  'nav.group.business':   true,
+  'nav.group.clinical':   true,
+  'nav.group.analytics':  true,
+  'nav.group.patient':    true,
+  'nav.group.governance': true,
+  'nav.group.admin':      true,
+});
+
 // ── 1. Clinical Alerts Center ─────────────────────────────────────────────────
 
 test.describe('Phase 41 — Clinical Alerts Center (/alerts)', () => {
   test.beforeEach(async ({ page }) => {
+    await page.addInitScript((groups) => {
+      localStorage.setItem('hq:onboarded-v38', 'done');
+      localStorage.setItem('hq:sidebar-groups', groups);
+    }, SIDEBAR_GROUPS_ALL_OPEN);
     // Stub all 4 parallel alert APIs with empty but valid responses
     await page.route('**/api/v1/population-health/risks**', (route) =>
       route.fulfill({ status: 200, contentType: 'application/json', body: '[]' }),
@@ -102,6 +117,13 @@ test.describe('Phase 41 — Clinical Alerts Center (/alerts)', () => {
 // ── 2. Reports & Export Panel ─────────────────────────────────────────────────
 
 test.describe('Phase 41 — Reports & Export Panel (/admin/reports)', () => {
+  test.beforeEach(async ({ page }) => {
+    await page.addInitScript((groups) => {
+      localStorage.setItem('hq:onboarded-v38', 'done');
+      localStorage.setItem('hq:sidebar-groups', groups);
+    }, SIDEBAR_GROUPS_ALL_OPEN);
+  });
+
   test('page loads with correct heading', async ({ page }) => {
     await page.goto('/admin/reports');
     await expect(page.getByRole('heading', { name: /reports|export/i })).toBeVisible({
@@ -162,7 +184,11 @@ test.describe('Phase 41 — Reports & Export Panel (/admin/reports)', () => {
 
 test.describe('Phase 41 — Practitioner Manager (/admin/practitioners)', () => {
   test.beforeEach(async ({ page }) => {
-    await page.route('**/api/v1/identity/practitioners**', (route) =>
+    await page.addInitScript((groups) => {
+      localStorage.setItem('hq:onboarded-v38', 'done');
+      localStorage.setItem('hq:sidebar-groups', groups);
+    }, SIDEBAR_GROUPS_ALL_OPEN);
+    await page.route('**/api/v1/scheduling/practitioners/**', (route) =>
       route.fulfill({
         status: 200,
         contentType: 'application/json',
@@ -201,11 +227,8 @@ test.describe('Phase 41 — Practitioner Manager (/admin/practitioners)', () => 
 
   test('Active/All filter toggle is visible', async ({ page }) => {
     await page.goto('/admin/practitioners');
-    await expect(
-      page.getByRole('checkbox', { name: /active only/i }).or(
-        page.getByLabel(/active only/i),
-      ).first(),
-    ).toBeVisible({ timeout: 12_000 });
+    // The component uses MUI Switch with label "Show inactive"
+    await expect(page.getByLabel(/show inactive/i).first()).toBeVisible({ timeout: 12_000 });
   });
 });
 
@@ -213,6 +236,10 @@ test.describe('Phase 41 — Practitioner Manager (/admin/practitioners)', () => 
 
 test.describe('Phase 41 — Dashboard ClinicalAlertsSummaryWidget', () => {
   test.beforeEach(async ({ page }) => {
+    await page.addInitScript((groups) => {
+      localStorage.setItem('hq:onboarded-v38', 'done');
+      localStorage.setItem('hq:sidebar-groups', groups);
+    }, SIDEBAR_GROUPS_ALL_OPEN);
     await page.route('**/api/v1/**', (route) =>
       route.fulfill({ status: 200, contentType: 'application/json', body: '[]' }),
     );

@@ -1,6 +1,25 @@
 import { test, expect } from '@playwright/test';
 
+// Phase 51: Dismiss onboarding wizard and expand admin sidebar group before each test.
+// The wizard intercepts clicks; the admin group is collapsed by default (Phase 51).
+const SIDEBAR_GROUPS_ALL_OPEN = JSON.stringify({
+  'nav.group.main':       true,
+  'nav.group.business':   true,
+  'nav.group.clinical':   true,
+  'nav.group.analytics':  true,
+  'nav.group.patient':    true,
+  'nav.group.governance': true,
+  'nav.group.admin':      true,
+});
+
 test.describe('Shell App — Cloud Navigation', () => {
+  test.beforeEach(async ({ page }) => {
+    await page.addInitScript((groups) => {
+      localStorage.setItem('hq:onboarded-v38', 'done');
+      localStorage.setItem('hq:sidebar-groups', groups);
+    }, SIDEBAR_GROUPS_ALL_OPEN);
+  });
+
   test('shell loads and shows the dashboard', async ({ page }) => {
     await page.goto('/');
     await expect(page).toHaveTitle(/Healthcare AI/i);
@@ -12,9 +31,9 @@ test.describe('Shell App — Cloud Navigation', () => {
     const sidebar = page.locator('aside, nav, [class*="sidebar"], [class*="Sidebar"]').first();
     await expect(sidebar.getByText('Dashboard')).toBeVisible();
     await expect(sidebar.getByText('Voice Sessions')).toBeVisible();
-    await expect(sidebar.getByText('AI Triage')).toBeVisible();
+    await expect(sidebar.getByText('Triage')).toBeVisible();
     await expect(sidebar.getByText('Scheduling')).toBeVisible();
-    await expect(sidebar.getByText('Population Health')).toBeVisible();
+    await expect(page.locator('a[href="/population-health"]')).toBeVisible();
     await expect(sidebar.getByText('Revenue Cycle')).toBeVisible();
   });
 
@@ -33,31 +52,31 @@ test.describe('Shell App — Cloud Navigation', () => {
 
   test('can navigate to voice page', async ({ page }) => {
     await page.goto('/');
-    await page.getByText('Voice Sessions').click();
+    await page.locator('a[href="/voice"]').first().click();
     await expect(page).toHaveURL(/\/voice/);
   });
 
   test('can navigate to triage page', async ({ page }) => {
     await page.goto('/');
-    await page.getByText('AI Triage').click();
+    await page.locator('a[href="/triage"]').first().click();
     await expect(page).toHaveURL(/\/triage/);
   });
 
   test('can navigate to scheduling page', async ({ page }) => {
     await page.goto('/');
-    await page.getByText('Scheduling').click();
+    await page.locator('a[href="/scheduling"]').first().click();
     await expect(page).toHaveURL(/\/scheduling/);
   });
 
   test('can navigate to population health page', async ({ page }) => {
     await page.goto('/');
-    await page.getByText('Population Health').click();
+    await page.locator('a[href="/population-health"]').first().click();
     await expect(page).toHaveURL(/\/population-health/);
   });
 
   test('can navigate to revenue page', async ({ page }) => {
     await page.goto('/');
-    await page.getByText('Revenue Cycle').click();
+    await page.locator('a[href="/revenue"]').first().click();
     await expect(page).toHaveURL(/\/revenue/);
   });
 
@@ -67,7 +86,7 @@ test.describe('Shell App — Cloud Navigation', () => {
       route.fulfill({ status: 200, contentType: 'application/json', body: '[]' }),
     );
     await page.goto('/');
-    await page.getByText('Clinical Alerts').click();
+    await page.locator('a[href="/alerts"]').first().click();
     await expect(page).toHaveURL(/\/alerts/);
     await expect(page.locator('body')).not.toBeEmpty();
   });
@@ -77,7 +96,7 @@ test.describe('Shell App — Cloud Navigation', () => {
       route.fulfill({ status: 200, contentType: 'application/json', body: '[]' }),
     );
     await page.goto('/');
-    await page.getByText('Reports & Export').click();
+    await page.locator('a[href="/admin/reports"]').first().click();
     await expect(page).toHaveURL(/\/admin\/reports/);
     await expect(page.locator('body')).not.toBeEmpty();
   });
