@@ -16,7 +16,7 @@ describe('PatientRegistrationForm', () => {
   });
 
   it('expands the form when register button is clicked', async () => {
-    const user = userEvent.setup();
+    const user = userEvent.setup({ delay: null });
     render(<PatientRegistrationForm onRegistered={vi.fn()} />);
     await user.click(screen.getByRole('button', { name: /Register New Patient/ }));
     expect(screen.getByLabelText(/Full Name/)).toBeInTheDocument();
@@ -24,7 +24,7 @@ describe('PatientRegistrationForm', () => {
   });
 
   it('shows validation error when fields are empty', async () => {
-    const user = userEvent.setup();
+    const user = userEvent.setup({ delay: null });
     render(<PatientRegistrationForm onRegistered={vi.fn()} />);
     await user.click(screen.getByRole('button', { name: /Register New Patient/ }));
     await user.click(screen.getByRole('button', { name: /Register Patient/ }));
@@ -32,7 +32,7 @@ describe('PatientRegistrationForm', () => {
   });
 
   it('shows validation error for invalid email format', async () => {
-    const user = userEvent.setup();
+    const user = userEvent.setup({ delay: null });
     render(<PatientRegistrationForm onRegistered={vi.fn()} />);
     await user.click(screen.getByRole('button', { name: /Register New Patient/ }));
     await user.type(screen.getByLabelText(/Full Name/), 'Jane Doe');
@@ -42,7 +42,7 @@ describe('PatientRegistrationForm', () => {
   });
 
   it('submits form and calls onRegistered on success', async () => {
-    const user = userEvent.setup();
+    const user = userEvent.setup({ delay: null });
     const onRegistered = vi.fn();
     global.fetch = vi.fn(() =>
       Promise.resolve({
@@ -64,7 +64,7 @@ describe('PatientRegistrationForm', () => {
   });
 
   it('shows API error message when registration fails', async () => {
-    const user = userEvent.setup();
+    const user = userEvent.setup({ delay: null });
     global.fetch = vi.fn(() =>
       Promise.resolve({
         ok: false,
@@ -85,7 +85,7 @@ describe('PatientRegistrationForm', () => {
   });
 
   it('collapses form when Cancel Registration is clicked', async () => {
-    const user = userEvent.setup();
+    const user = userEvent.setup({ delay: null });
     render(<PatientRegistrationForm onRegistered={vi.fn()} />);
     await user.click(screen.getByRole('button', { name: /Register New Patient/ }));
     expect(screen.getByLabelText(/Full Name/)).toBeInTheDocument();

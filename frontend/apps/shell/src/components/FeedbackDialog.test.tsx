@@ -34,7 +34,7 @@ describe('FeedbackDialog', () => {
   });
 
   it('calls onSkip when skip button is clicked', async () => {
-    const user = userEvent.setup();
+    const user = userEvent.setup({ delay: null });
     render(<FeedbackDialog {...defaultProps} />);
     await user.click(screen.getByRole('button', { name: /Skip/ }));
     expect(defaultProps.onSkip).toHaveBeenCalledOnce();

@@ -1,5 +1,4 @@
 import { render, screen, waitFor, fireEvent } from '@testing-library/react';
-import userEvent from '@testing-library/user-event';
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { PatientRegistrationPanel } from './PatientRegistrationPanel';
 
@@ -20,9 +19,9 @@ describe('PatientRegistrationPanel', () => {
 
   it('enables Register button when all fields filled', async () => {
     render(<PatientRegistrationPanel />);
-    await userEvent.type(screen.getByLabelText(/external id/i), 'ext-001');
-    await userEvent.type(screen.getByLabelText(/email/i), 'test@example.com');
-    await userEvent.type(screen.getByLabelText(/full name/i), 'John Smith');
+    fireEvent.change(screen.getByLabelText(/external id/i), { target: { value: 'ext-001' } });
+    fireEvent.change(screen.getByLabelText(/email/i), { target: { value: 'test@example.com' } });
+    fireEvent.change(screen.getByLabelText(/full name/i), { target: { value: 'John Smith' } });
     expect(screen.getByRole('button', { name: /register/i })).not.toBeDisabled();
   });
 
@@ -33,9 +32,9 @@ describe('PatientRegistrationPanel', () => {
         Promise.resolve({ id: 'acc-001', email: 'j@x.com', role: 'Patient', fhirPatientId: 'fhir-1' }),
     });
     render(<PatientRegistrationPanel />);
-    await userEvent.type(screen.getByLabelText(/external id/i), 'ext-001');
-    await userEvent.type(screen.getByLabelText(/email/i), 'j@x.com');
-    await userEvent.type(screen.getByLabelText(/full name/i), 'John Smith');
+    fireEvent.change(screen.getByLabelText(/external id/i), { target: { value: 'ext-001' } });
+    fireEvent.change(screen.getByLabelText(/email/i), { target: { value: 'j@x.com' } });
+    fireEvent.change(screen.getByLabelText(/full name/i), { target: { value: 'John Smith' } });
     fireEvent.click(screen.getByRole('button', { name: /register/i }));
     await waitFor(() =>
       expect(global.fetch).toHaveBeenCalledWith(
@@ -55,9 +54,9 @@ describe('PatientRegistrationPanel', () => {
         Promise.resolve({ id: 'acc-001', email: 'j@x.com', role: 'Patient', fhirPatientId: 'fhir-001' }),
     });
     render(<PatientRegistrationPanel />);
-    await userEvent.type(screen.getByLabelText(/external id/i), 'ext-001');
-    await userEvent.type(screen.getByLabelText(/email/i), 'j@x.com');
-    await userEvent.type(screen.getByLabelText(/full name/i), 'John Smith');
+    fireEvent.change(screen.getByLabelText(/external id/i), { target: { value: 'ext-001' } });
+    fireEvent.change(screen.getByLabelText(/email/i), { target: { value: 'j@x.com' } });
+    fireEvent.change(screen.getByLabelText(/full name/i), { target: { value: 'John Smith' } });
     fireEvent.click(screen.getByRole('button', { name: /register/i }));
     await waitFor(() => expect(screen.getByText(/acc-001/)).toBeInTheDocument());
     expect(screen.getByText(/FHIR ID: fhir-001/i)).toBeInTheDocument();
@@ -76,9 +75,9 @@ describe('PatientRegistrationPanel', () => {
         }),
     });
     render(<PatientRegistrationPanel />);
-    await userEvent.type(screen.getByLabelText(/external id/i), 'ext-001');
-    await userEvent.type(screen.getByLabelText(/email/i), 'j@x.com');
-    await userEvent.type(screen.getByLabelText(/full name/i), 'John Smith');
+    fireEvent.change(screen.getByLabelText(/external id/i), { target: { value: 'ext-001' } });
+    fireEvent.change(screen.getByLabelText(/email/i), { target: { value: 'j@x.com' } });
+    fireEvent.change(screen.getByLabelText(/full name/i), { target: { value: 'John Smith' } });
     fireEvent.click(screen.getByRole('button', { name: /register/i }));
     await waitFor(() => expect(screen.getByText(/already registered/i)).toBeInTheDocument());
   });
@@ -90,9 +89,9 @@ describe('PatientRegistrationPanel', () => {
       json: () => Promise.resolve({ error: 'Email is required' }),
     });
     render(<PatientRegistrationPanel />);
-    await userEvent.type(screen.getByLabelText(/external id/i), 'ext-001');
-    await userEvent.type(screen.getByLabelText(/email/i), 'j@x.com');
-    await userEvent.type(screen.getByLabelText(/full name/i), 'John Smith');
+    fireEvent.change(screen.getByLabelText(/external id/i), { target: { value: 'ext-001' } });
+    fireEvent.change(screen.getByLabelText(/email/i), { target: { value: 'j@x.com' } });
+    fireEvent.change(screen.getByLabelText(/full name/i), { target: { value: 'John Smith' } });
     fireEvent.click(screen.getByRole('button', { name: /register/i }));
     await waitFor(() => expect(screen.getByText(/email is required/i)).toBeInTheDocument());
   });
@@ -104,12 +103,13 @@ describe('PatientRegistrationPanel', () => {
         Promise.resolve({ id: 'acc-001', email: 'j@x.com', role: 'Patient', fhirPatientId: null }),
     });
     render(<PatientRegistrationPanel />);
-    await userEvent.type(screen.getByLabelText(/external id/i), 'ext-001');
-    await userEvent.type(screen.getByLabelText(/email/i), 'j@x.com');
-    await userEvent.type(screen.getByLabelText(/full name/i), 'John Smith');
+    fireEvent.change(screen.getByLabelText(/external id/i), { target: { value: 'ext-001' } });
+    fireEvent.change(screen.getByLabelText(/email/i), { target: { value: 'j@x.com' } });
+    fireEvent.change(screen.getByLabelText(/full name/i), { target: { value: 'John Smith' } });
     fireEvent.click(screen.getByRole('button', { name: /register/i }));
     await waitFor(() => screen.getByRole('button', { name: /reset/i }));
     fireEvent.click(screen.getByRole('button', { name: /reset/i }));
     expect(screen.queryByText(/acc-001/)).not.toBeInTheDocument();
   });
 });
+

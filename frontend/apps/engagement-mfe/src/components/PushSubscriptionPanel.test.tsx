@@ -19,7 +19,7 @@ describe('PushSubscriptionPanel', () => {
   });
 
   it('fetches subscriptions on patient search', async () => {
-    const user = userEvent.setup();
+    const user = userEvent.setup({ delay: null });
     (global.fetch as ReturnType<typeof vi.fn>).mockResolvedValueOnce({
       ok: true,
       json: () => Promise.resolve(mockSubs),
@@ -37,7 +37,7 @@ describe('PushSubscriptionPanel', () => {
   });
 
   it('shows subscription endpoints', async () => {
-    const user = userEvent.setup();
+    const user = userEvent.setup({ delay: null });
     (global.fetch as ReturnType<typeof vi.fn>).mockResolvedValueOnce({
       ok: true,
       json: () => Promise.resolve(mockSubs),
@@ -54,7 +54,7 @@ describe('PushSubscriptionPanel', () => {
   });
 
   it('shows empty state when no subscriptions', async () => {
-    const user = userEvent.setup();
+    const user = userEvent.setup({ delay: null });
     (global.fetch as ReturnType<typeof vi.fn>).mockResolvedValueOnce({
       ok: true,
       json: () => Promise.resolve([]),
@@ -70,7 +70,7 @@ describe('PushSubscriptionPanel', () => {
   });
 
   it('DELETEs subscription on unregister click', async () => {
-    const user = userEvent.setup();
+    const user = userEvent.setup({ delay: null });
     (global.fetch as ReturnType<typeof vi.fn>)
       .mockResolvedValueOnce({ ok: true, json: () => Promise.resolve(mockSubs) })
       .mockResolvedValueOnce({ ok: true })
@@ -92,7 +92,7 @@ describe('PushSubscriptionPanel', () => {
   });
 
   it('POSTs to push-subscriptions on register', async () => {
-    const user = userEvent.setup();
+    const user = userEvent.setup({ delay: null });
     (global.fetch as ReturnType<typeof vi.fn>)
       .mockResolvedValueOnce({ ok: true, json: () => Promise.resolve(mockSubs) })
       .mockResolvedValueOnce({

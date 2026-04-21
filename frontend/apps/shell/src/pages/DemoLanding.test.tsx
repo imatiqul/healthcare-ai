@@ -29,14 +29,14 @@ describe('DemoLanding', () => {
   });
 
   it('shows error when name or company is empty', async () => {
-    const user = userEvent.setup();
+    const user = userEvent.setup({ delay: null });
     render(<DemoLanding />);
     await user.click(screen.getByRole('button', { name: /Start Interactive Demo/ }));
     expect(screen.getByText(/Please enter your name and company/)).toBeInTheDocument();
   });
 
   it('calls start API and navigates on success', async () => {
-    const user = userEvent.setup();
+    const user = userEvent.setup({ delay: null });
     global.fetch = vi.fn(() =>
       Promise.resolve({
         ok: true,
@@ -64,7 +64,7 @@ describe('DemoLanding', () => {
   });
 
   it('shows error message when API call fails', async () => {
-    const user = userEvent.setup();
+    const user = userEvent.setup({ delay: null });
     global.fetch = vi.fn(() => Promise.resolve({ ok: false })) as unknown as typeof fetch;
 
     render(<DemoLanding />);
@@ -79,7 +79,7 @@ describe('DemoLanding', () => {
 
   it('shows "Starting Demo..." while loading', async () => {
     global.fetch = vi.fn(() => new Promise(() => {})) as unknown as typeof fetch;
-    const user = userEvent.setup();
+    const user = userEvent.setup({ delay: null });
 
     render(<DemoLanding />);
     await user.type(screen.getByLabelText(/Your Name/), 'Test');

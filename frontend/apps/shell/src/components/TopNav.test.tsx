@@ -64,7 +64,7 @@ describe('TopNav — unauthenticated', () => {
   });
 
   it('calls toggleMode when colour mode button is clicked', async () => {
-    const user = userEvent.setup();
+    const user = userEvent.setup({ delay: null });
     renderTopNav();
     await user.click(screen.getByLabelText('toggle colour mode'));
     expect(mockToggleMode).toHaveBeenCalledTimes(1);
@@ -76,7 +76,7 @@ describe('TopNav — unauthenticated', () => {
   });
 
   it('calls signIn when Sign In button is clicked', async () => {
-    const user = userEvent.setup();
+    const user = userEvent.setup({ delay: null });
     renderTopNav();
     await user.click(screen.getByRole('button', { name: 'topnav.signIn' }));
     expect(mockSignIn).toHaveBeenCalledTimes(1);
@@ -88,7 +88,7 @@ describe('TopNav — unauthenticated', () => {
   });
 
   it('calls onOpenSearch when search button is clicked', async () => {
-    const user = userEvent.setup();
+    const user = userEvent.setup({ delay: null });
     renderTopNav();
     await user.click(screen.getByLabelText('Search'));
     expect(mockOpenSearch).toHaveBeenCalledTimes(1);
@@ -111,21 +111,21 @@ describe('TopNav — authenticated', () => {
   });
 
   it('shows user name when authenticated', async () => {
-    const user = userEvent.setup();
+    const user = userEvent.setup({ delay: null });
     renderTopNav();
     await user.click(screen.getByRole('button', { name: 'User menu' }));
     expect(await screen.findByText('Dr. Admin')).toBeInTheDocument();
   });
 
   it('shows Sign Out button when authenticated', async () => {
-    const user = userEvent.setup();
+    const user = userEvent.setup({ delay: null });
     renderTopNav();
     await user.click(screen.getByRole('button', { name: 'User menu' }));
     expect(await screen.findByText('topnav.signOut')).toBeInTheDocument();
   });
 
   it('calls signOut when Sign Out is clicked', async () => {
-    const user = userEvent.setup();
+    const user = userEvent.setup({ delay: null });
     renderTopNav();
     await user.click(screen.getByRole('button', { name: 'User menu' }));
     await user.click(await screen.findByText('topnav.signOut'));
@@ -143,7 +143,7 @@ describe('TopNav — authenticated', () => {
   });
 
   it('renders "All clear" when no alerts from API', async () => {
-    const user = userEvent.setup();
+    const user = userEvent.setup({ delay: null });
     renderTopNav();
     await user.click(screen.getByLabelText('Notifications'));
     await waitFor(() => {

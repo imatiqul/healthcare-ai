@@ -26,7 +26,7 @@ describe('GdprErasurePanel', () => {
   });
 
   it('Request Erasure button is disabled if reason is too short', async () => {
-    const user = userEvent.setup();
+    const user = userEvent.setup({ delay: null });
     render(<GdprErasurePanel />);
     await user.type(screen.getByLabelText('patient user id'), 'patient-42');
     await user.type(screen.getByLabelText('Reason for Erasure'), 'short');
@@ -34,7 +34,7 @@ describe('GdprErasurePanel', () => {
   });
 
   it('opens confirmation dialog on Request Erasure click', async () => {
-    const user = userEvent.setup();
+    const user = userEvent.setup({ delay: null });
     render(<GdprErasurePanel />);
     await user.type(screen.getByLabelText('patient user id'), 'patient-42');
     await user.type(
@@ -46,7 +46,7 @@ describe('GdprErasurePanel', () => {
   });
 
   it('POSTs to /identity/consent/erasure on confirm', async () => {
-    const user = userEvent.setup();
+    const user = userEvent.setup({ delay: null });
     (global.fetch as ReturnType<typeof vi.fn>).mockResolvedValueOnce({
       ok: true,
       json: () => Promise.resolve(mockResponse),
@@ -70,7 +70,7 @@ describe('GdprErasurePanel', () => {
   });
 
   it('shows success alert with revokedConsents chip after erasure', async () => {
-    const user = userEvent.setup();
+    const user = userEvent.setup({ delay: null });
     (global.fetch as ReturnType<typeof vi.fn>).mockResolvedValueOnce({
       ok: true,
       json: () => Promise.resolve(mockResponse),
@@ -92,7 +92,7 @@ describe('GdprErasurePanel', () => {
   });
 
   it('shows error alert on failed erasure', async () => {
-    const user = userEvent.setup();
+    const user = userEvent.setup({ delay: null });
     (global.fetch as ReturnType<typeof vi.fn>).mockResolvedValueOnce({
       ok: false,
       status: 404,

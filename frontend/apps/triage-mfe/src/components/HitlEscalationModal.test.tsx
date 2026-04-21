@@ -55,7 +55,7 @@ describe('HitlEscalationModal', () => {
     ) as unknown as typeof fetch;
 
     const onApprove = vi.fn();
-    const user = userEvent.setup();
+    const user = userEvent.setup({ delay: null });
     render(<HitlEscalationModal {...defaultProps} onApprove={onApprove} />);
 
     const noteField = screen.getByLabelText(/Clinical Justification Note/i);
@@ -76,7 +76,7 @@ describe('HitlEscalationModal', () => {
   it('calls onClose when Cancel is clicked', async () => {
     global.fetch = vi.fn() as unknown as typeof fetch;
     const onClose = vi.fn();
-    const user = userEvent.setup();
+    const user = userEvent.setup({ delay: null });
     render(<HitlEscalationModal {...defaultProps} onClose={onClose} />);
 
     const cancelBtn = screen.getByRole('button', { name: /cancel/i });

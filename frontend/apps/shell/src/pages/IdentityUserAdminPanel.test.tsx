@@ -93,7 +93,7 @@ describe('IdentityUserAdminPanel', () => {
       ok: true,
       json: () => Promise.resolve(mockResponse),
     });
-    const user = userEvent.setup();
+    const user = userEvent.setup({ delay: null });
     render(<IdentityUserAdminPanel />);
     await waitFor(() => screen.getByText('Alice Chen'));
     await user.click(screen.getByText('Add User'));
@@ -108,7 +108,7 @@ describe('IdentityUserAdminPanel', () => {
       .mockResolvedValueOnce({ ok: true, json: () => Promise.resolve({ id: 'new-id', email: 'c@x.com', role: 'Clinician' }) })
       .mockResolvedValueOnce({ ok: true, json: () => Promise.resolve(mockResponse) });
 
-    const user = userEvent.setup();
+    const user = userEvent.setup({ delay: null });
     render(<IdentityUserAdminPanel />);
     await waitFor(() => screen.getByText('Alice Chen'));
 
@@ -132,7 +132,7 @@ describe('IdentityUserAdminPanel', () => {
       .mockResolvedValueOnce({ ok: true, json: () => Promise.resolve({ id: 'user-001', isActive: false }) })
       .mockResolvedValueOnce({ ok: true, json: () => Promise.resolve(mockResponse) });
 
-    const user = userEvent.setup();
+    const user = userEvent.setup({ delay: null });
     render(<IdentityUserAdminPanel />);
     await waitFor(() => screen.getByText('Alice Chen'));
 

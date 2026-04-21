@@ -32,7 +32,7 @@ describe('CostPredictionPanel', () => {
   });
 
   it('can add and remove conditions', async () => {
-    const user = userEvent.setup();
+    const user = userEvent.setup({ delay: null });
     render(<CostPredictionPanel />);
 
     await user.type(screen.getByPlaceholderText(/hypertension/i), 'CKD Stage 3');
@@ -47,7 +47,7 @@ describe('CostPredictionPanel', () => {
   });
 
   it('POSTs correct payload on form submit', async () => {
-    const user = userEvent.setup();
+    const user = userEvent.setup({ delay: null });
     (global.fetch as ReturnType<typeof vi.fn>).mockResolvedValueOnce({
       ok: true,
       json: () => Promise.resolve(mockPrediction),
@@ -67,7 +67,7 @@ describe('CostPredictionPanel', () => {
   });
 
   it('displays predicted cost, bounds, and cost tier', async () => {
-    const user = userEvent.setup();
+    const user = userEvent.setup({ delay: null });
     (global.fetch as ReturnType<typeof vi.fn>).mockResolvedValueOnce({
       ok: true,
       json: () => Promise.resolve(mockPrediction),
@@ -84,7 +84,7 @@ describe('CostPredictionPanel', () => {
   });
 
   it('displays cost drivers', async () => {
-    const user = userEvent.setup();
+    const user = userEvent.setup({ delay: null });
     (global.fetch as ReturnType<typeof vi.fn>).mockResolvedValueOnce({
       ok: true,
       json: () => Promise.resolve(mockPrediction),
@@ -100,7 +100,7 @@ describe('CostPredictionPanel', () => {
   });
 
   it('shows error alert on HTTP failure', async () => {
-    const user = userEvent.setup();
+    const user = userEvent.setup({ delay: null });
     (global.fetch as ReturnType<typeof vi.fn>).mockResolvedValueOnce({
       ok: false,
       status: 503,
@@ -115,7 +115,7 @@ describe('CostPredictionPanel', () => {
   });
 
   it('calls GET cost-prediction/{patientId} when Load Latest is clicked', async () => {
-    const user = userEvent.setup();
+    const user = userEvent.setup({ delay: null });
     (global.fetch as ReturnType<typeof vi.fn>).mockResolvedValueOnce({
       ok: true,
       json: () => Promise.resolve(mockPrediction),

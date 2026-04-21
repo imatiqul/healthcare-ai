@@ -51,7 +51,7 @@ describe('FhirObservationViewer', () => {
   });
 
   it('fetches correct URL with patientId', async () => {
-    const user = userEvent.setup();
+    const user = userEvent.setup({ delay: null });
     (global.fetch as ReturnType<typeof vi.fn>).mockResolvedValueOnce({
       ok: true,
       json: () => Promise.resolve(mockBundle),
@@ -67,7 +67,7 @@ describe('FhirObservationViewer', () => {
   });
 
   it('appends category query param when category is selected', async () => {
-    const user = userEvent.setup();
+    const user = userEvent.setup({ delay: null });
     (global.fetch as ReturnType<typeof vi.fn>).mockResolvedValueOnce({
       ok: true,
       json: () => Promise.resolve({ resourceType: 'Bundle', entry: [] }),
@@ -90,7 +90,7 @@ describe('FhirObservationViewer', () => {
   });
 
   it('parses FHIR Bundle entries and shows observation table', async () => {
-    const user = userEvent.setup();
+    const user = userEvent.setup({ delay: null });
     (global.fetch as ReturnType<typeof vi.fn>).mockResolvedValueOnce({
       ok: true,
       json: () => Promise.resolve(mockBundle),
@@ -107,7 +107,7 @@ describe('FhirObservationViewer', () => {
   });
 
   it('shows observation count chip', async () => {
-    const user = userEvent.setup();
+    const user = userEvent.setup({ delay: null });
     (global.fetch as ReturnType<typeof vi.fn>).mockResolvedValueOnce({
       ok: true,
       json: () => Promise.resolve(mockBundle),
@@ -121,7 +121,7 @@ describe('FhirObservationViewer', () => {
   });
 
   it('shows empty state when bundle has no entries', async () => {
-    const user = userEvent.setup();
+    const user = userEvent.setup({ delay: null });
     (global.fetch as ReturnType<typeof vi.fn>).mockResolvedValueOnce({
       ok: true,
       json: () => Promise.resolve({ resourceType: 'Bundle', entry: [] }),
@@ -135,7 +135,7 @@ describe('FhirObservationViewer', () => {
   });
 
   it('shows error alert on HTTP failure', async () => {
-    const user = userEvent.setup();
+    const user = userEvent.setup({ delay: null });
     (global.fetch as ReturnType<typeof vi.fn>).mockResolvedValueOnce({
       ok: false,
       status: 404,

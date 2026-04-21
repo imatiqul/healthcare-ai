@@ -39,14 +39,14 @@ describe('QuickActionsSpeedDial', () => {
   });
 
   it('opens the speed dial and shows Review Triage Queue action', async () => {
-    const user = userEvent.setup();
+    const user = userEvent.setup({ delay: null });
     renderDial();
     await user.click(screen.getByRole('button', { name: /quick actions speed dial/i }));
     expect(screen.getByRole('menuitem', { name: /review triage queue/i })).toBeInTheDocument();
   });
 
   it('shows all 6 action labels when open', async () => {
-    const user = userEvent.setup();
+    const user = userEvent.setup({ delay: null });
     renderDial();
     await user.click(screen.getByRole('button', { name: /quick actions speed dial/i }));
     expect(screen.getByRole('menuitem', { name: /book appointment/i })).toBeInTheDocument();
@@ -57,7 +57,7 @@ describe('QuickActionsSpeedDial', () => {
   });
 
   it('navigates to /triage when Review Triage Queue is clicked', async () => {
-    const user = userEvent.setup();
+    const user = userEvent.setup({ delay: null });
     renderDial();
     await user.click(screen.getByRole('button', { name: /quick actions speed dial/i }));
     fireEvent.click(screen.getByRole('menuitem', { name: /review triage queue/i }));
@@ -65,7 +65,7 @@ describe('QuickActionsSpeedDial', () => {
   });
 
   it('navigates to /scheduling when Book Appointment is clicked', async () => {
-    const user = userEvent.setup();
+    const user = userEvent.setup({ delay: null });
     renderDial();
     await user.click(screen.getByRole('button', { name: /quick actions speed dial/i }));
     fireEvent.click(screen.getByRole('menuitem', { name: /book appointment/i }));
@@ -73,7 +73,7 @@ describe('QuickActionsSpeedDial', () => {
   });
 
   it('navigates to /notifications when Notification Center is clicked', async () => {
-    const user = userEvent.setup();
+    const user = userEvent.setup({ delay: null });
     renderDial();
     await user.click(screen.getByRole('button', { name: /quick actions speed dial/i }));
     fireEvent.click(screen.getByRole('menuitem', { name: /notification center/i }));

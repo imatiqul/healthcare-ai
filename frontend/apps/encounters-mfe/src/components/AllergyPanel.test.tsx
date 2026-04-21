@@ -24,7 +24,7 @@ describe('AllergyPanel', () => {
   });
 
   it('fetches and renders allergies', async () => {
-    const user = userEvent.setup();
+    const user = userEvent.setup({ delay: null });
     const allergies = [
       {
         resourceType: 'AllergyIntolerance',
@@ -51,7 +51,7 @@ describe('AllergyPanel', () => {
   });
 
   it('shows no allergies message when list is empty', async () => {
-    const user = userEvent.setup();
+    const user = userEvent.setup({ delay: null });
     global.fetch = vi.fn(() =>
       Promise.resolve({ ok: true, json: () => Promise.resolve(makeBundle([])) })
     ) as unknown as typeof fetch;
@@ -66,7 +66,7 @@ describe('AllergyPanel', () => {
   });
 
   it('shows error on fetch failure', async () => {
-    const user = userEvent.setup();
+    const user = userEvent.setup({ delay: null });
     global.fetch = vi.fn(() => Promise.resolve({ ok: false, status: 503 })) as unknown as typeof fetch;
 
     render(<AllergyPanel />);

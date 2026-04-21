@@ -51,7 +51,7 @@ describe('AdminSettings', () => {
   });
 
   it('toggles persist to localStorage', async () => {
-    const user = userEvent.setup();
+    const user = userEvent.setup({ delay: null });
     renderPage();
     const toggle = screen.getByLabelText('alert-denials');
     // Default is true (on); click to turn off
@@ -60,7 +60,7 @@ describe('AdminSettings', () => {
   });
 
   it('shows "Preferences saved" message after toggling', async () => {
-    const user = userEvent.setup();
+    const user = userEvent.setup({ delay: null });
     renderPage();
     await user.click(screen.getByLabelText('alert-triage'));
     expect(screen.getByText('Preferences saved')).toBeInTheDocument();

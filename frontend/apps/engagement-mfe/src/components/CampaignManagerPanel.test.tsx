@@ -84,7 +84,7 @@ describe('CampaignManagerPanel', () => {
   });
 
   it('POSTs to /notifications/campaigns with correct payload', async () => {
-    const user = userEvent.setup();
+    const user = userEvent.setup({ delay: null });
 
     // initial load
     vi.mocked(global.fetch).mockResolvedValueOnce({
@@ -131,7 +131,7 @@ describe('CampaignManagerPanel', () => {
   });
 
   it('POSTs activate to /notifications/campaigns/{id}/activate', async () => {
-    const user = userEvent.setup();
+    const user = userEvent.setup({ delay: null });
 
     // initial load
     vi.mocked(global.fetch).mockResolvedValueOnce({

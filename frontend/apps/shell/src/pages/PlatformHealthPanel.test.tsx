@@ -67,7 +67,7 @@ describe('PlatformHealthPanel', () => {
   });
 
   it('clicking refresh triggers re-probe', async () => {
-    const user = userEvent.setup();
+    const user = userEvent.setup({ delay: null });
     render(<PlatformHealthPanel />);
     await waitFor(() => expect(mockFetch).toHaveBeenCalled());
     const callsBefore = mockFetch.mock.calls.length;

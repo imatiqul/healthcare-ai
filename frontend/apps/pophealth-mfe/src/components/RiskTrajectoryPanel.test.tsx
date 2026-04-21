@@ -40,7 +40,7 @@ describe('RiskTrajectoryPanel', () => {
       Promise.resolve({ ok: true, json: () => Promise.resolve(makeTrajectory()) })
     ) as unknown as typeof fetch;
 
-    const user = userEvent.setup();
+    const user = userEvent.setup({ delay: null });
     render(<RiskTrajectoryPanel />);
     await user.type(screen.getByLabelText('Patient ID'), 'PAT-123');
 
@@ -57,7 +57,7 @@ describe('RiskTrajectoryPanel', () => {
       Promise.resolve({ ok: true, json: () => Promise.resolve(makeTrajectory()) })
     ) as unknown as typeof fetch;
 
-    const user = userEvent.setup();
+    const user = userEvent.setup({ delay: null });
     render(<RiskTrajectoryPanel />);
     await user.type(screen.getByLabelText('Patient ID'), 'PAT-123');
 
@@ -78,7 +78,7 @@ describe('RiskTrajectoryPanel', () => {
       })
     ) as unknown as typeof fetch;
 
-    const user = userEvent.setup();
+    const user = userEvent.setup({ delay: null });
     render(<RiskTrajectoryPanel />);
     await user.type(screen.getByLabelText('Patient ID'), 'PAT-EMPTY');
 
@@ -92,7 +92,7 @@ describe('RiskTrajectoryPanel', () => {
       Promise.resolve({ ok: false, status: 404, json: () => Promise.resolve({}) })
     ) as unknown as typeof fetch;
 
-    const user = userEvent.setup();
+    const user = userEvent.setup({ delay: null });
     render(<RiskTrajectoryPanel />);
     await user.type(screen.getByLabelText('Patient ID'), 'BAD');
 
@@ -106,7 +106,7 @@ describe('RiskTrajectoryPanel', () => {
       Promise.resolve({ ok: true, json: () => Promise.resolve(makeTrajectory()) })
     ) as unknown as typeof fetch;
 
-    const user = userEvent.setup();
+    const user = userEvent.setup({ delay: null });
     render(<RiskTrajectoryPanel />);
     await user.type(screen.getByLabelText('Patient ID'), 'PAT-123');
 
@@ -122,7 +122,7 @@ describe('RiskTrajectoryPanel', () => {
       Promise.resolve({ ok: true, json: () => Promise.resolve(makeTrajectory()) })
     ) as unknown as typeof fetch;
 
-    const user = userEvent.setup();
+    const user = userEvent.setup({ delay: null });
     render(<RiskTrajectoryPanel />);
     await user.type(screen.getByLabelText('Patient ID'), 'PAT-123');
 
@@ -146,7 +146,7 @@ describe('RiskTrajectoryPanel', () => {
       })
     ) as unknown as typeof fetch;
 
-    const user = userEvent.setup();
+    const user = userEvent.setup({ delay: null });
     render(<RiskTrajectoryPanel />);
     await user.type(screen.getByLabelText('Patient ID'), 'PAT-ONE');
 

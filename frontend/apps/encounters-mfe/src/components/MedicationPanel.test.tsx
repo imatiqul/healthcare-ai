@@ -30,7 +30,7 @@ describe('MedicationPanel', () => {
   });
 
   it('fetches and renders medications after a search', async () => {
-    const user = userEvent.setup();
+    const user = userEvent.setup({ delay: null });
     const medications = [
       {
         resourceType: 'MedicationRequest',
@@ -58,7 +58,7 @@ describe('MedicationPanel', () => {
   });
 
   it('shows error message on fetch failure', async () => {
-    const user = userEvent.setup();
+    const user = userEvent.setup({ delay: null });
     global.fetch = vi.fn(() => Promise.resolve({ ok: false, status: 500 })) as unknown as typeof fetch;
 
     render(<MedicationPanel />);
@@ -71,7 +71,7 @@ describe('MedicationPanel', () => {
   });
 
   it('shows no medications message when list is empty', async () => {
-    const user = userEvent.setup();
+    const user = userEvent.setup({ delay: null });
     global.fetch = vi.fn(() =>
       Promise.resolve({ ok: true, json: () => Promise.resolve(makeBundle([])) })
     ) as unknown as typeof fetch;
@@ -86,7 +86,7 @@ describe('MedicationPanel', () => {
   });
 
   it('shows Discontinue button for active medications', async () => {
-    const user = userEvent.setup();
+    const user = userEvent.setup({ delay: null });
     global.fetch = vi.fn(() =>
       Promise.resolve({
         ok: true,

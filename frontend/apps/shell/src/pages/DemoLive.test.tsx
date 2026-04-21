@@ -86,7 +86,7 @@ describe('DemoLive', () => {
 
   it('calls advance API when Next button is clicked', async () => {
     sessionStorage.setItem('demo', JSON.stringify(DEMO_STATE));
-    const user = userEvent.setup();
+    const user = userEvent.setup({ delay: null });
     render(<DemoLive />);
     await waitFor(() => {
       expect(screen.getByText('Welcome to HealthQ Copilot!')).toBeInTheDocument();

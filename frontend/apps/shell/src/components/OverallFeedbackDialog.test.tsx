@@ -37,14 +37,14 @@ describe('OverallFeedbackDialog', () => {
   });
 
   it('enables Complete Demo button after NPS selection', async () => {
-    const user = userEvent.setup();
+    const user = userEvent.setup({ delay: null });
     render(<OverallFeedbackDialog {...defaultProps} />);
     await user.click(screen.getByText('9'));
     expect(screen.getByRole('button', { name: /Complete Demo/ })).toBeEnabled();
   });
 
   it('calls onSubmit with NPS score, priorities, and comment', async () => {
-    const user = userEvent.setup();
+    const user = userEvent.setup({ delay: null });
     render(<OverallFeedbackDialog {...defaultProps} />);
     await user.click(screen.getByText('8'));
     await user.click(screen.getByText('AI Triage'));

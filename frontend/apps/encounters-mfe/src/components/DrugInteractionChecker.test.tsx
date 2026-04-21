@@ -45,7 +45,7 @@ describe('DrugInteractionChecker', () => {
   });
 
   it('adds drugs via Enter key and shows them as chips', async () => {
-    const user = userEvent.setup();
+    const user = userEvent.setup({ delay: null });
     render(<DrugInteractionChecker />);
 
     await user.type(screen.getByPlaceholderText(/warfarin/i), 'Warfarin');
@@ -54,7 +54,7 @@ describe('DrugInteractionChecker', () => {
   });
 
   it('removes a drug chip on delete click', async () => {
-    const user = userEvent.setup();
+    const user = userEvent.setup({ delay: null });
     render(<DrugInteractionChecker />);
 
     await user.type(screen.getByPlaceholderText(/warfarin/i), 'Warfarin');
@@ -67,7 +67,7 @@ describe('DrugInteractionChecker', () => {
   });
 
   it('POSTs drugs array to the drug-interactions endpoint', async () => {
-    const user = userEvent.setup();
+    const user = userEvent.setup({ delay: null });
     (global.fetch as ReturnType<typeof vi.fn>).mockResolvedValueOnce({
       ok: true,
       json: () => Promise.resolve(mockResultWithInteractions),
@@ -91,7 +91,7 @@ describe('DrugInteractionChecker', () => {
   });
 
   it('displays interaction table with severity badge and description', async () => {
-    const user = userEvent.setup();
+    const user = userEvent.setup({ delay: null });
     (global.fetch as ReturnType<typeof vi.fn>).mockResolvedValueOnce({
       ok: true,
       json: () => Promise.resolve(mockResultWithInteractions),
@@ -110,7 +110,7 @@ describe('DrugInteractionChecker', () => {
   });
 
   it('shows no interactions message when result is empty', async () => {
-    const user = userEvent.setup();
+    const user = userEvent.setup({ delay: null });
     (global.fetch as ReturnType<typeof vi.fn>).mockResolvedValueOnce({
       ok: true,
       json: () => Promise.resolve(mockResultNoInteractions),
@@ -129,7 +129,7 @@ describe('DrugInteractionChecker', () => {
   });
 
   it('shows error alert on HTTP failure', async () => {
-    const user = userEvent.setup();
+    const user = userEvent.setup({ delay: null });
     (global.fetch as ReturnType<typeof vi.fn>).mockResolvedValueOnce({
       ok: false,
       status: 400,

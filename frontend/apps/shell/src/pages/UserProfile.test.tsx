@@ -93,7 +93,7 @@ describe('UserProfile — authenticated', () => {
   });
 
   it('calls signOut when Sign Out button is clicked', async () => {
-    const user = userEvent.setup();
+    const user = userEvent.setup({ delay: null });
     renderPage();
     await user.click(screen.getByLabelText('sign out'));
     expect(mockSignOut).toHaveBeenCalledTimes(1);

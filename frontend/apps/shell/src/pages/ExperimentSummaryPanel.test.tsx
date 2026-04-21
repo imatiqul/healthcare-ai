@@ -31,7 +31,7 @@ describe('ExperimentSummaryPanel', () => {
   });
 
   it('GETs /agents/experiments/{id}/summary on lookup', async () => {
-    const user = userEvent.setup();
+    const user = userEvent.setup({ delay: null });
     (global.fetch as ReturnType<typeof vi.fn>).mockResolvedValueOnce({
       ok: true,
       json: () => Promise.resolve(mockSummary),
@@ -50,7 +50,7 @@ describe('ExperimentSummaryPanel', () => {
   });
 
   it('shows control and challenger sample sizes', async () => {
-    const user = userEvent.setup();
+    const user = userEvent.setup({ delay: null });
     (global.fetch as ReturnType<typeof vi.fn>).mockResolvedValueOnce({
       ok: true,
       json: () => Promise.resolve(mockSummary),
@@ -69,7 +69,7 @@ describe('ExperimentSummaryPanel', () => {
   });
 
   it('shows promote-challenger chip when recommendation is promote-challenger', async () => {
-    const user = userEvent.setup();
+    const user = userEvent.setup({ delay: null });
     (global.fetch as ReturnType<typeof vi.fn>).mockResolvedValueOnce({
       ok: true,
       json: () => Promise.resolve(mockSummary),
@@ -85,7 +85,7 @@ describe('ExperimentSummaryPanel', () => {
   });
 
   it('shows statistically significant badge', async () => {
-    const user = userEvent.setup();
+    const user = userEvent.setup({ delay: null });
     (global.fetch as ReturnType<typeof vi.fn>).mockResolvedValueOnce({
       ok: true,
       json: () => Promise.resolve(mockSummary),
@@ -101,7 +101,7 @@ describe('ExperimentSummaryPanel', () => {
   });
 
   it('shows no-data alert when recommendation is no-data', async () => {
-    const user = userEvent.setup();
+    const user = userEvent.setup({ delay: null });
     (global.fetch as ReturnType<typeof vi.fn>).mockResolvedValueOnce({
       ok: true,
       json: () => Promise.resolve({ ...mockSummary, recommendation: 'no-data', statisticallySignificant: false }),
@@ -117,7 +117,7 @@ describe('ExperimentSummaryPanel', () => {
   });
 
   it('shows error alert on failed fetch', async () => {
-    const user = userEvent.setup();
+    const user = userEvent.setup({ delay: null });
     (global.fetch as ReturnType<typeof vi.fn>).mockResolvedValueOnce({ ok: false, status: 404 });
 
     render(<ExperimentSummaryPanel />);

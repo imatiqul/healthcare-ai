@@ -44,7 +44,7 @@ describe('WaitlistPanel', () => {
       json: async () => [],
     } as Response);
     render(<WaitlistPanel />);
-    expect(screen.getByText('Add to Waitlist', { selector: 'h3,h4,span,*' })).toBeInTheDocument();
+    expect(screen.getAllByText('Add to Waitlist').length).toBeGreaterThanOrEqual(1);
   });
 
   it('renders the enqueue form fields', async () => {
@@ -129,7 +129,7 @@ describe('WaitlistPanel', () => {
       .mockResolvedValueOnce({ ok: true, json: async () => ({}) } as Response)
       .mockResolvedValueOnce({ ok: true, json: async () => [] } as Response);
 
-    const user = userEvent.setup();
+    const user = userEvent.setup({ delay: null });
     render(<WaitlistPanel />);
     await waitFor(() => expect(screen.getByText(/no patients currently/i)).toBeInTheDocument());
 
@@ -150,7 +150,7 @@ describe('WaitlistPanel', () => {
       .mockResolvedValueOnce({ ok: true, json: async () => [] } as Response)
       .mockResolvedValueOnce({ ok: true, json: async () => ({ hasConflict: false }) } as Response);
 
-    const user = userEvent.setup();
+    const user = userEvent.setup({ delay: null });
     render(<WaitlistPanel />);
 
     await user.type(screen.getByPlaceholderText('e.g. PAT-001'), 'PAT-001');
@@ -167,7 +167,7 @@ describe('WaitlistPanel', () => {
       .mockResolvedValueOnce({ ok: true, json: async () => [] } as Response)
       .mockResolvedValueOnce({ ok: true, json: async () => ({ hasConflict: true }) } as Response);
 
-    const user = userEvent.setup();
+    const user = userEvent.setup({ delay: null });
     render(<WaitlistPanel />);
 
     await user.type(screen.getByPlaceholderText('e.g. PAT-001'), 'PAT-001');

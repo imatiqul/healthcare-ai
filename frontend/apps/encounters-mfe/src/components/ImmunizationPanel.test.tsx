@@ -24,7 +24,7 @@ describe('ImmunizationPanel', () => {
   });
 
   it('fetches and renders immunizations', async () => {
-    const user = userEvent.setup();
+    const user = userEvent.setup({ delay: null });
     const immunizations = [
       {
         resourceType: 'Immunization',
@@ -50,7 +50,7 @@ describe('ImmunizationPanel', () => {
   });
 
   it('shows no immunizations message when list is empty', async () => {
-    const user = userEvent.setup();
+    const user = userEvent.setup({ delay: null });
     global.fetch = vi.fn(() =>
       Promise.resolve({ ok: true, json: () => Promise.resolve(makeBundle([])) })
     ) as unknown as typeof fetch;
@@ -65,7 +65,7 @@ describe('ImmunizationPanel', () => {
   });
 
   it('shows error on fetch failure', async () => {
-    const user = userEvent.setup();
+    const user = userEvent.setup({ delay: null });
     global.fetch = vi.fn(() => Promise.resolve({ ok: false, status: 500 })) as unknown as typeof fetch;
 
     render(<ImmunizationPanel />);
@@ -78,7 +78,7 @@ describe('ImmunizationPanel', () => {
   });
 
   it('does not render Add or Delete buttons (read-only panel)', async () => {
-    const user = userEvent.setup();
+    const user = userEvent.setup({ delay: null });
     global.fetch = vi.fn(() =>
       Promise.resolve({
         ok: true,

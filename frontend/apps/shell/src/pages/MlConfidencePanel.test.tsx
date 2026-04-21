@@ -20,14 +20,14 @@ describe('MlConfidencePanel', () => {
   });
 
   it('enables Compute button when valid probability entered', async () => {
-    const user = userEvent.setup();
+    const user = userEvent.setup({ delay: null });
     render(<MlConfidencePanel />);
     await user.type(screen.getByLabelText('readmission probability'), '0.72');
     expect(screen.getByRole('button', { name: /compute confidence/i })).toBeEnabled();
   });
 
   it('POSTs to /agents/decisions/ml-confidence and shows confidence interval', async () => {
-    const user = userEvent.setup();
+    const user = userEvent.setup({ delay: null });
     const mockResp = {
       probability: 0.72,
       confidenceInterval: {
@@ -61,7 +61,7 @@ describe('MlConfidencePanel', () => {
   });
 
   it('shows High confidence badge with green styling', async () => {
-    const user = userEvent.setup();
+    const user = userEvent.setup({ delay: null });
     vi.mocked(global.fetch).mockResolvedValueOnce({
       ok: true,
       json: () =>
@@ -88,7 +88,7 @@ describe('MlConfidencePanel', () => {
   });
 
   it('shows 95% CI bounds', async () => {
-    const user = userEvent.setup();
+    const user = userEvent.setup({ delay: null });
     vi.mocked(global.fetch).mockResolvedValueOnce({
       ok: true,
       json: () =>
@@ -116,7 +116,7 @@ describe('MlConfidencePanel', () => {
   });
 
   it('shows feature importance list when features provided', async () => {
-    const user = userEvent.setup();
+    const user = userEvent.setup({ delay: null });
     vi.mocked(global.fetch).mockResolvedValueOnce({
       ok: true,
       json: () =>
@@ -167,7 +167,7 @@ describe('MlConfidencePanel', () => {
   });
 
   it('shows error alert on HTTP 500', async () => {
-    const user = userEvent.setup();
+    const user = userEvent.setup({ delay: null });
     vi.mocked(global.fetch).mockResolvedValueOnce({
       ok: false,
       status: 500,

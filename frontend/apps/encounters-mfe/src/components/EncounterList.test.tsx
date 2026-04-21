@@ -28,7 +28,7 @@ describe('EncounterList', () => {
   });
 
   it('fetches and renders encounters after a search', async () => {
-    const user = userEvent.setup();
+    const user = userEvent.setup({ delay: null });
     const encounters = [
       {
         resourceType: 'Encounter',
@@ -63,7 +63,7 @@ describe('EncounterList', () => {
   });
 
   it('shows an error message on fetch failure', async () => {
-    const user = userEvent.setup();
+    const user = userEvent.setup({ delay: null });
     global.fetch = vi.fn(() => Promise.resolve({ ok: false, status: 500 })) as unknown as typeof fetch;
 
     render(<EncounterList />);
@@ -76,7 +76,7 @@ describe('EncounterList', () => {
   });
 
   it('opens the create encounter modal', async () => {
-    const user = userEvent.setup();
+    const user = userEvent.setup({ delay: null });
     const encounters = [
       {
         resourceType: 'Encounter',

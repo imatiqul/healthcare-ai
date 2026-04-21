@@ -1,5 +1,4 @@
 import { render, screen, waitFor, fireEvent } from '@testing-library/react';
-import userEvent from '@testing-library/user-event';
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { OcrDocumentPanel } from './OcrDocumentPanel';
 
@@ -25,8 +24,8 @@ describe('OcrDocumentPanel', () => {
       json: () => Promise.resolve({ id: 'job-001', status: 'Queued' }),
     });
     render(<OcrDocumentPanel />);
-    await userEvent.type(screen.getByLabelText(/patient id \(guid\)/i), 'pat-uuid-001');
-    await userEvent.type(screen.getByLabelText(/document url/i), 'https://blob.example.com/doc.pdf');
+    fireEvent.change(screen.getByLabelText(/patient id \(guid\)/i), { target: { value: 'pat-uuid-001' } });
+    fireEvent.change(screen.getByLabelText(/document url/i), { target: { value: 'https://blob.example.com/doc.pdf' } });
     fireEvent.click(screen.getByRole('button', { name: /create job/i }));
     await waitFor(() =>
       expect(global.fetch).toHaveBeenCalledWith(
@@ -45,8 +44,8 @@ describe('OcrDocumentPanel', () => {
       json: () => Promise.resolve({ id: 'job-001', status: 'Queued' }),
     });
     render(<OcrDocumentPanel />);
-    await userEvent.type(screen.getByLabelText(/patient id \(guid\)/i), 'pat-uuid-001');
-    await userEvent.type(screen.getByLabelText(/document url/i), 'https://blob.example.com/doc.pdf');
+    fireEvent.change(screen.getByLabelText(/patient id \(guid\)/i), { target: { value: 'pat-uuid-001' } });
+    fireEvent.change(screen.getByLabelText(/document url/i), { target: { value: 'https://blob.example.com/doc.pdf' } });
     fireEvent.click(screen.getByRole('button', { name: /create job/i }));
     await waitFor(() => expect(screen.getByText('Queued')).toBeInTheDocument());
     expect(screen.getByText(/job-001/)).toBeInTheDocument();
@@ -63,8 +62,8 @@ describe('OcrDocumentPanel', () => {
         json: () => Promise.resolve({ id: 'job-001', status: 'Completed', extractedText: 'Test text' }),
       });
     render(<OcrDocumentPanel />);
-    await userEvent.type(screen.getByLabelText(/patient id \(guid\)/i), 'pat-uuid-001');
-    await userEvent.type(screen.getByLabelText(/document url/i), 'https://blob.example.com/doc.pdf');
+    fireEvent.change(screen.getByLabelText(/patient id \(guid\)/i), { target: { value: 'pat-uuid-001' } });
+    fireEvent.change(screen.getByLabelText(/document url/i), { target: { value: 'https://blob.example.com/doc.pdf' } });
     fireEvent.click(screen.getByRole('button', { name: /create job/i }));
     await waitFor(() => screen.getByRole('button', { name: /^process$/i }));
     fireEvent.click(screen.getByRole('button', { name: /^process$/i }));
@@ -88,8 +87,8 @@ describe('OcrDocumentPanel', () => {
           Promise.resolve({ id: 'job-001', status: 'Completed', extractedText: 'Patient: Jane Doe' }),
       });
     render(<OcrDocumentPanel />);
-    await userEvent.type(screen.getByLabelText(/patient id \(guid\)/i), 'pat-uuid-001');
-    await userEvent.type(screen.getByLabelText(/document url/i), 'https://blob.example.com/doc.pdf');
+    fireEvent.change(screen.getByLabelText(/patient id \(guid\)/i), { target: { value: 'pat-uuid-001' } });
+    fireEvent.change(screen.getByLabelText(/document url/i), { target: { value: 'https://blob.example.com/doc.pdf' } });
     fireEvent.click(screen.getByRole('button', { name: /create job/i }));
     await waitFor(() => screen.getByRole('button', { name: /^process$/i }));
     fireEvent.click(screen.getByRole('button', { name: /^process$/i }));
@@ -107,7 +106,7 @@ describe('OcrDocumentPanel', () => {
     });
     render(<OcrDocumentPanel />);
     const historyInput = screen.getAllByLabelText(/patient id/i)[1];
-    await userEvent.type(historyInput, 'pat-1');
+    fireEvent.change(historyInput, { target: { value: 'pat-1' } });
     fireEvent.click(screen.getByRole('button', { name: /load history/i }));
     await waitFor(() =>
       expect(global.fetch).toHaveBeenCalledWith(
@@ -127,7 +126,7 @@ describe('OcrDocumentPanel', () => {
     });
     render(<OcrDocumentPanel />);
     const historyInput = screen.getAllByLabelText(/patient id/i)[1];
-    await userEvent.type(historyInput, 'pat-1');
+    fireEvent.change(historyInput, { target: { value: 'pat-1' } });
     fireEvent.click(screen.getByRole('button', { name: /load history/i }));
     await waitFor(() => expect(screen.getByText(/2 jobs/i)).toBeInTheDocument());
     expect(screen.getByText(/job-abc/i)).toBeInTheDocument();
@@ -138,7 +137,7 @@ describe('OcrDocumentPanel', () => {
     (global.fetch as ReturnType<typeof vi.fn>).mockResolvedValue({ ok: false, status: 500 });
     render(<OcrDocumentPanel />);
     const historyInput = screen.getAllByLabelText(/patient id/i)[1];
-    await userEvent.type(historyInput, 'pat-1');
+    fireEvent.change(historyInput, { target: { value: 'pat-1' } });
     fireEvent.click(screen.getByRole('button', { name: /load history/i }));
     await waitFor(() => expect(screen.getByText(/failed to load history/i)).toBeInTheDocument());
   });

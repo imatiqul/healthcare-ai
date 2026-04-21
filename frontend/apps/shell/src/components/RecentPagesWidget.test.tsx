@@ -64,7 +64,7 @@ describe('RecentPagesWidget', () => {
   });
 
   it('navigates when a recent page is clicked', async () => {
-    const user = userEvent.setup();
+    const user = userEvent.setup({ delay: null });
     localStorage.setItem(STORAGE_KEY, JSON.stringify([
       { href: '/scheduling', label: 'Scheduling', visitedAt: new Date().toISOString() },
     ]));
@@ -74,7 +74,7 @@ describe('RecentPagesWidget', () => {
   });
 
   it('clears history and hides widget when clear button is clicked', async () => {
-    const user = userEvent.setup();
+    const user = userEvent.setup({ delay: null });
     localStorage.setItem(STORAGE_KEY, JSON.stringify([
       { href: '/revenue', label: 'Revenue Cycle', visitedAt: new Date().toISOString() },
     ]));
@@ -102,7 +102,7 @@ describe('RecentPagesWidget', () => {
   });
 
   it('navigates on Enter key press', async () => {
-    const user = userEvent.setup();
+    const user = userEvent.setup({ delay: null });
     localStorage.setItem(STORAGE_KEY, JSON.stringify([
       { href: '/governance', label: 'AI Governance', visitedAt: new Date().toISOString() },
     ]));

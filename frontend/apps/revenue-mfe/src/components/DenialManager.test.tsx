@@ -113,7 +113,7 @@ describe('DenialManager', () => {
     vi.spyOn(globalThis, 'fetch')
       .mockResolvedValueOnce({ ok: true, json: async () => mockDenials } as Response)
       .mockResolvedValueOnce({ ok: true, json: async () => mockAnalytics } as Response);
-    const user = userEvent.setup();
+    const user = userEvent.setup({ delay: null });
     render(<DenialManager />);
     await waitFor(() => expect(screen.getByText('CLM-001')).toBeInTheDocument());
     const appealButtons = screen.getAllByRole('button', { name: /appeal/i });
@@ -155,7 +155,7 @@ describe('DenialManager', () => {
     vi.spyOn(globalThis, 'fetch')
       .mockResolvedValueOnce({ ok: true, json: async () => mockDenials } as Response)
       .mockResolvedValueOnce({ ok: true, json: async () => mockAnalytics } as Response);
-    const user = userEvent.setup();
+    const user = userEvent.setup({ delay: null });
     render(<DenialManager />);
     await waitFor(() => expect(screen.getByText('CLM-002')).toBeInTheDocument());
 
@@ -174,7 +174,7 @@ describe('DenialManager', () => {
       .mockResolvedValueOnce({ ok: true, json: async () => mockDenials } as Response)
       .mockResolvedValueOnce({ ok: true, json: async () => mockAnalytics } as Response);
 
-    const user = userEvent.setup();
+    const user = userEvent.setup({ delay: null });
     render(<DenialManager />);
     await waitFor(() => expect(screen.getByText('CLM-001')).toBeInTheDocument());
 

@@ -38,7 +38,7 @@ describe('CommandPalette', () => {
   });
 
   it('filters results on query input', async () => {
-    const user = userEvent.setup();
+    const user = userEvent.setup({ delay: null });
     renderPalette(true);
     const input = screen.getByPlaceholderText(/Search pages/i);
     await user.type(input, 'triag');
@@ -48,7 +48,7 @@ describe('CommandPalette', () => {
   });
 
   it('shows "No results" for unmatched query', async () => {
-    const user = userEvent.setup();
+    const user = userEvent.setup({ delay: null });
     renderPalette(true);
     const input = screen.getByPlaceholderText(/Search pages/i);
     await user.type(input, 'xyznonexistent999');
@@ -58,7 +58,7 @@ describe('CommandPalette', () => {
   });
 
   it('keyboard arrow down moves selection', async () => {
-    const user = userEvent.setup();
+    const user = userEvent.setup({ delay: null });
     renderPalette(true);
     const input = screen.getByPlaceholderText(/Search pages/i);
     await user.type(input, 'dash');
@@ -76,7 +76,7 @@ describe('CommandPalette', () => {
   });
 
   it('navigates when Enter is pressed on a result', async () => {
-    const user = userEvent.setup();
+    const user = userEvent.setup({ delay: null });
     const { onClose } = renderPalette(true);
     const input = screen.getByPlaceholderText(/Search pages/i);
     await user.type(input, 'dashboard');

@@ -27,7 +27,7 @@ describe('CreateEncounterModal', () => {
   });
 
   it('submits a new encounter and calls onCreated', async () => {
-    const user = userEvent.setup();
+    const user = userEvent.setup({ delay: null });
     global.fetch = vi.fn(() =>
       Promise.resolve({ ok: true, json: () => Promise.resolve({ id: 'enc-new', resourceType: 'Encounter' }) })
     ) as unknown as typeof fetch;
@@ -43,7 +43,7 @@ describe('CreateEncounterModal', () => {
   });
 
   it('shows an error message when submit fails', async () => {
-    const user = userEvent.setup();
+    const user = userEvent.setup({ delay: null });
     global.fetch = vi.fn(() =>
       Promise.resolve({ ok: false, status: 422, text: () => Promise.resolve('Unprocessable Entity') })
     ) as unknown as typeof fetch;
@@ -62,7 +62,7 @@ describe('CreateEncounterModal', () => {
       Promise.resolve({ ok: true, json: () => Promise.resolve({}) })
     ) as unknown as typeof fetch;
 
-    const user = userEvent.setup();
+    const user = userEvent.setup({ delay: null });
     render(<CreateEncounterModal {...defaultProps} patientId="PAT-456" />);
     await user.click(screen.getByRole('button', { name: /create/i }));
 
@@ -72,7 +72,7 @@ describe('CreateEncounterModal', () => {
   });
 
   it('calls onClose when Cancel is clicked', async () => {
-    const user = userEvent.setup();
+    const user = userEvent.setup({ delay: null });
     render(<CreateEncounterModal {...defaultProps} />);
     await user.click(screen.getByRole('button', { name: /cancel/i }));
     expect(defaultProps.onClose).toHaveBeenCalledTimes(1);

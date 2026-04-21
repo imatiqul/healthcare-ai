@@ -72,7 +72,7 @@ describe('ClinicianFeedbackDashboard', () => {
   });
 
   it('POSTs to /agents/feedback on submit', async () => {
-    const user = userEvent.setup();
+    const user = userEvent.setup({ delay: null });
     (global.fetch as ReturnType<typeof vi.fn>)
       .mockResolvedValueOnce({
         ok: true,
@@ -106,7 +106,7 @@ describe('ClinicianFeedbackDashboard', () => {
   });
 
   it('shows success alert with action after submit', async () => {
-    const user = userEvent.setup();
+    const user = userEvent.setup({ delay: null });
     (global.fetch as ReturnType<typeof vi.fn>)
       .mockResolvedValueOnce({ ok: true, json: () => Promise.resolve(mockSummary) })
       .mockResolvedValueOnce({

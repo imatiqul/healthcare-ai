@@ -31,14 +31,14 @@ describe('ToastProvider', () => {
   });
 
   it('shows a toast message when showToast is called', async () => {
-    const user = userEvent.setup();
+    const user = userEvent.setup({ delay: null });
     renderWithProvider('Operation successful', 'success');
     await user.click(screen.getByText('Show Toast'));
     expect(await screen.findByText('Operation successful')).toBeInTheDocument();
   });
 
   it('shows toast with error severity', async () => {
-    const user = userEvent.setup();
+    const user = userEvent.setup({ delay: null });
     renderWithProvider('Something went wrong', 'error');
     await user.click(screen.getByText('Show Toast'));
     expect(await screen.findByText('Something went wrong')).toBeInTheDocument();
@@ -46,7 +46,7 @@ describe('ToastProvider', () => {
   });
 
   it('shows toast with warning severity', async () => {
-    const user = userEvent.setup();
+    const user = userEvent.setup({ delay: null });
     renderWithProvider('Warning message', 'warning');
     await user.click(screen.getByText('Show Toast'));
     expect(await screen.findByText('Warning message')).toBeInTheDocument();
@@ -60,7 +60,7 @@ describe('ToastProvider', () => {
   });
 
   it('close button exists and is clickable', async () => {
-    const user = userEvent.setup();
+    const user = userEvent.setup({ delay: null });
     renderWithProvider('Closable toast', 'info');
     await user.click(screen.getByText('Show Toast'));
     await screen.findByText('Closable toast');

@@ -32,7 +32,7 @@ describe('WelcomeCard', () => {
   });
 
   it('dismiss button hides the card and sets localStorage', async () => {
-    const user = userEvent.setup();
+    const user = userEvent.setup({ delay: null });
     renderCard();
     const dismissBtn = screen.getByLabelText('Dismiss welcome card');
     await user.click(dismissBtn);

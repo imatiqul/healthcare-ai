@@ -24,7 +24,7 @@ describe('ProblemListPanel', () => {
   });
 
   it('fetches and renders conditions', async () => {
-    const user = userEvent.setup();
+    const user = userEvent.setup({ delay: null });
     const conditions = [
       {
         resourceType: 'Condition',
@@ -49,7 +49,7 @@ describe('ProblemListPanel', () => {
   });
 
   it('shows no conditions message when list is empty', async () => {
-    const user = userEvent.setup();
+    const user = userEvent.setup({ delay: null });
     global.fetch = vi.fn(() =>
       Promise.resolve({ ok: true, json: () => Promise.resolve(makeBundle([])) })
     ) as unknown as typeof fetch;
@@ -64,7 +64,7 @@ describe('ProblemListPanel', () => {
   });
 
   it('shows error on fetch failure', async () => {
-    const user = userEvent.setup();
+    const user = userEvent.setup({ delay: null });
     global.fetch = vi.fn(() => Promise.resolve({ ok: false, status: 404 })) as unknown as typeof fetch;
 
     render(<ProblemListPanel />);

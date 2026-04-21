@@ -93,8 +93,9 @@ describe('BreakGlassAccessPanel', () => {
       ok: true,
       json: () => Promise.resolve([]),
     });
-    const user = userEvent.setup();
+    const user = userEvent.setup({ delay: null });
     render(<BreakGlassAccessPanel />);
+    await waitFor(() => expect(screen.getByText('Request Access')).not.toBeDisabled(), { timeout: 5000 });
     await user.click(screen.getByText('Request Access'));
     expect(screen.getByText('Request Break-Glass Emergency Access')).toBeTruthy();
     expect(screen.getByLabelText(/requesting user id/i)).toBeTruthy();
@@ -108,8 +109,9 @@ describe('BreakGlassAccessPanel', () => {
       .mockResolvedValueOnce({ ok: true, json: () => Promise.resolve({ id: 'bg-new', requestedByUserId: 'u1', targetPatientId: 'p1', clinicalJustification: 'emergency cardiac access for patient', grantedAt: new Date().toISOString(), expiresAt: futureExpiry }) })
       .mockResolvedValueOnce({ ok: true, json: () => Promise.resolve([]) });
 
-    const user = userEvent.setup();
+    const user = userEvent.setup({ delay: null });
     render(<BreakGlassAccessPanel />);
+    await waitFor(() => expect(screen.getByText('Request Access')).not.toBeDisabled(), { timeout: 5000 });
     await user.click(screen.getByText('Request Access'));
     await user.type(screen.getByLabelText(/requesting user id/i), 'user-aaa');
     await user.type(screen.getByLabelText(/target patient id/i), 'patient-bbb');
@@ -131,7 +133,7 @@ describe('BreakGlassAccessPanel', () => {
       .mockResolvedValueOnce({ ok: true, json: () => Promise.resolve({}) })
       .mockResolvedValueOnce({ ok: true, json: () => Promise.resolve([]) });
 
-    const user = userEvent.setup();
+    const user = userEvent.setup({ delay: null });
     render(<BreakGlassAccessPanel />);
     await waitFor(() => screen.getByText('user-111'));
 

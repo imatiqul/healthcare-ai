@@ -47,7 +47,7 @@ describe('ModelRegisterPanel', () => {
       ok: true,
       json: () => Promise.resolve(mockRegistered),
     });
-    const user = userEvent.setup();
+    const user = userEvent.setup({ delay: null });
     render(<ModelRegisterPanel />);
 
     await user.type(screen.getByPlaceholderText('gpt-4o'), 'gpt-4o');
@@ -70,7 +70,7 @@ describe('ModelRegisterPanel', () => {
       ok: true,
       json: () => Promise.resolve(mockRegistered),
     });
-    const user = userEvent.setup();
+    const user = userEvent.setup({ delay: null });
     render(<ModelRegisterPanel />);
 
     await user.type(screen.getByPlaceholderText('gpt-4o'), 'gpt-4o');
@@ -96,7 +96,7 @@ describe('ModelRegisterPanel', () => {
       ok: true,
       json: () => Promise.resolve(mockDetail),
     });
-    const user = userEvent.setup();
+    const user = userEvent.setup({ delay: null });
     render(<ModelRegisterPanel />);
 
     await user.type(screen.getByLabelText('registry entry id'), 'reg-002');
@@ -114,7 +114,7 @@ describe('ModelRegisterPanel', () => {
       ok: true,
       json: () => Promise.resolve(mockDetail),
     });
-    const user = userEvent.setup();
+    const user = userEvent.setup({ delay: null });
     render(<ModelRegisterPanel />);
 
     await user.type(screen.getByLabelText('registry entry id'), 'reg-002');

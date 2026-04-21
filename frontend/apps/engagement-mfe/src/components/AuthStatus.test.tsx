@@ -32,7 +32,7 @@ describe('AuthStatus — unauthenticated', () => {
 
   it('calls loginRedirect when Sign in is clicked', async () => {
     const { AuthStatus } = await import('./AuthStatus');
-    const user = userEvent.setup();
+    const user = userEvent.setup({ delay: null });
     render(<AuthStatus />);
     await user.click(screen.getByRole('button', { name: /Sign in/i }));
     expect(mockLoginRedirect).toHaveBeenCalledTimes(1);
@@ -62,7 +62,7 @@ describe('AuthStatus — authenticated', () => {
 
   it('calls logoutRedirect when Sign out is clicked', async () => {
     const { AuthStatus } = await import('./AuthStatus');
-    const user = userEvent.setup();
+    const user = userEvent.setup({ delay: null });
     render(<AuthStatus />);
     await user.click(screen.getByRole('button', { name: /Sign out/i }));
     expect(mockLogoutRedirect).toHaveBeenCalledTimes(1);

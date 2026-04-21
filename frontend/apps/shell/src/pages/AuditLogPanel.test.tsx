@@ -72,7 +72,7 @@ describe('AuditLogPanel', () => {
     global.URL.createObjectURL = vi.fn(() => 'blob:url');
     global.URL.revokeObjectURL = vi.fn();
 
-    const user = userEvent.setup();
+    const user = userEvent.setup({ delay: null });
     render(<AuditLogPanel />);
     await waitFor(() => screen.getByText('user-abc'));
 

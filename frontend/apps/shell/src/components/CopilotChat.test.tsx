@@ -55,14 +55,14 @@ describe('CopilotChat', () => {
   });
 
   it('opens the chat drawer when FAB is clicked', async () => {
-    const user = userEvent.setup();
+    const user = userEvent.setup({ delay: null });
     render(<CopilotChat />);
     await user.click(screen.getByLabelText('Open HealthQ Copilot'));
     expect(screen.getByText('AI Clinical Workflow Guide')).toBeInTheDocument();
   });
 
   it('loads suggestions when opened', async () => {
-    const user = userEvent.setup();
+    const user = userEvent.setup({ delay: null });
     render(<CopilotChat />);
     await user.click(screen.getByLabelText('Open HealthQ Copilot'));
     await waitFor(() => {
@@ -71,7 +71,7 @@ describe('CopilotChat', () => {
   });
 
   it('shows welcome text in empty state', async () => {
-    const user = userEvent.setup();
+    const user = userEvent.setup({ delay: null });
     render(<CopilotChat />);
     await user.click(screen.getByLabelText('Open HealthQ Copilot'));
     expect(screen.getByText(/I'm your HealthQ Copilot/)).toBeInTheDocument();

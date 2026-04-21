@@ -58,7 +58,7 @@ describe('PatientPortal', () => {
   });
 
   it('switches tab content when a tab is clicked', async () => {
-    const user = userEvent.setup();
+    const user = userEvent.setup({ delay: null });
     render(<PatientPortal patientId="PAT-001" />);
     await waitFor(() => screen.getByTestId('appointment-history'));
 
@@ -67,7 +67,7 @@ describe('PatientPortal', () => {
   });
 
   it('loads patient data when Load button is clicked with manual input', async () => {
-    const user = userEvent.setup();
+    const user = userEvent.setup({ delay: null });
     render(<PatientPortal />);
 
     // Find the patient ID text field (it has a placeholder or label)

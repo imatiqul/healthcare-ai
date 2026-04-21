@@ -39,7 +39,7 @@ describe('SdohAssessmentPanel', () => {
   });
 
   it('POSTs correct payload on form submit', async () => {
-    const user = userEvent.setup();
+    const user = userEvent.setup({ delay: null });
     (global.fetch as ReturnType<typeof vi.fn>).mockResolvedValueOnce({
       ok: true,
       json: () => Promise.resolve(mockAssessmentResult),
@@ -59,7 +59,7 @@ describe('SdohAssessmentPanel', () => {
   });
 
   it('displays assessment results including totalScore and riskLevel', async () => {
-    const user = userEvent.setup();
+    const user = userEvent.setup({ delay: null });
     (global.fetch as ReturnType<typeof vi.fn>).mockResolvedValueOnce({
       ok: true,
       json: () => Promise.resolve(mockAssessmentResult),
@@ -75,7 +75,7 @@ describe('SdohAssessmentPanel', () => {
   });
 
   it('displays prioritized needs as badges', async () => {
-    const user = userEvent.setup();
+    const user = userEvent.setup({ delay: null });
     (global.fetch as ReturnType<typeof vi.fn>).mockResolvedValueOnce({
       ok: true,
       json: () => Promise.resolve(mockAssessmentResult),
@@ -90,7 +90,7 @@ describe('SdohAssessmentPanel', () => {
   });
 
   it('displays recommended actions', async () => {
-    const user = userEvent.setup();
+    const user = userEvent.setup({ delay: null });
     (global.fetch as ReturnType<typeof vi.fn>).mockResolvedValueOnce({
       ok: true,
       json: () => Promise.resolve(mockAssessmentResult),
@@ -107,7 +107,7 @@ describe('SdohAssessmentPanel', () => {
   });
 
   it('shows error alert on HTTP failure', async () => {
-    const user = userEvent.setup();
+    const user = userEvent.setup({ delay: null });
     (global.fetch as ReturnType<typeof vi.fn>).mockResolvedValueOnce({
       ok: false,
       status: 500,
@@ -122,7 +122,7 @@ describe('SdohAssessmentPanel', () => {
   });
 
   it('calls GET /sdoh/{patientId} when Load Latest is clicked', async () => {
-    const user = userEvent.setup();
+    const user = userEvent.setup({ delay: null });
     (global.fetch as ReturnType<typeof vi.fn>).mockResolvedValueOnce({
       ok: true,
       json: () => Promise.resolve(mockAssessmentResult),

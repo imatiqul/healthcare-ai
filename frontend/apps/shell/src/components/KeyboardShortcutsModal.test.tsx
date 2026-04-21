@@ -50,7 +50,7 @@ describe('KeyboardShortcutsModal', () => {
   });
 
   it('calls onClose when Close button is clicked', async () => {
-    const user = userEvent.setup();
+    const user = userEvent.setup({ delay: null });
     const { onClose } = renderModal();
     await user.click(screen.getByText('Close'));
     expect(onClose).toHaveBeenCalledTimes(1);
@@ -81,7 +81,7 @@ describe('useKeyboardShortcutsModal', () => {
   });
 
   it('openModal opens the modal', async () => {
-    const user = userEvent.setup();
+    const user = userEvent.setup({ delay: null });
     render(<HookConsumer />);
     await user.click(screen.getByText('Open'));
     expect(screen.getByTestId('state').textContent).toBe('open');
