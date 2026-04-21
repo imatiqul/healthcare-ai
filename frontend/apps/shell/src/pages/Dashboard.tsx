@@ -19,6 +19,7 @@ import { Card, CardContent, SkeletonStatGrid } from '@healthcare/design-system';
 import { useTranslation } from 'react-i18next';
 import { createGlobalHub } from '@healthcare/signalr-client';
 import { WelcomeCard } from '../components/WelcomeCard';
+import { RecentPagesWidget } from '../components/RecentPagesWidget'; // Phase 35
 
 const API_BASE = import.meta.env.VITE_API_BASE_URL || '';
 
@@ -225,29 +226,36 @@ export default function Dashboard() {
     <Box>
       <Typography variant="h5" fontWeight={700} mb={3}>{t('dashboard.title', 'Dashboard')}</Typography>
       <WelcomeCard />
-      <Stack spacing={4}>
-        {sections.map((section) => {
-          const sectionStats = stats.filter(s => s.section === section);
-          const meta = sectionMeta[section];
-          return (
-            <Box key={section}>
-              <Stack direction="row" alignItems="center" spacing={1} mb={1.5}>
-                <Box sx={{ width: 3, height: 18, borderRadius: 2, bgcolor: meta.color }} />
-                <Typography variant="overline" fontWeight={700} color="text.secondary" sx={{ letterSpacing: '0.08em', lineHeight: 1 }}>
-                  {meta.label}
-                </Typography>
-              </Stack>
-              <Grid container spacing={2}>
-                {sectionStats.map((stat) => (
-                  <Grid item xs={12} sm={6} md={3} key={stat.labelKey}>
-                    <StatCard stat={stat} />
+      <Grid container spacing={3}>
+        <Grid item xs={12} md={9}>
+          <Stack spacing={4}>
+            {sections.map((section) => {
+              const sectionStats = stats.filter(s => s.section === section);
+              const meta = sectionMeta[section];
+              return (
+                <Box key={section}>
+                  <Stack direction="row" alignItems="center" spacing={1} mb={1.5}>
+                    <Box sx={{ width: 3, height: 18, borderRadius: 2, bgcolor: meta.color }} />
+                    <Typography variant="overline" fontWeight={700} color="text.secondary" sx={{ letterSpacing: '0.08em', lineHeight: 1 }}>
+                      {meta.label}
+                    </Typography>
+                  </Stack>
+                  <Grid container spacing={2}>
+                    {sectionStats.map((stat) => (
+                      <Grid item xs={12} sm={6} md={3} key={stat.labelKey}>
+                        <StatCard stat={stat} />
+                      </Grid>
+                    ))}
                   </Grid>
-                ))}
-              </Grid>
-            </Box>
-          );
-        })}
-      </Stack>
+                </Box>
+              );
+            })}
+          </Stack>
+        </Grid>
+        <Grid item xs={12} md={3}>
+          <RecentPagesWidget />
+        </Grid>
+      </Grid>
     </Box>
   );
 }

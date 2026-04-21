@@ -13,6 +13,8 @@ import { ToastProvider } from './components/ToastProvider';
 import { KeyboardShortcutsModal, useKeyboardShortcutsModal } from './components/KeyboardShortcutsModal';
 import { AppBreadcrumbs } from './components/AppBreadcrumbs'; // Phase 34
 import { SessionExpiryGuard } from './components/SessionExpiryGuard'; // Phase 34
+import { PageTracker } from './components/PageTracker'; // Phase 35
+import { QuickActionsSpeedDial } from './components/QuickActionsSpeedDial'; // Phase 35
 import Dashboard from './pages/Dashboard';
 import DemoLanding from './pages/DemoLanding';
 const AdminSettingsPage = lazy(() => import('./pages/AdminSettings')); // Phase 33
@@ -165,6 +167,7 @@ export default function App() {
           <Box component="main" sx={{ flex: 1, overflow: 'auto', p: { xs: 2, md: 3 }, bgcolor: 'background.default' }}>
             <Suspense fallback={<Loading />}>
               <Routes>
+                <Route path="*" element={<PageTracker />} />
                 <Route path="/" element={<Dashboard />} />
                 <Route path="/notifications" element={
                   <MfeErrorBoundary name="Notification Center">
@@ -312,6 +315,7 @@ export default function App() {
         <CommandPalette open={paletteOpen} onClose={closePalette} />
         <KeyboardShortcutsModal open={shortcutsOpen} onClose={closeShortcuts} />
         <SessionExpiryGuard />
+        <QuickActionsSpeedDial />
       </Box>
     </SidebarProvider>
   );
