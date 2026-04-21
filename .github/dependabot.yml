@@ -1,0 +1,164 @@
+version: 2
+
+updates:
+  # ── .NET / NuGet packages ──────────────────────────────────────────────────
+  - package-ecosystem: nuget
+    directory: /
+    schedule:
+      interval: weekly
+      day: monday
+      time: "06:00"
+      timezone: "UTC"
+    groups:
+      aspnetcore:
+        patterns: ["Microsoft.AspNetCore.*", "Microsoft.Extensions.*"]
+      semantic-kernel:
+        patterns: ["Microsoft.SemanticKernel*"]
+      opentelemetry:
+        patterns: ["OpenTelemetry.*"]
+      polly:
+        patterns: ["Polly*", "Microsoft.Extensions.Http.Resilience*"]
+      dapr:
+        patterns: ["Dapr.*"]
+      entity-framework:
+        patterns: ["Microsoft.EntityFrameworkCore*"]
+    ignore:
+      # Pin SK to a tested minor; bump manually after compat testing
+      - dependency-name: "Microsoft.SemanticKernel*"
+        update-types: ["version-update:semver-major"]
+    open-pull-requests-limit: 10
+    reviewers:
+      - imatiqul
+    labels:
+      - dependencies
+      - dotnet
+
+  # ── Frontend — pnpm (monorepo) ─────────────────────────────────────────────
+  - package-ecosystem: npm
+    directory: /frontend
+    schedule:
+      interval: weekly
+      day: monday
+      time: "06:00"
+      timezone: "UTC"
+    groups:
+      react:
+        patterns: ["react", "react-dom", "@types/react", "@types/react-dom"]
+      mui:
+        patterns: ["@mui/*", "@emotion/*"]
+      vite:
+        patterns: ["vite", "@vitejs/*", "vitest", "@vitest/*"]
+      module-federation:
+        patterns: ["@module-federation/*"]
+      testing:
+        patterns: [
+          "@testing-library/*",
+          "playwright",
+          "@playwright/*",
+          "vitest",
+          "jest-axe",
+          "axe-core"
+        ]
+      i18n:
+        patterns: ["i18next", "react-i18next"]
+    ignore:
+      # React 19 API surface is stable — pin major, minor only
+      - dependency-name: "react"
+        update-types: ["version-update:semver-major"]
+      - dependency-name: "react-dom"
+        update-types: ["version-update:semver-major"]
+    open-pull-requests-limit: 10
+    reviewers:
+      - imatiqul
+    labels:
+      - dependencies
+      - frontend
+
+  # ── GitHub Actions ─────────────────────────────────────────────────────────
+  - package-ecosystem: github-actions
+    directory: /
+    schedule:
+      interval: weekly
+      day: monday
+      time: "06:00"
+      timezone: "UTC"
+    groups:
+      all-actions:
+        patterns: ["*"]
+    open-pull-requests-limit: 5
+    reviewers:
+      - imatiqul
+    labels:
+      - dependencies
+      - ci-cd
+
+  # ── Docker base images ─────────────────────────────────────────────────────
+  - package-ecosystem: docker
+    directory: /src/HealthQCopilot.Agents
+    schedule:
+      interval: weekly
+      day: tuesday
+      time: "06:00"
+      timezone: "UTC"
+    reviewers:
+      - imatiqul
+    labels:
+      - dependencies
+      - docker
+      - security
+
+  - package-ecosystem: docker
+    directory: /src/HealthQCopilot.Voice
+    schedule:
+      interval: weekly
+      day: tuesday
+      time: "06:00"
+      timezone: "UTC"
+    reviewers:
+      - imatiqul
+    labels:
+      - dependencies
+      - docker
+      - security
+
+  - package-ecosystem: docker
+    directory: /src/HealthQCopilot.Fhir
+    schedule:
+      interval: weekly
+      day: tuesday
+      time: "06:00"
+      timezone: "UTC"
+    reviewers:
+      - imatiqul
+    labels:
+      - dependencies
+      - docker
+      - security
+
+  - package-ecosystem: docker
+    directory: /src/HealthQCopilot.Identity
+    schedule:
+      interval: weekly
+      day: tuesday
+      time: "06:00"
+      timezone: "UTC"
+    reviewers:
+      - imatiqul
+    labels:
+      - dependencies
+      - docker
+      - security
+
+  - package-ecosystem: docker
+    directory: /src/HealthQCopilot.Gateway
+    schedule:
+      interval: weekly
+      day: tuesday
+      time: "06:00"
+      timezone: "UTC"
+    reviewers:
+      - imatiqul
+    labels:
+      - dependencies
+      - docker
+      - security

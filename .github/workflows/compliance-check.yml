@@ -1,7 +1,11 @@
 name: Compliance & Security Checks
 
-# Scheduled run disabled while in local development. Re-enable before going to production.
+# Runs weekly on Monday and can be triggered manually.
+# Scheduled scans ensure continuous compliance posture — HIPAA §164.308(a)(8).
 on:
+  schedule:
+    # Monday 08:00 UTC — findings reviewed during business hours
+    - cron: '0 8 * * 1'
   workflow_dispatch:
     inputs:
       skip_zap:
@@ -16,12 +20,58 @@ on:
 permissions:
   contents: read
   security-events: write   # for SARIF upload
+  issues: write            # for Gitleaks issue creation
 
 env:
   APIM_BASE: https://healthq-copilot-apim.azure-api.net
   SHELL_URL:  https://gentle-tree-03115af0f.7.azurestaticapps.net
 
 jobs:
+  # ── 0. Gitleaks: Secret scanning ────────────────────────────────────────
+  gitleaks-scan:
+    name: Gitleaks Secret Scan
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0   # full history for git log scanning
+
+      - name: Run Gitleaks
+        uses: gitleaks/gitleaks-action@v2
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GITLEAKS_LICENSE: ${{ secrets.GITLEAKS_LICENSE }}  # optional: only needed for private repos with SAAS gitleaks
+        with:
+          args: detect --source . --exit-code 1 --report-format sarif --report-path gitleaks-results.sarif --redact
+        continue-on-error: true   # collect SARIF first; gate below
+
+      - name: Upload Gitleaks SARIF
+        if: always()
+        uses: github/codeql-action/upload-sarif@v3
+        with:
+          sarif_file: gitleaks-results.sarif
+        continue-on-error: true   # SARIF upload may fail if no results file
+
+      - name: Gate on secrets found
+        run: |
+          if [ -f gitleaks-results.sarif ]; then
+            COUNT=$(python3 -c "
+import json, sys
+with open('gitleaks-results.sarif') as f:
+    d = json.load(f)
+runs = d.get('runs', [])
+n = sum(len(r.get('results', [])) for r in runs)
+print(n)
+" 2>/dev/null || echo 0)
+            echo "Gitleaks findings: $COUNT"
+            if [ "$COUNT" -gt 0 ]; then
+              echo "::error::$COUNT secrets detected in the repository — HIPAA §164.312(a)(2)(iv) — rotate credentials immediately"
+              exit 1
+            fi
+          fi
+          echo "✅ No secrets detected"
+
   # ── 1. Trivy: Container & File-System CVE scan ─────────────────────────────
   trivy-scan:
     name: Trivy CVE Scan

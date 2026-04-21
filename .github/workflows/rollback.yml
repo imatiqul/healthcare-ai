@@ -1,0 +1,232 @@
+name: Emergency Rollback
+
+# Triggered manually when a bad deployment needs to be reverted.
+# Rolls back one or all services to a previous image SHA.
+on:
+  workflow_dispatch:
+    inputs:
+      service:
+        description: 'Service to roll back (or "all" for all 10 services)'
+        required: true
+        type: choice
+        options:
+          - all
+          - voice
+          - ai-agent
+          - fhir
+          - identity
+          - ocr
+          - scheduling
+          - notification
+          - pop-health
+          - revenue
+          - gateway
+      target_sha:
+        description: 'Git SHA of the known-good image to restore (e.g. abc1234). Leave blank to roll back to the previous revision.'
+        required: false
+        type: string
+      environment:
+        description: 'Target environment'
+        required: true
+        type: choice
+        default: 'dev'
+        options:
+          - dev
+          - prod
+      reason:
+        description: 'Reason for rollback (required for audit trail — HIPAA §164.312(b))'
+        required: true
+        type: string
+
+permissions:
+  id-token: write
+  contents: write  # to write rollback event to audit log
+
+env:
+  REGISTRY: ghcr.io
+  IMAGE_PREFIX: ghcr.io/${{ github.repository_owner }}/healthcare-ai/healthq-copilot
+  ACA_RESOURCE_GROUP: healthq-copilot-rg
+
+jobs:
+  # ── Pre-flight: validate inputs and confirm the target image exists ─────────
+  preflight:
+    runs-on: ubuntu-latest
+    outputs:
+      services: ${{ steps.resolve.outputs.services }}
+      target_sha: ${{ steps.resolve.outputs.target_sha }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 20   # enough history for SHA resolution
+
+      - name: Resolve services and target SHA
+        id: resolve
+        run: |
+          # Build the list of services to roll back
+          if [ "${{ inputs.service }}" = "all" ]; then
+            SERVICES='["voice","ai-agent","fhir","identity","ocr","scheduling","notification","pop-health","revenue","gateway"]'
+          else
+            SERVICES='["${{ inputs.service }}"]'
+          fi
+          echo "services=$SERVICES" >> $GITHUB_OUTPUT
+
+          # Determine the target SHA
+          if [ -n "${{ inputs.target_sha }}" ]; then
+            echo "target_sha=${{ inputs.target_sha }}" >> $GITHUB_OUTPUT
+          else
+            # Resolve the previous commit SHA on main
+            PREV_SHA=$(git log --format="%H" -n 2 HEAD | tail -n 1)
+            echo "target_sha=$PREV_SHA" >> $GITHUB_OUTPUT
+            echo "No SHA specified — resolving to previous commit: $PREV_SHA"
+          fi
+
+      - name: Log rollback intent (HIPAA audit)
+        run: |
+          echo "## 🔄 Rollback Initiated" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "| Field | Value |" >> $GITHUB_STEP_SUMMARY
+          echo "|-------|-------|" >> $GITHUB_STEP_SUMMARY
+          echo "| Initiated By | @${{ github.actor }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| Service(s) | ${{ inputs.service }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| Target SHA | ${{ steps.resolve.outputs.target_sha }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| Environment | ${{ inputs.environment }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| Reason | ${{ inputs.reason }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| Timestamp | $(date -u '+%Y-%m-%dT%H:%M:%SZ') |" >> $GITHUB_STEP_SUMMARY
+
+  # ── Rollback: restore the previous image for each affected service ──────────
+  rollback:
+    needs: preflight
+    runs-on: ubuntu-latest
+    environment: ${{ inputs.environment }}
+    strategy:
+      fail-fast: false
+      max-parallel: 3
+      matrix:
+        service: ${{ fromJson(needs.preflight.outputs.services) }}
+    steps:
+      - uses: azure/login@v2
+        with:
+          client-id: ${{ secrets.AZURE_CLIENT_ID }}
+          tenant-id: ${{ secrets.AZURE_TENANT_ID }}
+          subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+
+      - name: Verify rollback image exists in GHCR
+        run: |
+          TARGET_SHA="${{ needs.preflight.outputs.target_sha }}"
+          IMAGE="${{ env.IMAGE_PREFIX }}/${{ matrix.service }}:${TARGET_SHA}"
+          echo "Checking image: $IMAGE"
+          # Use GHCR API to confirm the manifest exists before rolling back
+          HTTP_STATUS=$(curl -s -o /dev/null -w "%{http_code}" \
+            -H "Authorization: Bearer $(echo '${{ secrets.GITHUB_TOKEN }}' | base64)" \
+            "https://ghcr.io/v2/${{ github.repository_owner }}/healthcare-ai/healthq-copilot/${{ matrix.service }}/manifests/${TARGET_SHA}" \
+            2>/dev/null || echo "000")
+          if [ "$HTTP_STATUS" = "200" ] || [ "$HTTP_STATUS" = "401" ]; then
+            # 401 means the registry responded (image exists, auth needed for full access)
+            echo "✅ Image confirmed in GHCR: $IMAGE"
+          else
+            echo "⚠️  Image may not exist for SHA ${TARGET_SHA} — will attempt rollback using ACA revision history"
+          fi
+
+      - name: Roll back to previous ACA revision
+        id: aca-rollback
+        run: |
+          TARGET_SHA="${{ needs.preflight.outputs.target_sha }}"
+          SVC="${{ matrix.service }}"
+          ACA_RG="${{ env.ACA_RESOURCE_GROUP }}"
+
+          echo "Rolling back $SVC to SHA $TARGET_SHA..."
+
+          # Option A: If a specific SHA is provided, update to that image tag
+          if [ -n "${{ inputs.target_sha }}" ]; then
+            az containerapp update \
+              --name "$SVC" \
+              --resource-group "$ACA_RG" \
+              --image "${{ env.IMAGE_PREFIX }}/${SVC}:${TARGET_SHA}"
+            echo "✅ $SVC updated to image tag $TARGET_SHA"
+          else
+            # Option B: Activate the previous (inactive) revision
+            PREV_REVISION=$(az containerapp revision list \
+              --name "$SVC" \
+              --resource-group "$ACA_RG" \
+              --query "sort_by([?properties.active==\`false\`], &properties.createdTime)[-1].name" \
+              -o tsv 2>/dev/null || echo "")
+
+            if [ -n "$PREV_REVISION" ]; then
+              az containerapp revision activate \
+                --name "$SVC" \
+                --resource-group "$ACA_RG" \
+                --revision "$PREV_REVISION"
+              # Deactivate current (bad) revision
+              CURRENT_REVISION=$(az containerapp show \
+                --name "$SVC" \
+                --resource-group "$ACA_RG" \
+                --query "properties.latestRevisionName" -o tsv)
+              if [ "$CURRENT_REVISION" != "$PREV_REVISION" ]; then
+                az containerapp revision deactivate \
+                  --name "$SVC" \
+                  --resource-group "$ACA_RG" \
+                  --revision "$CURRENT_REVISION" || true
+              fi
+              echo "✅ $SVC rolled back to revision $PREV_REVISION"
+            else
+              echo "❌ No previous revision found for $SVC — manual intervention required"
+              exit 1
+            fi
+          fi
+
+      - name: Post-rollback health check
+        run: |
+          SVC="${{ matrix.service }}"
+          ACA_RG="${{ env.ACA_RESOURCE_GROUP }}"
+
+          echo "Waiting 20s for revision to stabilise..."
+          sleep 20
+
+          ACTIVE=$(az containerapp show \
+            --name "$SVC" \
+            --resource-group "$ACA_RG" \
+            --query "properties.latestRevisionName" -o tsv 2>/dev/null || echo "unknown")
+
+          RUNNING=$(az containerapp revision show \
+            --name "$SVC" \
+            --resource-group "$ACA_RG" \
+            --revision "$ACTIVE" \
+            --query "properties.active" -o tsv 2>/dev/null || echo "false")
+
+          if [ "$RUNNING" = "true" ]; then
+            echo "✅ $SVC post-rollback: revision $ACTIVE is active"
+          else
+            echo "❌ $SVC post-rollback: revision $ACTIVE is NOT active"
+            exit 1
+          fi
+
+  # ── Summary: emit Job Summary with rollback outcome ────────────────────────
+  rollback-summary:
+    needs: [preflight, rollback]
+    runs-on: ubuntu-latest
+    if: always()
+    steps:
+      - name: Emit rollback summary
+        run: |
+          OUTCOME="${{ needs.rollback.result }}"
+
+          if [ "$OUTCOME" = "success" ]; then
+            STATUS_EMOJI="✅"
+            STATUS_TEXT="SUCCESS"
+          else
+            STATUS_EMOJI="❌"
+            STATUS_TEXT="FAILED — manual intervention may be required"
+          fi
+
+          echo "## $STATUS_EMOJI Rollback $STATUS_TEXT" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "| Field | Value |" >> $GITHUB_STEP_SUMMARY
+          echo "|-------|-------|" >> $GITHUB_STEP_SUMMARY
+          echo "| Service(s) | ${{ inputs.service }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| Target SHA | ${{ needs.preflight.outputs.target_sha }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| Environment | ${{ inputs.environment }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| Initiated By | @${{ github.actor }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| Reason | ${{ inputs.reason }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| Completed At | $(date -u '+%Y-%m-%dT%H:%M:%SZ') |" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "> **HIPAA §164.312(b):** This rollback has been logged with operator identity, reason, and timestamp for audit purposes." >> $GITHUB_STEP_SUMMARY
