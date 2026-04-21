@@ -5,6 +5,7 @@ using HealthQCopilot.Agents.Infrastructure;
 using HealthQCopilot.Agents.Plugins;
 using HealthQCopilot.Agents.Rag;
 using HealthQCopilot.Agents.Services;
+using HealthQCopilot.Infrastructure.AI;
 using HealthQCopilot.Infrastructure.Auth;
 using HealthQCopilot.Infrastructure.Messaging;
 using HealthQCopilot.Infrastructure.Middleware;
@@ -124,6 +125,12 @@ builder.Services.AddWebPubSubService();
 
 // Azure Event Hubs — HIPAA-compliant immutable audit trail
 builder.Services.AddEventHubAudit();
+
+// ── Phase 39 — AI & Cloud Architecture improvements ───────────────────────────
+builder.Services.AddHttpContextAccessor();
+builder.Services.AddSingleton<ILlmUsageTracker, LlmUsageTracker>();
+builder.Services.AddSingleton<IPromptRegistry, PromptRegistry>();
+builder.Services.AddScoped<ConfidenceRouter>();
 builder.Services.AddOutputCache(opts =>
 {
     opts.AddPolicy("short", b => b.Expire(TimeSpan.FromSeconds(30)).SetVaryByQuery("top", "status"));
@@ -140,6 +147,7 @@ app.UseCloudEvents();
 app.UseMiddleware<TenantContextMiddleware>();
 app.UseMiddleware<SecurityHeadersMiddleware>();
 app.UseMiddleware<PhiAuditMiddleware>();
+app.UseMiddleware<IdempotencyMiddleware>();
 app.UseAuthentication();
 app.UseAuthorization();
 app.UseOutputCache();

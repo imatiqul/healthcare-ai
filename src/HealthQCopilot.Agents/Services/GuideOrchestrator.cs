@@ -1,8 +1,11 @@
+using System.Diagnostics;
 using System.Text.Json;
 using HealthQCopilot.Agents.Infrastructure;
 using HealthQCopilot.Agents.Plugins;
 using HealthQCopilot.Agents.Rag;
 using HealthQCopilot.Domain.Agents;
+using HealthQCopilot.Infrastructure.AI;
+using Microsoft.AspNetCore.Http;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.SemanticKernel;
 using Microsoft.SemanticKernel.ChatCompletion;
@@ -16,6 +19,9 @@ public sealed class GuideOrchestrator
     private readonly AgentDbContext _db;
     private readonly PlatformGuidePlugin _guidePlugin;
     private readonly IRagContextProvider? _rag;
+    private readonly ILlmUsageTracker _usageTracker;
+    private readonly IPromptRegistry _promptRegistry;
+    private readonly IHttpContextAccessor _httpContextAccessor;
     private readonly ILogger<GuideOrchestrator> _logger;
     private readonly bool _hasLlm;
 
@@ -38,12 +44,18 @@ public sealed class GuideOrchestrator
         Kernel kernel,
         AgentDbContext db,
         PlatformGuidePlugin guidePlugin,
+        ILlmUsageTracker usageTracker,
+        IPromptRegistry promptRegistry,
+        IHttpContextAccessor httpContextAccessor,
         ILogger<GuideOrchestrator> logger,
         IRagContextProvider? rag = null)
     {
         _kernel = kernel;
         _db = db;
         _guidePlugin = guidePlugin;
+        _usageTracker = usageTracker;
+        _promptRegistry = promptRegistry;
+        _httpContextAccessor = httpContextAccessor;
         _rag = rag;
         _logger = logger;
         _hasLlm = kernel.GetAllServices<IChatCompletionService>().Any();
@@ -93,9 +105,15 @@ public sealed class GuideOrchestrator
                 ? await _rag.GetRelevantContextAsync(userMessage, topK: 4, ct: ct)
                 : string.Empty;
 
+            // Resolve effective system prompt — supports per-tenant overrides via App Configuration
+            var tenantId = _httpContextAccessor.HttpContext?.Request.Headers["X-Tenant-Id"].FirstOrDefault()
+                ?? _httpContextAccessor.HttpContext?.User?.FindFirst("tid")?.Value
+                ?? "default";
+            var basePrompt = await _promptRegistry.GetPromptAsync("guide-system", tenantId, SystemPrompt, ct);
+
             var effectiveSystemPrompt = string.IsNullOrEmpty(ragContext)
-                ? SystemPrompt
-                : SystemPrompt + Environment.NewLine + Environment.NewLine + ragContext;
+                ? basePrompt
+                : basePrompt + Environment.NewLine + Environment.NewLine + ragContext;
 
             var history = new ChatHistory(effectiveSystemPrompt);
 
@@ -113,7 +131,14 @@ public sealed class GuideOrchestrator
                 Temperature = 0.3
             };
 
+            var sw = Stopwatch.StartNew();
             var result = await chatService.GetChatMessageContentAsync(history, settings, _kernel, ct);
+            sw.Stop();
+
+            // Track token usage for cost attribution per tenant
+            var (promptTokens, completionTokens) = ExtractTokenUsage(result);
+            _usageTracker.TrackUsage(promptTokens, completionTokens, "GuideAgent", tenantId, sw.Elapsed.TotalMilliseconds);
+
             return result.Content ?? "I'm here to help. Could you rephrase your question?";
         }
         catch (Exception ex)
@@ -121,6 +146,22 @@ public sealed class GuideOrchestrator
             _logger.LogWarning(ex, "LLM chat failed, falling back to rules");
             return await ChatWithRulesAsync(userMessage, ct);
         }
+    }
+
+    /// <summary>
+    /// Extracts prompt and completion token counts from SK ChatMessageContent metadata.
+    /// Uses reflection to avoid a hard compile-time dependency on the OpenAI SDK type.
+    /// Returns (0, 0) gracefully when metadata is absent (e.g., streaming / mock LLM).
+    /// </summary>
+    private static (int PromptTokens, int CompletionTokens) ExtractTokenUsage(ChatMessageContent? msg)
+    {
+        if (msg?.Metadata?.TryGetValue("Usage", out var usageObj) != true || usageObj is null)
+            return (0, 0);
+
+        var t = usageObj.GetType();
+        var input = t.GetProperty("InputTokenCount")?.GetValue(usageObj) as int? ?? 0;
+        var output = t.GetProperty("OutputTokenCount")?.GetValue(usageObj) as int? ?? 0;
+        return (input, output);
     }
 
     private async Task<string> ChatWithRulesAsync(string userMessage, CancellationToken ct)

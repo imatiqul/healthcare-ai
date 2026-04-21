@@ -70,6 +70,22 @@ public sealed class BusinessMetrics
     public Counter<long> AgentGuardVerdictTotal { get; }
     public Counter<long> MlConfidenceComputedTotal { get; } // Phase 28
 
+    // ── LLM Token Usage (Phase 39 — cost attribution) ────────────────────────
+    /// <summary>Total LLM prompt tokens consumed. Tagged by agent and tenant.</summary>
+    public Counter<long> LlmPromptTokensTotal { get; }
+    /// <summary>Total LLM completion tokens generated. Tagged by agent and tenant.</summary>
+    public Counter<long> LlmCompletionTokensTotal { get; }
+    /// <summary>Latency histogram per LLM call from first token to completion (ms).</summary>
+    public Histogram<double> LlmCallLatencyMs { get; }
+
+    // ── Idempotency (Phase 39 — duplicate request prevention) ─────────────────
+    /// <summary>POST requests served from idempotency cache (client retry deduplication).</summary>
+    public Counter<long> IdempotencyHitsTotal { get; }
+
+    // ── Confidence Routing (Phase 39 — AI confidence-based workflow routing) ──
+    /// <summary>Triage decisions routed by AI confidence band. Tagged by routing=auto-escalate|standard-hitl|fast-track.</summary>
+    public Counter<long> ConfidenceRoutingTotal { get; }
+
     public BusinessMetrics(IMeterFactory meterFactory)
     {
         _meter = meterFactory.Create("HealthQCopilot.Business");
@@ -179,5 +195,26 @@ public sealed class BusinessMetrics
         MlConfidenceComputedTotal = _meter.CreateCounter<long>(
             "healthq.xai.ml_confidence.computed.total",
             description: "Total ML readmission risk confidence computations performed"); // Phase 28
+
+        // LLM Token Usage (Phase 39)
+        LlmPromptTokensTotal = _meter.CreateCounter<long>(
+            "healthq.llm.prompt_tokens.total",
+            description: "Total LLM prompt tokens consumed. Use for per-tenant Azure OpenAI cost attribution.");
+        LlmCompletionTokensTotal = _meter.CreateCounter<long>(
+            "healthq.llm.completion_tokens.total",
+            description: "Total LLM completion tokens generated. Drives cost-per-workflow analysis.");
+        LlmCallLatencyMs = _meter.CreateHistogram<double>(
+            "healthq.llm.call.latency.ms", "ms",
+            "End-to-end LLM call latency (prompt submission to full response receipt).");
+
+        // Idempotency (Phase 39)
+        IdempotencyHitsTotal = _meter.CreateCounter<long>(
+            "healthq.api.idempotency.hits.total",
+            description: "POST requests served from idempotency cache (client retry deduplication). High rate indicates aggressive client retries.");
+
+        // Confidence Routing (Phase 39)
+        ConfidenceRoutingTotal = _meter.CreateCounter<long>(
+            "healthq.ai.confidence_routing.total",
+            description: "Triage decisions routed by AI confidence band. Tags: routing=auto-escalate|standard-hitl|fast-track.");
     }
 }

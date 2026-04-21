@@ -1,10 +1,13 @@
+using System.Diagnostics;
 using Dapr.Client;
 using HealthQCopilot.Agents.Infrastructure;
 using HealthQCopilot.Agents.Plugins;
 using HealthQCopilot.Agents.Rag;
 using HealthQCopilot.Domain.Agents;
+using HealthQCopilot.Infrastructure.AI;
 using HealthQCopilot.Infrastructure.Messaging;
 using HealthQCopilot.Infrastructure.RealTime;
+using Microsoft.AspNetCore.Http;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.SemanticKernel;
 using Microsoft.SemanticKernel.ChatCompletion;
@@ -21,11 +24,17 @@ public sealed class TriageOrchestrator
     private readonly IEventHubAuditService _auditService;
     private readonly DaprClient _dapr;
     private readonly IRagContextProvider? _rag;
+    private readonly ILlmUsageTracker _usageTracker;
+    private readonly ConfidenceRouter _confidenceRouter;
+    private readonly IHttpContextAccessor _httpContextAccessor;
     private readonly ILogger<TriageOrchestrator> _logger;
 
     public TriageOrchestrator(Kernel kernel, AgentDbContext db, WorkflowDispatcher dispatcher,
                                HallucinationGuardAgent guard, IWebPubSubService pubSub,
                                IEventHubAuditService auditService, DaprClient dapr,
+                               ILlmUsageTracker usageTracker,
+                               ConfidenceRouter confidenceRouter,
+                               IHttpContextAccessor httpContextAccessor,
                                ILogger<TriageOrchestrator> logger,
                                IRagContextProvider? rag = null)
     {
@@ -36,6 +45,9 @@ public sealed class TriageOrchestrator
         _pubSub = pubSub;
         _auditService = auditService;
         _dapr = dapr;
+        _usageTracker = usageTracker;
+        _confidenceRouter = confidenceRouter;
+        _httpContextAccessor = httpContextAccessor;
         _rag = rag;
         _logger = logger;
     }
@@ -60,15 +72,22 @@ public sealed class TriageOrchestrator
             ? transcriptText
             : transcriptText + Environment.NewLine + Environment.NewLine + ragContext;
 
-        var start = DateTime.UtcNow;
+        var sw = Stopwatch.StartNew();
         try
         {
             var plugin = _kernel.Plugins["Triage"];
-            var result = await _kernel.InvokeAsync<TriageClassification>(
+            var functionResult = await _kernel.InvokeAsync(
                 plugin["classify_urgency"],
                 new KernelArguments { ["transcriptText"] = enrichedTranscript },
                 ct);
 
+            // Track LLM token usage for cost attribution
+            var tenantId = _httpContextAccessor.HttpContext?.Request.Headers["X-Tenant-Id"].FirstOrDefault() ?? "default";
+            // Note: classify_urgency is a rule-based KernelFunction (no LLM tokens).
+            // LLM tokens are tracked separately in StreamAiThinkingAsync.
+            _usageTracker.TrackUsage(0, 0, "TriageAgent", tenantId, sw.Elapsed.TotalMilliseconds);
+
+            var result = functionResult?.GetValue<TriageClassification>();
             if (result is not null)
             {
                 // ── Hallucination guard before accepting the AI result ─────────
@@ -105,11 +124,25 @@ public sealed class TriageOrchestrator
         }
 
     triageComplete:
-        var latency = DateTime.UtcNow - start;
+        sw.Stop();
+        var latency = sw.Elapsed;
+
         var decision = AgentDecision.Create(workflow.Id, "TriageAgent", transcriptText,
             $"Classified as {workflow.AssignedLevel}: {workflow.AgentReasoning}",
             isGuardApproved: guardApproved, latency);
         _db.AgentDecisions.Add(decision);
+
+        // ── Confidence-based routing (Phase 39) ───────────────────────────────
+        // Estimate confidence from the outcome path:
+        //   AI + guard-approved → moderate-high confidence (0.72)
+        //   AI guard-rejected / rule-based fallback → low confidence (0.48)
+        // The XaiExplainabilityService provides calibrated confidence post-decision.
+        var estimatedConfidence = guardApproved ? 0.72 : 0.48;
+        var routing = _confidenceRouter.Route(estimatedConfidence, patientId, workflow.Id);
+        if (routing == ConfidenceRoutingDecision.AutoEscalate)
+        {
+            workflow.Escalate();
+        }
 
         await _db.SaveChangesAsync(ct);
 
@@ -189,6 +222,8 @@ public sealed class TriageOrchestrator
 
         var tokenBuffer = new System.Text.StringBuilder();
         var chunkCount = 0;
+        var streamSw = Stopwatch.StartNew();
+        var tenantId = _httpContextAccessor.HttpContext?.Request.Headers["X-Tenant-Id"].FirstOrDefault() ?? "default";
 
         try
         {
@@ -215,6 +250,11 @@ public sealed class TriageOrchestrator
 
             // Signal that streaming is complete
             await _pubSub.SendAiThinkingAsync(sessionId, string.Empty, isFinal: true, ct);
+
+            // Track approximate LLM usage (streaming chunks ≈ tokens)
+            streamSw.Stop();
+            _usageTracker.TrackUsage(promptTokens: chunkCount * 4, completionTokens: chunkCount,
+                "TriageAgent-Stream", tenantId, streamSw.Elapsed.TotalMilliseconds);
 
             _logger.LogInformation(
                 "AI thinking stream completed for session {SessionId}: {ChunkCount} chunks",
