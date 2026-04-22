@@ -24,12 +24,13 @@ import { DEMO_WORKFLOWS, getGlobalSceneIndex, TOTAL_SCENES } from './demoScripts
 interface DemoControlBarProps {
   countdown:  number;   // seconds remaining in current scene
   totalSec:   number;   // total seconds for current scene
+  elapsedSec: number;   // Phase 65 — total demo elapsed seconds
 }
 
 const BAR_R  = 18;   // SVG circle radius
 const BAR_C  = 2 * Math.PI * BAR_R; // circumference
 
-export function DemoControlBar({ countdown, totalSec }: DemoControlBarProps) {
+export function DemoControlBar({ countdown, totalSec, elapsedSec }: DemoControlBarProps) {
   const {
     demoWorkflowIdx,
     demoSceneIdx,
@@ -86,6 +87,13 @@ export function DemoControlBar({ countdown, totalSec }: DemoControlBarProps) {
           </Typography>
           <Typography variant="caption" sx={{ color: 'rgba(255,255,255,0.45)', fontSize: '0.65rem' }}>
             {demoClientName ? `${demoClientName} · ${demoCompany}` : 'Self-Driven Demo'}
+            {' · '}
+            <Box
+              component="span"
+              sx={{ color: elapsedSec >= 3600 ? '#ef9a9a' : elapsedSec >= 1800 ? '#ffcc02' : 'rgba(255,255,255,0.45)' }}
+            >
+              {String(Math.floor(elapsedSec / 60)).padStart(2, '0')}:{String(elapsedSec % 60).padStart(2, '0')}
+            </Box>
           </Typography>
         </Box>
       </Box>

@@ -1,5 +1,5 @@
-import { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useState, useEffect } from 'react';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import Box from '@mui/material/Box';
 import Card from '@mui/material/Card';
 import CardContent from '@mui/material/CardContent';
@@ -43,23 +43,66 @@ interface StepInfo {
   feedbackTags: string[];
 }
 
+const LS_KEY = 'hq-demo-workflows';
+
 export default function DemoLanding() {
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
   const { startSelfDrivenDemo, setDemoWorkflowIndices } = useGlobalStore(); // Phase 58 + 64
   const [clientName, setClientName] = useState('');
   const [company, setCompany]       = useState('');
   const [email, setEmail]           = useState('');
   const [loading, setLoading]       = useState(false);
   const [error, setError]           = useState('');
-  // Phase 64 — workflow selector (all 8 on by default)
-  const [selectedWorkflows, setSelectedWorkflows] = useState<number[]>([0, 1, 2, 3, 4, 5, 6, 7]);
+
+  // Phase 64/65 — workflow selector (restore from localStorage or default all 8)
+  const restoreWorkflows = (): number[] => {
+    try {
+      const stored = localStorage.getItem(LS_KEY);
+      if (stored) {
+        const arr: unknown = JSON.parse(stored);
+        if (Array.isArray(arr) && arr.length > 0) return arr as number[];
+      }
+    } catch { /* ignore */ }
+    return [0, 1, 2, 3, 4, 5, 6, 7];
+  };
+  const [selectedWorkflows, setSelectedWorkflows] = useState<number[]>(restoreWorkflows);
+
+  // Phase 65 — URL-based pre-fill + optional auto-start
+  useEffect(() => {
+    const qName    = searchParams.get('name');
+    const qCompany = searchParams.get('company');
+    const qEmail   = searchParams.get('email');
+    const qWf      = searchParams.get('workflows'); // e.g. '0,2,5'
+    const qAuto    = searchParams.get('auto');      // '1' = auto-start
+
+    if (qName)    setClientName(qName);
+    if (qCompany) setCompany(qCompany);
+    if (qEmail)   setEmail(qEmail);
+    if (qWf) {
+      const indices = qWf.split(',').map(Number).filter(n => n >= 0 && n <= 7);
+      if (indices.length > 0) setSelectedWorkflows(indices);
+    }
+    // Auto-start: requires name + company to be provided via URL too
+    if (qAuto === '1' && qName && qCompany) {
+      const wfIndices = qWf
+        ? qWf.split(',').map(Number).filter(n => n >= 0 && n <= 7)
+        : [0, 1, 2, 3, 4, 5, 6, 7];
+      setDemoWorkflowIndices(wfIndices.length > 0 ? wfIndices : [0, 1, 2, 3, 4, 5, 6, 7]);
+      startSelfDrivenDemo(qName.trim(), qCompany.trim());
+      navigate('/');
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   const toggleWorkflow = (i: number) => {
-    setSelectedWorkflows(prev =>
-      prev.includes(i)
-        ? prev.length > 1 ? prev.filter(x => x !== i) : prev  // keep min 1
-        : [...prev, i].sort((a, b) => a - b)
-    );
+    setSelectedWorkflows(prev => {
+      const next = prev.includes(i)
+        ? prev.length > 1 ? prev.filter(x => x !== i) : prev
+        : [...prev, i].sort((a, b) => a - b);
+      localStorage.setItem(LS_KEY, JSON.stringify(next));
+      return next;
+    });
   };
 
   const handleStart = async () => {
@@ -114,6 +157,7 @@ export default function DemoLanding() {
     }
     setError('');
     setDemoWorkflowIndices(selectedWorkflows); // Phase 64
+    localStorage.setItem(LS_KEY, JSON.stringify(selectedWorkflows)); // Phase 65
     startSelfDrivenDemo(clientName.trim(), company.trim());
     navigate('/');
   };
@@ -240,7 +284,11 @@ export default function DemoLanding() {
               <Typography
                 variant="caption"
                 sx={{ color: 'primary.main', cursor: 'pointer', mt: 0.5, display: 'inline-block' }}
-                onClick={() => setSelectedWorkflows([0, 1, 2, 3, 4, 5, 6, 7])}
+                onClick={() => {
+                const all = [0, 1, 2, 3, 4, 5, 6, 7];
+                setSelectedWorkflows(all);
+                localStorage.setItem(LS_KEY, JSON.stringify(all));
+              }}
               >
                 Select all
               </Typography>

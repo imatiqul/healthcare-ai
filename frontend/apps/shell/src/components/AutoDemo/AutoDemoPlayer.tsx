@@ -42,8 +42,9 @@ export function AutoDemoPlayer() {
   } = useGlobalStore();
 
   const [narrationText, setNarrationText] = useState('');
-  const [countdown, setCountdown] = useState(30);
-  const [showHelp, setShowHelp] = useState(false);
+  const [countdown, setCountdown]         = useState(30);
+  const [showHelp, setShowHelp]           = useState(false);
+  const [elapsedSec, setElapsedSec]       = useState(0);  // Phase 65 — demo elapsed timer
 
   // Stable refs so interval callbacks always see the latest values
   const narrationRef    = useRef<ReturnType<typeof setInterval> | null>(null);
@@ -224,6 +225,7 @@ export function AutoDemoPlayer() {
           <DemoControlBar
             countdown={countdown}
             totalSec={scene.durationSec}
+            elapsedSec={elapsedSec}
           />
         </>
       )}
