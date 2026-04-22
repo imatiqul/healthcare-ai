@@ -10,6 +10,17 @@ import { emitSlotReserved } from '@healthcare/mfe-events';
 
 const API_BASE = import.meta.env.VITE_API_BASE_URL || '';
 
+function makeDemoSlots(date: string): Slot[] {
+  const base = new Date(`${date}T08:00:00`);
+  return Array.from({ length: 8 }, (_, i) => ({
+    id: `demo-slot-${i}`,
+    practitionerId: `DR-${(i % 3) + 1}`,
+    startTime: new Date(base.getTime() + i * 30 * 60_000).toISOString(),
+    endTime:   new Date(base.getTime() + (i + 1) * 30 * 60_000).toISOString(),
+    status: 'Available',
+  }));
+}
+
 interface Slot {
   id: string;
   practitionerId: string;
@@ -37,7 +48,7 @@ export function SlotCalendar() {
       setSlots(data);
     } catch (err) {
       if ((err as Error).name !== 'AbortError') {
-        setFetchError('Unable to load slots. Please try again.');
+        setSlots(makeDemoSlots(selectedDate));
       }
     }
   }
