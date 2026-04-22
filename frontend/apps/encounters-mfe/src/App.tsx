@@ -6,12 +6,22 @@ import Divider from '@mui/material/Divider';
 import TextField from '@mui/material/TextField';
 import Button from '@mui/material/Button';
 import Chip from '@mui/material/Chip';
+import Tabs from '@mui/material/Tabs';
+import Tab from '@mui/material/Tab';
 import PersonIcon from '@mui/icons-material/Person';
+import MedicalServicesIcon from '@mui/icons-material/MedicalServices';
+import BiotechIcon from '@mui/icons-material/Biotech';
+import FolderOpenIcon from '@mui/icons-material/FolderOpen';
+import MedicationIcon from '@mui/icons-material/Medication';
 import { EncounterList } from './components/EncounterList';
 import { MedicationPanel } from './components/MedicationPanel';
 import { AllergyPanel } from './components/AllergyPanel';
 import { ProblemListPanel } from './components/ProblemListPanel';
 import { ImmunizationPanel } from './components/ImmunizationPanel';
+import { FhirObservationViewer } from './components/FhirObservationViewer';
+import { LabDeltaFlagsPanel } from './components/LabDeltaFlagsPanel';
+import { FhirEverythingViewer } from './components/FhirEverythingViewer';
+import { DrugInteractionChecker } from './components/DrugInteractionChecker';
 
 const DEMO_PATIENTS = [
   { id: 'PAT-00142', label: 'PAT-00142 · Diabetes / HTN' },
@@ -22,6 +32,7 @@ const DEMO_PATIENTS = [
 export default function App() {
   const [patientId, setPatientId] = useState(DEMO_PATIENTS[0].id);
   const [searchInput, setSearchInput] = useState(DEMO_PATIENTS[0].id);
+  const [activeTab, setActiveTab] = useState(0);
 
   function handleSearch() {
     const trimmed = searchInput.trim();
@@ -68,16 +79,44 @@ export default function App() {
         ))}
       </Stack>
 
-      <EncounterList patientId={patientId} />
+      {/* ── Tab Navigation ── */}
+      <Box sx={{ borderBottom: 1, borderColor: 'divider', mb: 3 }}>
+        <Tabs value={activeTab} onChange={(_, v: number) => setActiveTab(v)} aria-label="encounters tabs">
+          <Tab icon={<MedicalServicesIcon fontSize="small" />} iconPosition="start" label="Clinical Summary" />
+          <Tab icon={<BiotechIcon fontSize="small" />}         iconPosition="start" label="Lab & Observations" />
+          <Tab icon={<FolderOpenIcon fontSize="small" />}      iconPosition="start" label="Full Record" />
+          <Tab icon={<MedicationIcon fontSize="small" />}      iconPosition="start" label="Drug Safety" />
+        </Tabs>
+      </Box>
 
-      <Divider sx={{ my: 3 }} />
+      {/* ── Tab 0: Clinical Summary ── */}
+      {activeTab === 0 && (
+        <Stack gap={3}>
+          <EncounterList patientId={patientId} />
+          <MedicationPanel patientId={patientId} />
+          <AllergyPanel patientId={patientId} />
+          <ProblemListPanel patientId={patientId} />
+          <ImmunizationPanel patientId={patientId} />
+        </Stack>
+      )}
 
-      <Stack gap={3}>
-        <MedicationPanel patientId={patientId} />
-        <AllergyPanel patientId={patientId} />
-        <ProblemListPanel patientId={patientId} />
-        <ImmunizationPanel patientId={patientId} />
-      </Stack>
+      {/* ── Tab 1: Lab & Observations ── */}
+      {activeTab === 1 && (
+        <Stack gap={3}>
+          <LabDeltaFlagsPanel patientId={patientId} />
+          <FhirObservationViewer patientId={patientId} />
+        </Stack>
+      )}
+
+      {/* ── Tab 2: Full FHIR Record ── */}
+      {activeTab === 2 && (
+        <FhirEverythingViewer patientId={patientId} />
+      )}
+
+      {/* ── Tab 3: Drug Safety ── */}
+      {activeTab === 3 && (
+        <DrugInteractionChecker />
+      )}
     </Box>
   );
 }

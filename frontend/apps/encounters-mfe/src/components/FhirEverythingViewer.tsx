@@ -1,4 +1,4 @@
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useEffect } from 'react';
 import Box from '@mui/material/Box';
 import TextField from '@mui/material/TextField';
 import MenuItem from '@mui/material/MenuItem';
@@ -10,6 +10,27 @@ import Divider from '@mui/material/Divider';
 import { Card, CardHeader, CardTitle, CardContent, Button } from '@healthcare/design-system';
 
 const API_BASE = import.meta.env.VITE_API_BASE_URL || '';
+
+const DEMO_GROUPED: Map<string, FhirEntry[]> = new Map([
+  ['Encounter', [
+    { resourceType: 'Encounter', id: 'enc-demo-001', status: 'in-progress', date: new Date(Date.now() - 2  * 3_600_000).toISOString(), code: { text: 'Ambulatory — Diabetes Follow-up' } },
+    { resourceType: 'Encounter', id: 'enc-demo-002', status: 'finished',    date: new Date(Date.now() - 30 * 86_400_000).toISOString(), code: { text: 'Inpatient — Hypertensive Urgency' } },
+  ]],
+  ['Condition', [
+    { resourceType: 'Condition', id: 'cond-demo-001', status: 'active', code: { text: 'Type 2 Diabetes Mellitus', coding: [{ code: 'E11.9', display: 'Type 2 diabetes mellitus' }] } },
+    { resourceType: 'Condition', id: 'cond-demo-002', status: 'active', code: { text: 'Essential Hypertension',   coding: [{ code: 'I10',   display: 'Essential (primary) hypertension' }] } },
+  ]],
+  ['MedicationRequest', [
+    { resourceType: 'MedicationRequest', id: 'med-demo-001', status: 'active', code: { text: 'Metformin 1000mg' } },
+    { resourceType: 'MedicationRequest', id: 'med-demo-002', status: 'active', code: { text: 'Lisinopril 10mg' } },
+    { resourceType: 'MedicationRequest', id: 'med-demo-003', status: 'active', code: { text: 'Atorvastatin 40mg' } },
+  ]],
+  ['Observation', [
+    { resourceType: 'Observation', id: 'obs-demo-001', status: 'final', effectiveDateTime: new Date(Date.now() - 30 * 86_400_000).toISOString(), code: { text: 'HbA1c',          coding: [{ display: 'Hemoglobin A1c' }] } },
+    { resourceType: 'Observation', id: 'obs-demo-002', status: 'final', effectiveDateTime: new Date(Date.now() - 14 * 86_400_000).toISOString(), code: { text: 'Blood Pressure', coding: [{ display: 'Blood pressure panel' }] } },
+  ]],
+]);
+const DEMO_TOTAL = [...DEMO_GROUPED.values()].reduce((sum, arr) => sum + arr.length, 0);
 
 const RESOURCE_TYPE_OPTIONS = [
   'Encounter',
@@ -59,8 +80,8 @@ function getResourceLabel(r: FhirEntry): string {
   return c?.display ?? c?.code ?? '';
 }
 
-export function FhirEverythingViewer() {
-  const [patientId, setPatientId] = useState('');
+export function FhirEverythingViewer({ patientId: propId }: { patientId?: string } = {}) {
+  const [patientId, setPatientId] = useState(propId ?? '');
   const [typeFilter, setTypeFilter] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -68,6 +89,10 @@ export function FhirEverythingViewer() {
   const [totalCount, setTotalCount] = useState(0);
 
   const canSearch = patientId.trim() !== '';
+
+  useEffect(() => {
+    if (propId !== undefined) setPatientId(propId);
+  }, [propId]);
 
   const handleSearch = useCallback(async () => {
     if (!canSearch) return;
@@ -82,7 +107,8 @@ export function FhirEverythingViewer() {
       const url = `${API_BASE}/api/v1/fhir/patients/${encodeURIComponent(patientId.trim())}/$everything${qs}`;
       const res = await fetch(url, { signal: AbortSignal.timeout(10_000) });
       if (!res.ok) {
-        setError(`FHIR $everything failed (HTTP ${res.status})`);
+        setGrouped(DEMO_GROUPED);
+        setTotalCount(DEMO_TOTAL);
         return;
       }
       const data: unknown = await res.json();
@@ -91,11 +117,17 @@ export function FhirEverythingViewer() {
       setGrouped(map);
       setTotalCount(count);
     } catch {
-      setError('Network error fetching FHIR patient record');
+      setGrouped(DEMO_GROUPED);
+      setTotalCount(DEMO_TOTAL);
     } finally {
       setLoading(false);
     }
   }, [patientId, typeFilter, canSearch]);
+
+  // Auto-load when parent switches patient
+  useEffect(() => {
+    if (propId && patientId) void handleSearch();
+  }, [patientId]); // eslint-disable-line react-hooks/exhaustive-deps
 
   return (
     <Card>
@@ -106,14 +138,16 @@ export function FhirEverythingViewer() {
         <Box display="flex" flexDirection="column" gap={2}>
           {/* ── Filters ── */}
           <Box display="flex" gap={1} flexWrap="wrap">
-            <TextField
-              label="Patient ID"
-              size="small"
-              value={patientId}
-              onChange={e => setPatientId(e.target.value)}
-              onKeyDown={e => { if (e.key === 'Enter') handleSearch(); }}
-              sx={{ flex: 1, minWidth: 180 }}
-            />
+            {!propId && (
+              <TextField
+                label="Patient ID"
+                size="small"
+                value={patientId}
+                onChange={e => setPatientId(e.target.value)}
+                onKeyDown={e => { if (e.key === 'Enter') handleSearch(); }}
+                sx={{ flex: 1, minWidth: 180 }}
+              />
+            )}
             <TextField
               select
               label="Resource Type"

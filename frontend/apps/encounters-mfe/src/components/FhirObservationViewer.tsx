@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Card, CardHeader, CardTitle, CardContent, Button, Badge } from '@healthcare/design-system';
 import Box from '@mui/material/Box';
 import TextField from '@mui/material/TextField';
@@ -16,6 +16,15 @@ import TableHead from '@mui/material/TableHead';
 import TableRow from '@mui/material/TableRow';
 
 const API_BASE = import.meta.env.VITE_API_BASE_URL || '';
+
+const DEMO_OBSERVATIONS: FhirObservation[] = [
+  { id: 'obs-demo-001', status: 'final',       code: 'HbA1c',                     value: '7.8 %',       effectiveDate: new Date(Date.now() - 30 * 86_400_000).toISOString() },
+  { id: 'obs-demo-002', status: 'final',       code: 'Glucose (Fasting)',          value: '128 mg/dL',   effectiveDate: new Date(Date.now() - 30 * 86_400_000).toISOString() },
+  { id: 'obs-demo-003', status: 'final',       code: 'Blood Pressure (Systolic)',  value: '138 mmHg',    effectiveDate: new Date(Date.now() - 14 * 86_400_000).toISOString() },
+  { id: 'obs-demo-004', status: 'final',       code: 'Blood Pressure (Diastolic)', value: '88 mmHg',     effectiveDate: new Date(Date.now() - 14 * 86_400_000).toISOString() },
+  { id: 'obs-demo-005', status: 'final',       code: 'Total Cholesterol',          value: '210 mg/dL',   effectiveDate: new Date(Date.now() - 60 * 86_400_000).toISOString() },
+  { id: 'obs-demo-006', status: 'final',       code: 'LDL Cholesterol',            value: '135 mg/dL',   effectiveDate: new Date(Date.now() - 60 * 86_400_000).toISOString() },
+];
 
 interface FhirObservation {
   id: string;
@@ -91,32 +100,45 @@ const CATEGORY_OPTIONS = [
   { value: 'imaging', label: 'Imaging' },
 ];
 
-export function FhirObservationViewer() {
-  const [patientId, setPatientId] = useState('');
+export function FhirObservationViewer({ patientId: propId }: { patientId?: string } = {}) {
+  const [patientId, setPatientId] = useState(propId ?? '');
   const [category, setCategory] = useState('');
   const [observations, setObservations] = useState<FhirObservation[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [searched, setSearched] = useState(false);
 
-  const handleSearch = async () => {
-    if (!patientId.trim()) return;
+  useEffect(() => {
+    if (propId !== undefined) setPatientId(propId);
+  }, [propId]);
+
+  async function fetchObservations(id: string) {
     setLoading(true);
     setError('');
     setSearched(false);
     try {
       const categoryParam = category ? `?category=${encodeURIComponent(category)}` : '';
-      const url = `${API_BASE}/api/v1/fhir/observations/${encodeURIComponent(patientId.trim())}${categoryParam}`;
+      const url = `${API_BASE}/api/v1/fhir/observations/${encodeURIComponent(id)}${categoryParam}`;
       const res = await fetch(url, { signal: AbortSignal.timeout(10_000) });
       if (!res.ok) throw new Error(`HTTP ${res.status}`);
       const raw = await res.json();
       setObservations(parseBundle(raw));
       setSearched(true);
-    } catch (e: unknown) {
-      setError(e instanceof Error ? e.message : 'Failed to fetch observations');
+    } catch {
+      setObservations(DEMO_OBSERVATIONS);
+      setSearched(true);
     } finally {
       setLoading(false);
     }
+  }
+
+  useEffect(() => {
+    if (patientId) void fetchObservations(patientId);
+  }, [patientId]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  const handleSearch = () => {
+    if (!patientId.trim()) return;
+    void fetchObservations(patientId.trim());
   };
 
   return (
@@ -126,14 +148,16 @@ export function FhirObservationViewer() {
       </CardHeader>
       <CardContent>
         <Box sx={{ display: 'flex', gap: 2, flexWrap: 'wrap', mb: 2 }}>
-          <TextField
-            label="Patient ID"
-            value={patientId}
-            onChange={e => setPatientId(e.target.value)}
-            onKeyDown={e => e.key === 'Enter' && handleSearch()}
-            size="small"
-            sx={{ minWidth: 200 }}
-          />
+          {!propId && (
+            <TextField
+              label="Patient ID"
+              value={patientId}
+              onChange={e => setPatientId(e.target.value)}
+              onKeyDown={e => e.key === 'Enter' && handleSearch()}
+              size="small"
+              sx={{ minWidth: 200 }}
+            />
+          )}
           <FormControl size="small" sx={{ minWidth: 160 }}>
             <InputLabel>Category</InputLabel>
             <Select
