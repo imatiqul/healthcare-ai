@@ -146,7 +146,7 @@ export async function createGlobalVoiceClient(
   if (globalClient) return globalClient;
 
   const negotiateUrl = `${negotiateBaseUrl}/api/webpubsub/negotiate?sessionId=${encodeURIComponent(sessionId)}&userId=${encodeURIComponent(userId)}`;
-  const res = await fetch(negotiateUrl, { credentials: 'include' });
+  const res = await fetch(negotiateUrl, { credentials: 'omit' });
 
   if (!res.ok) {
     throw new Error(`Web PubSub negotiate failed: ${res.status}`);

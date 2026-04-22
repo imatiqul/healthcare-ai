@@ -210,7 +210,7 @@ export default function Dashboard() {
   }, []);
 
   useEffect(() => {
-    const hub = createGlobalHub('');
+    const hub = createGlobalHub('', API_BASE);
     let started = false;
 
     const startHub = async () => {

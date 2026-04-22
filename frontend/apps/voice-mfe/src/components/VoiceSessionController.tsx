@@ -27,7 +27,7 @@ type SessionStatus = 'idle' | 'connecting' | 'live' | 'ended';
 // Also captures a full-quality WebM blob in parallel for local replay.
 function useMicCapture(sessionId: string | null, apiBase: string, onTranscript: (text: string) => void) {
   const audioContextRef  = useRef<AudioContext | null>(null);
-  const processorRef     = useRef<ScriptProcessorNode | null>(null);
+  const workletNodeRef   = useRef<AudioWorkletNode | null>(null);
   const streamRef        = useRef<MediaStream | null>(null);
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
   const audioBlobChunks  = useRef<Blob[]>([]);
@@ -81,25 +81,18 @@ function useMicCapture(sessionId: string | null, apiBase: string, onTranscript: 
       };
       mr.start(250); // collect chunks every 250ms
 
-      // ── PCM ScriptProcessor: 16kHz stream for Azure Speech ──────────────
+      // ── PCM AudioWorkletNode: 16kHz stream for Azure Speech ────────────
       const audioContext = new AudioContext({ sampleRate: 16000 });
       audioContextRef.current = audioContext;
+      await audioContext.audioWorklet.addModule('/worklets/pcm-processor.js');
       const source = audioContext.createMediaStreamSource(stream);
-      // 4096-sample buffer = ~256ms at 16kHz
-      // eslint-disable-next-line @typescript-eslint/no-deprecated
-      const processor = audioContext.createScriptProcessor(4096, 1, 1);
-      processorRef.current = processor;
-      processor.onaudioprocess = (e) => {
-        const float32 = e.inputBuffer.getChannelData(0);
-        const int16   = new Int16Array(float32.length);
-        for (let i = 0; i < float32.length; i++) {
-          const s = Math.max(-1, Math.min(1, float32[i]));
-          int16[i] = s < 0 ? s * 0x8000 : s * 0x7FFF;
-        }
-        void sendChunk(int16.buffer);
+      const workletNode = new AudioWorkletNode(audioContext, 'pcm-processor');
+      workletNodeRef.current = workletNode;
+      workletNode.port.onmessage = (e: MessageEvent<ArrayBuffer>) => {
+        void sendChunk(e.data);
       };
-      source.connect(processor);
-      processor.connect(audioContext.destination);
+      source.connect(workletNode);
+      workletNode.connect(audioContext.destination);
 
       setRecording(true);
     } catch (err) {
@@ -110,10 +103,10 @@ function useMicCapture(sessionId: string | null, apiBase: string, onTranscript: 
   const stopRecording = useCallback(() => {
     mediaRecorderRef.current?.stop();
     mediaRecorderRef.current = null;
-    processorRef.current?.disconnect();
+    workletNodeRef.current?.disconnect();
     void audioContextRef.current?.close();
     streamRef.current?.getTracks().forEach(t => t.stop());
-    processorRef.current = null;
+    workletNodeRef.current = null;
     audioContextRef.current = null;
     streamRef.current = null;
     setRecording(false);
