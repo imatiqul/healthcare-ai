@@ -103,7 +103,25 @@ export default function DemoLive() {
         setStepInfo(data.stepInfo);
       }
     } catch {
-      setError('Could not advance. Please try again.');
+      // Backend offline — advance demo step locally with canned narration
+      const STEP_NARRATIONS = [
+        'Voice Intake: The AI listens in real time, capturing structured clinical data from natural conversation — no typing required.',
+        'AI Triage: Semantic Kernel agents score urgency, suggest ICD-10 codes, and flag escalation needs within seconds.',
+        'Scheduling: Intelligent slot matching and waitlist management ensure optimal access for every patient.',
+        'Revenue Cycle: Automated coding and prior-auth tracking reduce claim denials and accelerate reimbursement.',
+        'Population Health: Predictive risk stratification and HEDIS gap analysis keep your entire patient panel on track.',
+        'Thank you for exploring HealthQ Copilot — the AI copilot for modern clinical workflows!',
+      ];
+      const nextStep = activeStep + 1;
+      if (nextStep >= STEP_LABELS.length) {
+        setShowOverall(true);
+        setNarration(STEP_NARRATIONS[STEP_NARRATIONS.length - 1]);
+        setCompleted(true);
+      } else {
+        setActiveStep(nextStep);
+        setNarration(STEP_NARRATIONS[Math.min(nextStep - 1, STEP_NARRATIONS.length - 2)]);
+        setStepInfo(null);
+      }
     } finally {
       setLoading(false);
     }

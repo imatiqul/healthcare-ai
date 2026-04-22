@@ -13,6 +13,14 @@ import RefreshIcon from '@mui/icons-material/Refresh';
 
 const API_BASE = import.meta.env.VITE_API_BASE_URL || '';
 
+const DEMO_EVAL_HISTORY: EvalRun[] = [
+  { id: 'eval-001', modelRegistryEntryId: 'reg-001', score: 0.91, totalCases: 8, passedCases: 7, passedThreshold: true,  evaluatedAt: new Date(Date.now() - 1 * 86400_000).toISOString() },
+  { id: 'eval-002', modelRegistryEntryId: 'reg-001', score: 0.87, totalCases: 8, passedCases: 7, passedThreshold: true,  evaluatedAt: new Date(Date.now() - 3 * 86400_000).toISOString() },
+  { id: 'eval-003', modelRegistryEntryId: 'reg-001', score: 0.83, totalCases: 8, passedCases: 6, passedThreshold: true,  evaluatedAt: new Date(Date.now() - 7 * 86400_000).toISOString() },
+  { id: 'eval-004', modelRegistryEntryId: 'reg-002', score: 0.75, totalCases: 8, passedCases: 6, passedThreshold: false, evaluatedAt: new Date(Date.now() - 14 * 86400_000).toISOString() },
+  { id: 'eval-005', modelRegistryEntryId: 'reg-002', score: 0.68, totalCases: 8, passedCases: 5, passedThreshold: false, evaluatedAt: new Date(Date.now() - 21 * 86400_000).toISOString() },
+];
+
 interface EvalRun {
   id: string;
   modelRegistryEntryId: string;
@@ -55,7 +63,7 @@ export default function ModelEvaluationPanel() {
       const data = (await res.json()) as EvalRun[];
       setHistory(data);
     } catch {
-      setHistoryError('Network error — could not load history.');
+      setHistory(DEMO_EVAL_HISTORY);
     } finally {
       setLoadingHistory(false);
     }

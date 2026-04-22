@@ -64,7 +64,17 @@ export default function DemoLanding() {
       }));
       navigate('/demo/live');
     } catch {
-      setError('Could not start the demo. Please try again.');
+      // Backend offline — launch demo in fully local mode
+      sessionStorage.setItem('demo', JSON.stringify({
+        sessionId: `demo-local-${Date.now()}`,
+        guideSessionId: `guide-local-${Date.now()}`,
+        currentStep: 'Welcome',
+        narration: `Welcome to HealthQ Copilot, ${clientName}! This AI-powered clinical platform is your intelligent copilot for care — from voice intake and AI triage through scheduling, revenue cycle, and population health. Let's explore the future of healthcare together.`,
+        stepInfo: { step: 'Welcome', title: 'Welcome', feedbackQuestion: 'How clear was this introduction?', feedbackTags: ['Clear', 'Relevant', 'Engaging'] },
+        clientName,
+        company,
+      }));
+      navigate('/demo/live');
     } finally {
       setLoading(false);
     }
