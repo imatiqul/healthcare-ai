@@ -192,31 +192,49 @@ jobs:
       - name: Deploy to Azure Container Apps
         if: (matrix.changed == 'true' || github.event_name == 'workflow_dispatch') && github.ref == 'refs/heads/main'
         run: |
-          # Ensure ACA has GHCR pull credentials (idempotent — safe on every deploy).
-          # Requires a long-lived GitHub PAT with read:packages scope stored as GHCR_PULL_TOKEN.
-          az containerapp registry set \
-            --name ${{ matrix.service }} \
-            --resource-group ${{ env.ACA_RESOURCE_GROUP }} \
-            --server ghcr.io \
-            --username ${{ github.repository_owner }} \
-            --password ${{ secrets.GHCR_PULL_TOKEN }}
+          SERVICE="${{ matrix.service }}"
+          RG="${{ env.ACA_RESOURCE_GROUP }}"
+          IMAGE="${{ env.IMAGE_PREFIX }}/${SERVICE}:${{ github.sha }}"
+
+          # Guard: skip gracefully if the Container App doesn't exist yet.
+          # This lets CI pass while ACA infrastructure is still being provisioned.
+          if ! az containerapp show --name "$SERVICE" --resource-group "$RG" \
+               --query name -o tsv 2>/dev/null; then
+            echo "::warning::Container App '$SERVICE' not found in resource group '$RG'."
+            echo "Skipping deployment — provision ACA resources first (see infra/)."
+            exit 0
+          fi
+
+          # Configure GHCR pull credentials (idempotent; skip if secret not yet set).
+          PULL_TOKEN="${{ secrets.GHCR_PULL_TOKEN }}"
+          if [ -n "$PULL_TOKEN" ]; then
+            az containerapp registry set \
+              --name "$SERVICE" \
+              --resource-group "$RG" \
+              --server ghcr.io \
+              --username "${{ github.repository_owner }}" \
+              --password "$PULL_TOKEN"
+          else
+            echo "::warning::GHCR_PULL_TOKEN secret not set — skipping registry credential update."
+          fi
 
           az containerapp update \
-            --name ${{ matrix.service }} \
-            --resource-group ${{ env.ACA_RESOURCE_GROUP }} \
-            --image ${{ env.IMAGE_PREFIX }}/${{ matrix.service }}:${{ github.sha }} \
+            --name "$SERVICE" \
+            --resource-group "$RG" \
+            --image "$IMAGE" \
             --min-replicas 1
+
           # Only the gateway is internet-facing; all other services stay internal
           # (reachable only from within the ACA environment via Dapr/service-to-service)
-          if [ "${{ matrix.service }}" = "gateway" ]; then
+          if [ "$SERVICE" = "gateway" ]; then
             INGRESS_TYPE="external"
           else
             INGRESS_TYPE="internal"
           fi
           az containerapp ingress update \
-            --name ${{ matrix.service }} \
-            --resource-group ${{ env.ACA_RESOURCE_GROUP }} \
-            --type $INGRESS_TYPE \
+            --name "$SERVICE" \
+            --resource-group "$RG" \
+            --type "$INGRESS_TYPE" \
             --target-port 8080
 
       - name: Update Helm image tag for GitOps (ArgoCD)
