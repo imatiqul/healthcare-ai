@@ -21,7 +21,7 @@ import CheckCircleIcon from '@mui/icons-material/CheckCircle';
 
 // ── Data ──────────────────────────────────────────────────────────────────────
 
-export const CURRENT_VERSION = 'v51';
+export const CURRENT_VERSION = 'v52';
 const SEEN_KEY = 'hq:whats-new-seen';
 
 interface FeatureEntry {
@@ -37,6 +37,17 @@ interface Release {
 }
 
 export const RELEASES: Release[] = [
+  {
+    version: 'v52',
+    title:   'Zero-Downtime Demo Resilience & Security Hardening',
+    date:    'April 2026',
+    features: [
+      { title: 'Full demo fallbacks across every MFE',     description: 'All 8 micro-frontends now show rich demo data when the backend is scaled to zero — Voice, Triage, Scheduling, Population Health, Revenue, Encounters, Engagement, and the Shell. No blank panels or error states anywhere during demos.' },
+      { title: 'Demo flow works end-to-end offline',        description: 'The guided demo (DemoLanding → DemoLive → DemoAdminPanel) runs entirely from local state when the AI Agent service is unavailable. Step narrations advance locally, session scores are computed, and the overview summary appears at completion.' },
+      { title: 'HEDIS evaluation always returns results',   description: 'The HEDIS Measures panel now falls back to demo quality-measure results on both network errors and non-OK HTTP responses, so clinicians always see actionable data.' },
+      { title: 'Security: no secrets in source code',       description: 'docker-compose.yml dev passwords extracted to environment variable substitution (${VAR:-default}). A documented .env.example guides local setup; .env is now gitignored to prevent accidental commits.' },
+    ],
+  },
   {
     version: 'v51',
     title:   'Collapsible Navigation & Smart Badges',
