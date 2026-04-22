@@ -10,9 +10,13 @@ import Typography from '@mui/material/Typography';
 import Chip from '@mui/material/Chip';
 import Tooltip from '@mui/material/Tooltip';
 import LinearProgress from '@mui/material/LinearProgress';
+import IconButton from '@mui/material/IconButton';
 import SmartToyIcon from '@mui/icons-material/SmartToy';
 import LightbulbIcon from '@mui/icons-material/Lightbulb';
 import WifiTetheringIcon from '@mui/icons-material/WifiTethering';
+import ExpandLessIcon from '@mui/icons-material/ExpandLess';
+import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
+import { useState } from 'react';
 import type { DemoWorkflow, DemoScene } from './demoScripts';
 import { useGlobalStore } from '../../store';
 
@@ -54,6 +58,7 @@ export function DemoNarratorPanel({
   liveKpi,
 }: DemoNarratorPanelProps) {
   const { setDemoScene } = useGlobalStore();
+  const [collapsed, setCollapsed] = useState(false);
   // Pick a KPI to feature based on the current scene index
   const kpiSlot = KPI_LABELS[(workflowIdx * 3 + sceneIdx) % KPI_LABELS.length];
   const kpiValue = liveKpi ? liveKpi[kpiSlot.key] : null;
@@ -120,8 +125,19 @@ export function DemoNarratorPanel({
           </Typography>
         </Box>
         <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: 0.3 }}>
-          <SmartToyIcon sx={{ fontSize: 18, color: 'rgba(255,255,255,0.4)' }} />
-          {kpiValue !== null && (
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
+            <SmartToyIcon sx={{ fontSize: 16, color: 'rgba(255,255,255,0.35)' }} />
+            <Tooltip title={collapsed ? 'Expand narrator' : 'Collapse narrator'} arrow placement="left">
+            <IconButton
+              size="small"
+              onClick={() => setCollapsed(c => !c)}
+              sx={{ color: 'rgba(255,255,255,0.4)', p: 0.2, '&:hover': { color: '#fff' } }}
+            >
+              {collapsed ? <ExpandMoreIcon sx={{ fontSize: 16 }} /> : <ExpandLessIcon sx={{ fontSize: 16 }} />}
+            </IconButton>
+          </Tooltip>
+          </Box>
+          {kpiValue !== null && !collapsed && (
             <Tooltip title="Live platform data" arrow placement="left">
               <Chip
                 icon={<WifiTetheringIcon sx={{ fontSize: '0.7rem !important' }} />}
@@ -147,6 +163,9 @@ export function DemoNarratorPanel({
         </Box>
       </Box>
 
+      {/* Collapsible body */}
+      {!collapsed && (
+        <>
       {/* Scene progress bar + countdown */}
       <Box sx={{ px: 2, pt: 1, pb: 0.5 }}>
         <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 0.5 }}>
@@ -245,6 +264,8 @@ export function DemoNarratorPanel({
           </Tooltip>
         ))}
       </Box>
+        </>
+      )}
     </Box>
   );
 }

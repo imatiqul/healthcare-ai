@@ -34,6 +34,7 @@ import { useTranslation } from 'react-i18next';
 import { ContextualHelpPanel } from './ContextualHelpPanel'; // Phase 37
 import { WhatsNewPanel, useWhatsNewBadge } from './WhatsNewPanel'; // Phase 38
 import { PatientQuickSearch } from './PatientQuickSearch'; // Phase 47
+import { useGlobalStore } from '../store'; // Phase 63
 
 const API_BASE = import.meta.env.VITE_API_BASE_URL || '';
 
@@ -152,6 +153,7 @@ export function TopNav({ onOpenSearch }: TopNavProps) {
   const [whatsNewOpen, setWhatsNewOpen]     = useState(false); // Phase 38
   const whatsNewCount                       = useWhatsNewBadge();  // Phase 38
   const aiStatus                            = useAiStatus();       // Phase 53
+  const { isDemoActive, demoClientName, demoCompany, exitDemo } = useGlobalStore(); // Phase 63
 
   const openUserMenu  = (e: React.MouseEvent<HTMLElement>) => setUserMenuAnchor(e.currentTarget);
   const closeUserMenu = () => setUserMenuAnchor(null);
@@ -186,6 +188,40 @@ export function TopNav({ onOpenSearch }: TopNavProps) {
           <Typography variant="body2" fontWeight={600} color="text.secondary" sx={{ display: { xs: 'none', sm: 'block' } }}>
             {t('topnav.platformTitle', 'HealthQ Copilot')}
           </Typography>
+
+          {/* Phase 63 — LIVE DEMO pill shown when demo is active */}
+          {isDemoActive && (
+            <Tooltip
+              title={
+                demoClientName
+                  ? `Demo in progress · ${demoClientName}${demoCompany ? ` · ${demoCompany}` : ''} · Click to exit`
+                  : 'Self-driven demo in progress · Click to exit'
+              }
+              arrow
+            >
+              <Chip
+                onClick={exitDemo}
+                label="● LIVE DEMO"
+                size="small"
+                sx={{
+                  height:      20,
+                  fontSize:    '0.62rem',
+                  fontWeight:  800,
+                  letterSpacing: '0.04em',
+                  bgcolor:     'error.main',
+                  color:       '#fff',
+                  border:      'none',
+                  cursor:      'pointer',
+                  animation:   'hq-demo-blink 2s ease-in-out infinite',
+                  '@keyframes hq-demo-blink': {
+                    '0%, 100%': { opacity: 1 },
+                    '50%':      { opacity: 0.6 },
+                  },
+                  '&:hover': { bgcolor: 'error.dark' },
+                }}
+              />
+            </Tooltip>
+          )}
         </Stack>
 
         {/* ── Centre — search bar (desktop) ── */}

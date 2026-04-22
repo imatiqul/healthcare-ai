@@ -18,6 +18,7 @@ import { DEMO_WORKFLOWS } from './demoScripts';
 import { DemoNarratorPanel } from './DemoNarratorPanel';
 import { DemoControlBar } from './DemoControlBar';
 import { DemoCompletionOverlay } from './DemoCompletionOverlay';
+import { DemoKeyboardHelp } from './DemoKeyboardHelp';
 
 // How many milliseconds between each word appearing in the typewriter
 const WORD_INTERVAL_MS = 110;
@@ -42,6 +43,7 @@ export function AutoDemoPlayer() {
 
   const [narrationText, setNarrationText] = useState('');
   const [countdown, setCountdown] = useState(30);
+  const [showHelp, setShowHelp] = useState(false);
 
   // Stable refs so interval callbacks always see the latest values
   const narrationRef    = useRef<ReturnType<typeof setInterval> | null>(null);
@@ -86,6 +88,10 @@ export function AutoDemoPlayer() {
         case 'Escape':
           e.preventDefault();
           exitRef.current();
+          break;
+        case '?':
+          e.preventDefault();
+          setShowHelp(prev => !prev);
           break;
         default:
           // 1–8 → jump to that workflow (index 0–7)
@@ -201,6 +207,7 @@ export function AutoDemoPlayer() {
 
   return (
     <>
+      {showHelp && <DemoKeyboardHelp onClose={() => setShowHelp(false)} />}
       {isDemoComplete && <DemoCompletionOverlay />}
       {!isDemoComplete && (
         <>
