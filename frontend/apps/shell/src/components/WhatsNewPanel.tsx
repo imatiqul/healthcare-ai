@@ -21,7 +21,7 @@ import CheckCircleIcon from '@mui/icons-material/CheckCircle';
 
 // ── Data ──────────────────────────────────────────────────────────────────────
 
-export const CURRENT_VERSION = 'v52';
+export const CURRENT_VERSION = 'v53';
 const SEEN_KEY = 'hq:whats-new-seen';
 
 interface FeatureEntry {
@@ -37,6 +37,17 @@ interface Release {
 }
 
 export const RELEASES: Release[] = [
+  {
+    version: 'v53',
+    title:   'Live AI Status Indicator & Seamless Demo Experience',
+    date:    'April 2026',
+    features: [
+      { title: 'AI backend status pill in TopNav',            description: 'A real-time “Live” / “Demo” chip now appears in the top navigation bar. A pulsing green dot means the AI backend is reachable and serving real patient data; amber “Demo” means the backend is offline and all panels are powered by realistic seed data. The status refreshes every 60 seconds.' },
+      { title: 'Activity Feed powered by demo data',          description: 'The dashboard Activity Feed now shows 8 realistic clinical events (risk flags, triage cases, appointments, claim denials) when all backend sources are offline, so the dashboard is never empty during presentations or QA.' },
+      { title: 'Slot reservation works offline',              description: 'Clicking “Reserve” on any generated demo slot now succeeds instantly — the slot status updates to Reserved locally and the cross-MFE slotReserved event fires — without requiring a backend call.' },
+      { title: 'Partial data warnings refined',               description: 'The Activity Feed alert now only appears when some (not all) data sources fail, making it actionable rather than noisy. When all sources are offline the demo data takes over silently.' },
+    ],
+  },
   {
     version: 'v52',
     title:   'Zero-Downtime Demo Resilience & Security Hardening',

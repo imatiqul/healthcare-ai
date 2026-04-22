@@ -37,6 +37,33 @@ import { PatientQuickSearch } from './PatientQuickSearch'; // Phase 47
 
 const API_BASE = import.meta.env.VITE_API_BASE_URL || '';
 
+// ── AI backend status hook ────────────────────────────────────────────────────
+// Probes the agent stats endpoint every 60 s.  Returns 'live' (backend reachable),
+// 'demo' (offline / scaled-to-zero), or 'checking' on initial load.
+type AiBackendStatus = 'checking' | 'live' | 'demo';
+
+function useAiStatus(): AiBackendStatus {
+  const [status, setStatus] = useState<AiBackendStatus>('checking');
+
+  const probe = useCallback(async () => {
+    if (!API_BASE) { setStatus('demo'); return; }
+    try {
+      const res = await fetch(`${API_BASE}/api/v1/agents/stats`, { signal: AbortSignal.timeout(5_000) });
+      setStatus(res.ok || res.status === 404 || res.status === 401 ? 'live' : 'demo');
+    } catch {
+      setStatus('demo');
+    }
+  }, []);
+
+  useEffect(() => {
+    void probe();
+    const id = setInterval(probe, 60_000);
+    return () => clearInterval(id);
+  }, [probe]);
+
+  return status;
+}
+
 interface LiveAlert {
   id:       string;
   title:    string;
@@ -124,6 +151,7 @@ export function TopNav({ onOpenSearch }: TopNavProps) {
   const [helpOpen, setHelpOpen]             = useState(false); // Phase 37
   const [whatsNewOpen, setWhatsNewOpen]     = useState(false); // Phase 38
   const whatsNewCount                       = useWhatsNewBadge();  // Phase 38
+  const aiStatus                            = useAiStatus();       // Phase 53
 
   const openUserMenu  = (e: React.MouseEvent<HTMLElement>) => setUserMenuAnchor(e.currentTarget);
   const closeUserMenu = () => setUserMenuAnchor(null);
@@ -225,7 +253,44 @@ export function TopNav({ onOpenSearch }: TopNavProps) {
 
           {isAuthenticated && session ? (
             <>
-              {/* Live notification bell */}
+              {/* AI backend status pill */}
+          {aiStatus !== 'checking' && (
+            <Tooltip
+              title={
+                aiStatus === 'live'
+                  ? 'AI backend is live — real patient data'
+                  : 'AI backend offline — showing demo seed data'
+              }
+            >
+              <Chip
+                size="small"
+                label={aiStatus === 'live' ? 'Live' : 'Demo'}
+                icon={
+                  <Box
+                    component="span"
+                    sx={{
+                      width: 6, height: 6, borderRadius: '50%',
+                      bgcolor: aiStatus === 'live' ? 'success.main' : 'warning.main',
+                      display: 'inline-block',
+                      animation: aiStatus === 'live' ? 'pulse 2s ease-in-out infinite' : 'none',
+                      '@keyframes pulse': { '0%,100%': { opacity: 1 }, '50%': { opacity: 0.4 } },
+                      ml: 0.5,
+                    }}
+                  />
+                }
+                sx={{
+                  height: 20, fontSize: '0.65rem', fontWeight: 700,
+                  bgcolor: aiStatus === 'live' ? 'success.50' : 'warning.50',
+                  color:   aiStatus === 'live' ? 'success.700' : 'warning.700',
+                  border: '1px solid',
+                  borderColor: aiStatus === 'live' ? 'success.200' : 'warning.200',
+                  '& .MuiChip-icon': { ml: 0.5 },
+                }}
+              />
+            </Tooltip>
+          )}
+
+          {/* Live notification bell */}
               <Tooltip title={alerts.length ? `${alerts.length} alert${alerts.length > 1 ? 's' : ''}` : 'No alerts'}>
                 <IconButton size="small" onClick={openNotif} aria-label="Notifications">
                   <Badge
