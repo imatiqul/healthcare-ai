@@ -33,6 +33,9 @@ export interface GlobalState {
   // Phase 67 additions
   narratorVisible:       boolean;   // show/hide the NarratorPanel (N key)
   setNarratorVisible:   (visible: boolean) => void;
+  // Phase 71 additions
+  demoAudienceGroup:     string | null; // selected audience group id (patients|practitioners|clinics|leadership|full)
+  setDemoAudienceGroup: (groupId: string | null) => void;
   startSelfDrivenDemo:   (clientName: string, company: string) => void;
   advanceDemoScene:      () => void;
   prevDemoScene:         () => void;
@@ -72,9 +75,12 @@ export const useGlobalStore = create<GlobalState>((set) => ({
   demoWorkflowIndices: [],
   // Phase 67 additions
   narratorVisible: true,
+  // Phase 71 additions
+  demoAudienceGroup: null,
 
   setNarratorVisible: (visible) => set({ narratorVisible: visible }),
   setDemoWorkflowIndices: (indices) => set({ demoWorkflowIndices: indices }),
+  setDemoAudienceGroup: (groupId) => set({ demoAudienceGroup: groupId }),
 
   startSelfDrivenDemo: (clientName, company) =>
     set((state) => {
@@ -123,7 +129,7 @@ export const useGlobalStore = create<GlobalState>((set) => ({
 
   pauseDemo:  () => set({ demoPaused: true }),
   resumeDemo: () => set({ demoPaused: false }),
-  exitDemo:   () => set({ isDemoActive: false, demoWorkflowIdx: 0, demoSceneIdx: 0, demoPaused: false, isDemoComplete: false, demoSpeed: 1, narratorVisible: true }),
+  exitDemo:   () => set({ isDemoActive: false, demoWorkflowIdx: 0, demoSceneIdx: 0, demoPaused: false, isDemoComplete: false, demoSpeed: 1, narratorVisible: true, demoAudienceGroup: null }),
 
   setDemoScene: (workflowIdx, sceneIdx) =>
     set({ demoWorkflowIdx: workflowIdx, demoSceneIdx: sceneIdx, demoPaused: false }),

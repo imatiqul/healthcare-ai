@@ -24,7 +24,7 @@ import CalendarMonthIcon from '@mui/icons-material/CalendarMonth';
 import CloseIcon from '@mui/icons-material/Close';
 import CheckCircleIcon from '@mui/icons-material/CheckCircle';
 import { useGlobalStore } from '../../store';
-import { DEMO_WORKFLOWS, TOTAL_SCENES } from './demoScripts';
+import { DEMO_WORKFLOWS, TOTAL_SCENES, AUDIENCE_FEATURE_PRIORITIES, getAudienceGroupById } from './demoScripts';
 
 const API_BASE = import.meta.env.VITE_API_BASE_URL || '';
 const DEMO_API = `${API_BASE}/api/v1/agents/demo`;
@@ -44,20 +44,25 @@ function npsColor(score: number): string {
 }
 
 export function DemoCompletionOverlay() {
-  const { demoClientName, demoCompany, demoWorkflowIndices, exitDemo, startSelfDrivenDemo } = useGlobalStore();
+  const { demoClientName, demoCompany, demoWorkflowIndices, demoAudienceGroup, exitDemo, startSelfDrivenDemo } = useGlobalStore();
   const [npsScore, setNpsScore]           = useState<number | null>(null);
   const [submitted, setSubmitted]         = useState(false);
   const [priorities, setPriorities]       = useState<string[]>([]); // Phase 68
   const [comment, setComment]             = useState('');            // Phase 68
 
-  const FEATURE_PRIORITIES = [
-    { key: 'Voice AI',          emoji: '🎙️' },
-    { key: 'AI Triage',         emoji: '🔴' },
-    { key: 'Smart Scheduling',  emoji: '📅' },
-    { key: 'Revenue Cycle',     emoji: '💰' },
-    { key: 'Population Health', emoji: '📊' },
-    { key: 'Patient Engagement',emoji: '💬' },
-  ];
+  // Phase 71 — group-personalised feature priorities
+  const audienceInfo = demoAudienceGroup ? getAudienceGroupById(demoAudienceGroup) : null;
+  const FEATURE_PRIORITIES =
+    (demoAudienceGroup && AUDIENCE_FEATURE_PRIORITIES[demoAudienceGroup])
+      ? AUDIENCE_FEATURE_PRIORITIES[demoAudienceGroup]
+      : [
+          { key: 'Voice AI',          emoji: '🎙️' },
+          { key: 'AI Triage',         emoji: '🔴' },
+          { key: 'Smart Scheduling',  emoji: '📅' },
+          { key: 'Revenue Cycle',     emoji: '💰' },
+          { key: 'Population Health', emoji: '📊' },
+          { key: 'Patient Engagement',emoji: '💬' },
+        ];
 
   const togglePriority = (key: string) =>
     setPriorities(prev =>
@@ -67,12 +72,23 @@ export function DemoCompletionOverlay() {
   // Phase 64 — dynamic stats based on workflows actually demoed
   const workflowsShown = demoWorkflowIndices.length > 0 ? demoWorkflowIndices.length : DEMO_WORKFLOWS.length;
   const scenesShown    = workflowsShown * 3; // 3 scenes per workflow
+
+  // Phase 71 — audience-targeted stat rows
+  const audienceStats: Record<string, Array<{ label: string; value: string }>> = {
+    patients:      [{ label: 'Registration Time',  value: '<3 min' }, { label: 'Engagement Rate', value: '73%' }, { label: 'No-show Reduction', value: '34%' }],
+    practitioners: [{ label: 'SOAP Note Speed',    value: '~60s' },   { label: 'AI Accuracy',      value: '94%' }, { label: 'Time Saved/Enc',    value: '20 min' }],
+    clinics:       [{ label: 'Slot Utilisation',   value: '91%' },    { label: 'Claim Recovery',   value: '68%' }, { label: 'Denial Rate',       value: '3–4%' }],
+    leadership:    [{ label: 'Readmission Drop',   value: '40%' },    { label: 'Risk Patients',    value: '16' },  { label: 'Open Care Gaps',    value: '28' }],
+    full:          [{ label: 'AI Triage Accuracy', value: '94%' },    { label: 'Claim Recovery',   value: '68%' }, { label: 'No-show Reduction', value: '34%' }],
+  };
+  const groupStats = demoAudienceGroup && audienceStats[demoAudienceGroup]
+    ? audienceStats[demoAudienceGroup]
+    : [{ label: 'AI Triage Accuracy', value: '94%' }, { label: 'Avg Claim Recovery', value: '68%' }, { label: 'No-show Reduction', value: '34%' }];
+
   const STAT_ROWS = [
     { label: 'Workflows Covered',  value: `${workflowsShown}` },
     { label: 'Scenes Presented',   value: `${scenesShown}` },
-    { label: 'AI Triage Accuracy', value: '94%' },
-    { label: 'Avg Claim Recovery', value: '68%' },
-    { label: 'No-show Reduction',  value: '34%' },
+    ...groupStats,
     { label: 'Readmission Drop',   value: '40%' },
   ];
 
@@ -98,6 +114,7 @@ export function DemoCompletionOverlay() {
             npsScore,
             featurePriorities: priorities,
             comment: comment.trim() || null,
+            audienceGroup: demoAudienceGroup ?? null, // Phase 71
           }),
           signal:  AbortSignal.timeout(5_000),
         });
@@ -113,6 +130,7 @@ export function DemoCompletionOverlay() {
     );
     const body = encodeURIComponent(
       `Hi,\n\nI just completed the HealthQ Copilot demo and I'd love to learn more.\n\n` +
+      (audienceInfo ? `Demo track: ${audienceInfo.icon} ${audienceInfo.name} — ${audienceInfo.tagline}\n\n` : '') +
       (priorities.length > 0 ? `Most interested in: ${priorities.join(', ')}\n\n` : '') +
       `Name: ${demoClientName || '—'}\nCompany: ${demoCompany || '—'}\n\nBest,\n${demoClientName || 'Demo Attendee'}`
     );
@@ -148,7 +166,9 @@ export function DemoCompletionOverlay() {
         <Box
           sx={{
             p:          3,
-            background: 'linear-gradient(135deg, #1565c0 0%, #6a1b9a 100%)',
+            background: audienceInfo
+              ? `linear-gradient(135deg, ${audienceInfo.color}cc 0%, ${audienceInfo.color}66 100%)`
+              : 'linear-gradient(135deg, #1565c0 0%, #6a1b9a 100%)',
             textAlign:  'center',
             position:   'relative',
           }}
@@ -171,13 +191,18 @@ export function DemoCompletionOverlay() {
           </Tooltip>
           <AutoAwesomeIcon sx={{ fontSize: 52, color: '#ffd54f', mb: 1 }} />
           <Typography variant="h5" fontWeight={800} sx={{ color: '#fff', mb: 0.5 }}>
-            Demo Complete!
+            {audienceInfo ? `${audienceInfo.icon} Demo Complete!` : 'Demo Complete!'}
           </Typography>
           <Typography variant="body2" sx={{ color: 'rgba(255,255,255,0.75)' }}>
             {demoClientName
               ? `Thank you, ${demoClientName} from ${demoCompany}!`
               : 'You\'ve experienced the full HealthQ Copilot platform.'}
           </Typography>
+          {audienceInfo && (
+            <Typography variant="caption" sx={{ color: 'rgba(255,255,255,0.6)', display: 'block', mt: 0.5 }}>
+              {audienceInfo.tagline}
+            </Typography>
+          )}
         </Box>
 
         <Box sx={{ p: 3 }}>

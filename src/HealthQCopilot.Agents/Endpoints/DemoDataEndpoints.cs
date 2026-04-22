@@ -366,6 +366,109 @@ public static class DemoDataEndpoints
         .WithTags("Demo")
         .WithSummary("Admin audit event summary");
 
+        // ── Phase 71 — Audience-group-aware KPI endpoint ─────────────────────
+        // Returns proof-point metrics tailored to the selected audience group.
+        // Used by DemoNarratorPanel and DemoCompletionOverlay for live audience context.
+        app.MapGet("/api/v1/demo/kpi/audience", (string? group) =>
+        {
+            var kpi = group switch
+            {
+                "patients" => new
+                {
+                    group           = "patients",
+                    groupName       = "Patients",
+                    proofPoints     = new[]
+                    {
+                        new { stat = "<3 min",  label = "Digital Registration" },
+                        new { stat = "73%",     label = "Patient Engagement Rate" },
+                        new { stat = "34%",     label = "No-show Reduction" },
+                        new { stat = "24/7",    label = "Portal Access" },
+                    },
+                    highlights      = new[]
+                    {
+                        "Self-registration reduces front-desk workload by 68%",
+                        "AI reminders achieve 73% open rate vs. 22% industry avg",
+                        "HIPAA-compliant portal available on any device",
+                    },
+                },
+                "practitioners" => new
+                {
+                    group           = "practitioners",
+                    groupName       = "Practitioners",
+                    proofPoints     = new[]
+                    {
+                        new { stat = "~60s",   label = "SOAP Note from Voice" },
+                        new { stat = "94%",    label = "AI Triage Accuracy" },
+                        new { stat = "20 min", label = "Saved Per Encounter" },
+                        new { stat = "100%",   label = "Explainable Reasoning" },
+                    },
+                    highlights      = new[]
+                    {
+                        "Voice AI handles 6 minutes of speech → complete SOAP note in seconds",
+                        "AI triage accuracy 94% vs. ~82% industry average",
+                        "Drug interaction screening covers 100% of prescriptions in real time",
+                    },
+                },
+                "clinics" => new
+                {
+                    group           = "clinics",
+                    groupName       = "Clinic Operations",
+                    proofPoints     = new[]
+                    {
+                        new { stat = "91%",    label = "Slot Utilisation" },
+                        new { stat = "68%",    label = "Claim Recovery Rate" },
+                        new { stat = "3–4%",   label = "Denial Rate (vs 9% avg)" },
+                        new { stat = "40–60%", label = "Coding FTE Reduction" },
+                    },
+                    highlights      = new[]
+                    {
+                        "Smart scheduling pushes utilisation from 74% → 91%",
+                        "AI prior auth tracker eliminates surprise denials before submission",
+                        "Denial appeal AI recovers 68% of initially denied claims",
+                    },
+                },
+                "leadership" => new
+                {
+                    group           = "leadership",
+                    groupName       = "Clinical Leadership",
+                    proofPoints     = new[]
+                    {
+                        new { stat = "40%",  label = "Readmission Drop" },
+                        new { stat = "16",   label = "Active Risk Patients" },
+                        new { stat = "28",   label = "Open Care Gaps" },
+                        new { stat = "94%",  label = "AI Model Accuracy" },
+                    },
+                    highlights      = new[]
+                    {
+                        "ML risk model monitors 100% of panel continuously — not just at visits",
+                        "HEDIS quality measure improvement unlocks value-based care bonuses",
+                        "SDOH screening integrated into every encounter — not just a checkbox",
+                    },
+                },
+                _ => new // default / full platform
+                {
+                    group           = "full",
+                    groupName       = "Full Platform",
+                    proofPoints     = new[]
+                    {
+                        new { stat = "94%",    label = "AI Triage Accuracy" },
+                        new { stat = "34%",    label = "No-show Reduction" },
+                        new { stat = "68%",    label = "Claim Recovery Rate" },
+                        new { stat = "~60s",   label = "SOAP Note in Seconds" },
+                    },
+                    highlights      = new[]
+                    {
+                        "8 integrated clinical AI modules — one platform, zero tab-switching",
+                        "End-to-end: voice intake → AI triage → scheduling → billing → population health",
+                        "FHIR-native, HL7-ready, deploys on Azure in under 30 minutes",
+                    },
+                }
+            };
+            return Results.Ok(kpi);
+        })
+        .WithTags("Demo")
+        .WithSummary("Audience-group-specific KPI proof points for live demos");
+
         return app;
     }
 }

@@ -36,6 +36,7 @@ export function AutoDemoPlayer() {
     demoWorkflowIndices,
     narratorVisible,
     setNarratorVisible,
+    demoAudienceGroup,
     advanceDemoScene,
     prevDemoScene,
     pauseDemo,
@@ -199,6 +200,7 @@ export function AutoDemoPlayer() {
               workflowId:   DEMO_WORKFLOWS[demoWorkflowIdx]?.id ?? '',
               sceneId:      scene.id,
               timeSpentSec: timeSpent,
+              audienceGroup: demoAudienceGroup ?? null, // Phase 71
             }),
             signal: AbortSignal.timeout(4_000),
           });
@@ -283,6 +285,7 @@ export function AutoDemoPlayer() {
               totalSec={scene.durationSec}
               remainingSec={getRemainingTourSec(demoWorkflowIdx, demoSceneIdx, demoWorkflowIndices, countdown)}
               liveKpi={liveKpi}
+              audienceGroup={demoAudienceGroup}
             />
           )}
           <DemoControlBar
@@ -291,6 +294,7 @@ export function AutoDemoPlayer() {
             elapsedSec={elapsedSec}
             isFullscreen={isFullscreen}
             onToggleFullscreen={toggleFullscreen}
+            audienceGroup={demoAudienceGroup}
           />
         </>
       )}

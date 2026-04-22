@@ -49,7 +49,7 @@ const LS_GROUP_KEY = 'hq-demo-audience-group';
 export default function DemoLanding() {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
-  const { startSelfDrivenDemo, setDemoWorkflowIndices } = useGlobalStore(); // Phase 58 + 64
+  const { startSelfDrivenDemo, setDemoWorkflowIndices, setDemoAudienceGroup } = useGlobalStore(); // Phase 58 + 64 + 71
   const [clientName, setClientName] = useState('');
   const [company, setCompany]       = useState('');
   const [email, setEmail]           = useState('');
@@ -78,21 +78,32 @@ export default function DemoLanding() {
     const qCompany = searchParams.get('company');
     const qEmail   = searchParams.get('email');
     const qWf      = searchParams.get('workflows'); // e.g. '0,2,5'
+    const qGroup   = searchParams.get('group');     // Phase 71 — audience group id
     const qAuto    = searchParams.get('auto');      // '1' = auto-start
 
     if (qName)    setClientName(qName);
     if (qCompany) setCompany(qCompany);
     if (qEmail)   setEmail(qEmail);
-    if (qWf) {
+    if (qGroup) {
+      setSelectedGroup(qGroup);
+      localStorage.setItem(LS_GROUP_KEY, qGroup);
+      const indices = getAudienceGroupIndices(qGroup);
+      setSelectedWorkflows(indices);
+      localStorage.setItem(LS_KEY, JSON.stringify(indices));
+    } else if (qWf) {
       const indices = qWf.split(',').map(Number).filter(n => n >= 0 && n <= 7);
       if (indices.length > 0) setSelectedWorkflows(indices);
     }
     // Auto-start: requires name + company to be provided via URL too
     if (qAuto === '1' && qName && qCompany) {
-      const wfIndices = qWf
-        ? qWf.split(',').map(Number).filter(n => n >= 0 && n <= 7)
-        : [0, 1, 2, 3, 4, 5, 6, 7];
+      const resolvedGroup = qGroup ?? null;
+      const wfIndices = qGroup
+        ? getAudienceGroupIndices(qGroup)
+        : qWf
+          ? qWf.split(',').map(Number).filter(n => n >= 0 && n <= 7)
+          : [0, 1, 2, 3, 4, 5, 6, 7];
       setDemoWorkflowIndices(wfIndices.length > 0 ? wfIndices : [0, 1, 2, 3, 4, 5, 6, 7]);
+      setDemoAudienceGroup(resolvedGroup); // Phase 71
       startSelfDrivenDemo(qName.trim(), qCompany.trim());
       navigate('/');
     }
@@ -176,6 +187,7 @@ export default function DemoLanding() {
     }
     setError('');
     setDemoWorkflowIndices(selectedWorkflows); // Phase 64
+    setDemoAudienceGroup(selectedGroup);       // Phase 71
     localStorage.setItem(LS_KEY, JSON.stringify(selectedWorkflows)); // Phase 65
     startSelfDrivenDemo(clientName.trim(), company.trim());
     navigate('/');

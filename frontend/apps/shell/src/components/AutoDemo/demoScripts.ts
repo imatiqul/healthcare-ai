@@ -458,3 +458,98 @@ export function getAudienceGroupIndices(groupId: string): number[] {
     .filter(i => i !== -1)
     .sort((a, b) => a - b);
 }
+
+/** Phase 71 — Lookup a single audience group by id. */
+export function getAudienceGroupById(groupId: string): DemoAudienceGroup | null {
+  return DEMO_AUDIENCE_GROUPS.find(g => g.id === groupId) ?? null;
+}
+
+// ── Phase 71 — Audience-specific proof points ────────────────────────────────
+//
+// Shown on DemoLanding (below each persona card) and in DemoCompletionOverlay.
+// Each group has 4 stat/label pairs that resonate with the specific buyer.
+
+export interface AudienceProofPoint { stat: string; label: string }
+
+export const AUDIENCE_PROOF_POINTS: Record<string, AudienceProofPoint[]> = {
+  patients: [
+    { stat: '<3 min',  label: 'Digital Registration' },
+    { stat: '73%',     label: 'Patient Engagement Rate' },
+    { stat: '34%',     label: 'No-show Reduction' },
+    { stat: '24/7',    label: 'Portal Access' },
+  ],
+  practitioners: [
+    { stat: '~60s',    label: 'SOAP Note from Voice' },
+    { stat: '94%',     label: 'AI Triage Accuracy' },
+    { stat: '20 min',  label: 'Saved Per Encounter' },
+    { stat: '100%',    label: 'Explainable AI Reasoning' },
+  ],
+  clinics: [
+    { stat: '91%',     label: 'Slot Utilisation Rate' },
+    { stat: '68%',     label: 'Claim Recovery Rate' },
+    { stat: '3–4%',    label: 'Denial Rate (vs 9% avg)' },
+    { stat: '40–60%',  label: 'Coding FTE Reduction' },
+  ],
+  leadership: [
+    { stat: '40%',     label: 'Readmission Drop' },
+    { stat: '16',      label: 'Active Risk Patients' },
+    { stat: '28',      label: 'Open Care Gaps' },
+    { stat: '94%',     label: 'AI Model Accuracy' },
+  ],
+  full: [
+    { stat: '94%',     label: 'AI Triage Accuracy' },
+    { stat: '34%',     label: 'No-show Reduction' },
+    { stat: '68%',     label: 'Claim Recovery Rate' },
+    { stat: '~60s',    label: 'SOAP Note in Seconds' },
+  ],
+};
+
+// ── Phase 71 — Audience-specific feature priorities ─────────────────────────
+//
+// Used in DemoCompletionOverlay to show contextually relevant feature tiles
+// for the audience that just completed the demo.
+
+export interface FeaturePriorityTile { key: string; emoji: string }
+
+export const AUDIENCE_FEATURE_PRIORITIES: Record<string, FeaturePriorityTile[]> = {
+  patients: [
+    { key: 'Patient Portal',       emoji: '🙋' },
+    { key: 'Smart Scheduling',     emoji: '📅' },
+    { key: 'Care Reminders',       emoji: '🔔' },
+    { key: 'Registration',         emoji: '📋' },
+    { key: 'Lab Results',          emoji: '🧪' },
+    { key: 'Consent Management',   emoji: '✅' },
+  ],
+  practitioners: [
+    { key: 'Voice AI',             emoji: '🎙️' },
+    { key: 'AI Triage',            emoji: '🚨' },
+    { key: 'Clinical Encounters',  emoji: '🩺' },
+    { key: 'Drug Interaction',     emoji: '💊' },
+    { key: 'SOAP Notes',           emoji: '📝' },
+    { key: 'AI Reasoning',         emoji: '🧠' },
+  ],
+  clinics: [
+    { key: 'Smart Scheduling',     emoji: '📅' },
+    { key: 'Revenue Cycle',        emoji: '💰' },
+    { key: 'Prior Auth',           emoji: '🔐' },
+    { key: 'Denial Recovery',      emoji: '📬' },
+    { key: 'Command Center',       emoji: '🏥' },
+    { key: 'AI Coding',            emoji: '🤖' },
+  ],
+  leadership: [
+    { key: 'Population Health',    emoji: '📊' },
+    { key: 'HEDIS Measures',       emoji: '✅' },
+    { key: 'Risk Stratification',  emoji: '⚠️' },
+    { key: 'SDOH Screening',       emoji: '🌍' },
+    { key: 'Value-Based Care',     emoji: '🎯' },
+    { key: 'Analytics Dashboard',  emoji: '📈' },
+  ],
+  full: [
+    { key: 'Voice AI',             emoji: '🎙️' },
+    { key: 'AI Triage',            emoji: '🚨' },
+    { key: 'Smart Scheduling',     emoji: '📅' },
+    { key: 'Revenue Cycle',        emoji: '💰' },
+    { key: 'Population Health',    emoji: '📊' },
+    { key: 'Patient Engagement',   emoji: '💬' },
+  ],
+};

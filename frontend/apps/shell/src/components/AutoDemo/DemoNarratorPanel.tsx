@@ -19,6 +19,7 @@ import ExpandLessIcon from '@mui/icons-material/ExpandLess';
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
 import { useState } from 'react';
 import type { DemoWorkflow, DemoScene } from './demoScripts';
+import { getAudienceGroupById } from './demoScripts';
 import { useGlobalStore } from '../../store';
 
 interface LiveKpi {
@@ -39,6 +40,7 @@ interface DemoNarratorPanelProps {
   totalSec:       number;       // total seconds for current scene
   remainingSec:   number;       // Phase 68 — seconds remaining in full tour
   liveKpi?:       LiveKpi | null;
+  audienceGroup?: string | null; // Phase 71 — active audience group id
 }
 
 // Rotate which KPI is shown in the badge every render (stable per scene)
@@ -59,6 +61,7 @@ export function DemoNarratorPanel({
   totalSec,
   remainingSec,
   liveKpi,
+  audienceGroup,
 }: DemoNarratorPanelProps) {
   const { setDemoScene } = useGlobalStore();
   const [collapsed, setCollapsed] = useState(false);
@@ -76,6 +79,8 @@ export function DemoNarratorPanel({
   // Phase 68 — remaining tour time label
   const remMins = Math.ceil(remainingSec / 60);
   const remainingLabel = remMins <= 1 ? '<1 min left' : `~${remMins} min left`;
+  // Phase 71 — audience group info for the header badge
+  const audienceInfo = audienceGroup ? getAudienceGroupById(audienceGroup) : null;
 
   return (
     <Box
@@ -133,6 +138,24 @@ export function DemoNarratorPanel({
           <Typography variant="caption" sx={{ color: 'rgba(255,255,255,0.35)', fontSize: '0.62rem' }}>
             {remainingLabel}
           </Typography>
+          {/* Phase 71 — audience group badge */}
+          {audienceInfo && (
+            <Box sx={{ mt: 0.4 }}>
+              <Chip
+                label={`${audienceInfo.icon} ${audienceInfo.name}`}
+                size="small"
+                sx={{
+                  height:     16,
+                  fontSize:   '0.58rem',
+                  fontWeight: 700,
+                  bgcolor:    audienceInfo.color + '22',
+                  color:      audienceInfo.color,
+                  border:     `1px solid ${audienceInfo.color}44`,
+                  '& .MuiChip-label': { px: 0.8 },
+                }}
+              />
+            </Box>
+          )}
         </Box>
         <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: 0.3 }}>
           <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>

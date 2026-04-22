@@ -25,7 +25,7 @@ import FullscreenExitIcon from '@mui/icons-material/FullscreenExit';
 import VisibilityIcon from '@mui/icons-material/Visibility';
 import VisibilityOffIcon from '@mui/icons-material/VisibilityOff';
 import { useGlobalStore } from '../../store';
-import { DEMO_WORKFLOWS, getGlobalSceneIndex, TOTAL_SCENES } from './demoScripts';
+import { DEMO_WORKFLOWS, getGlobalSceneIndex, TOTAL_SCENES, getAudienceGroupById } from './demoScripts';
 import { useState } from 'react';
 
 interface DemoControlBarProps {
@@ -34,12 +34,13 @@ interface DemoControlBarProps {
   elapsedSec:          number;   // Phase 65 — total demo elapsed seconds
   isFullscreen:        boolean;  // Phase 67 — current fullscreen state
   onToggleFullscreen:  () => void; // Phase 67 — toggle fullscreen
+  audienceGroup?:      string | null; // Phase 71 — active audience group id
 }
 
 const BAR_R  = 18;   // SVG circle radius
 const BAR_C  = 2 * Math.PI * BAR_R; // circumference
 
-export function DemoControlBar({ countdown, totalSec, elapsedSec, isFullscreen, onToggleFullscreen }: DemoControlBarProps) {
+export function DemoControlBar({ countdown, totalSec, elapsedSec, isFullscreen, onToggleFullscreen, audienceGroup }: DemoControlBarProps) {
   const {
     demoWorkflowIdx,
     demoSceneIdx,
@@ -66,7 +67,8 @@ export function DemoControlBar({ countdown, totalSec, elapsedSec, isFullscreen, 
     const url = new URL('/demo', window.location.origin);
     if (demoClientName) url.searchParams.set('name',      demoClientName);
     if (demoCompany)    url.searchParams.set('company',   demoCompany);
-    if (demoWorkflowIndices.length > 0) url.searchParams.set('workflows', wf);
+    if (audienceGroup)  url.searchParams.set('group',     audienceGroup); // Phase 71
+    else if (demoWorkflowIndices.length > 0) url.searchParams.set('workflows', wf);
     url.searchParams.set('auto', '1');
     navigator.clipboard.writeText(url.toString()).then(() => {
       setCopied(true);
@@ -123,8 +125,28 @@ export function DemoControlBar({ countdown, totalSec, elapsedSec, isFullscreen, 
             </Box>
           </Typography>
         </Box>
-      </Box>
-
+      </Box>      {/* Phase 71 — audience group chip */}
+      {(() => {
+        const ag = audienceGroup ? getAudienceGroupById(audienceGroup) : null;
+        return ag ? (
+          <Tooltip title={ag.tagline} arrow placement="top">
+            <Chip
+              label={`${ag.icon} ${ag.name}`}
+              size="small"
+              sx={{
+                height:     22,
+                fontSize:   '0.62rem',
+                fontWeight: 700,
+                bgcolor:    ag.color + '22',
+                color:      ag.color,
+                border:     `1px solid ${ag.color}55`,
+                ml:         0.5,
+                '& .MuiChip-label': { px: 1 },
+              }}
+            />
+          </Tooltip>
+        ) : null;
+      })()}
       {/* Divider */}
       <Box sx={{ width: 1, height: 32, bgcolor: 'rgba(255,255,255,0.1)', mx: 0.5 }} />
 

@@ -55,6 +55,14 @@ public sealed class DemoOrchestrator
         _logger = logger;
     }
 
+    // Phase 71 — overload that accepts audience group for analytics/narration personalisation
+    public Task<DemoStartResponse> StartDemoAsync(string clientName, string company, string? email, string? audienceGroup, CancellationToken ct)
+    {
+        if (!string.IsNullOrWhiteSpace(audienceGroup))
+            _logger.LogInformation("Demo started for audience group '{Group}' — client {Client} ({Company})", audienceGroup, clientName, company);
+        return StartDemoAsync(clientName, company, email, ct);
+    }
+
     public async Task<DemoStartResponse> StartDemoAsync(string clientName, string company, string? email, CancellationToken ct)
     {
         var session = DemoSession.Create(Guid.NewGuid(), clientName, company, email);

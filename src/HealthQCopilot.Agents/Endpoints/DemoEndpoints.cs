@@ -21,7 +21,7 @@ public static class DemoEndpoints
             DemoOrchestrator orchestrator,
             CancellationToken ct) =>
         {
-            var result = await orchestrator.StartDemoAsync(request.ClientName, request.Company, request.Email, ct);
+            var result = await orchestrator.StartDemoAsync(request.ClientName, request.Company, request.Email, request.AudienceGroup, ct);
             return Results.Created($"/api/v1/agents/demo/{result.SessionId}/status", result);
         })
         .WithName("StartDemo")
@@ -214,7 +214,7 @@ public static class DemoEndpoints
     }
 }
 
-public record StartDemoRequest(string ClientName, string Company, string? Email);
+public record StartDemoRequest(string ClientName, string Company, string? Email, string? AudienceGroup = null); // Phase 71
 public record SubmitStepFeedbackRequest(string Step, int Rating, List<string> Tags, string? Comment);
 public record CompleteDemoRequest(int NpsScore, List<string> FeaturePriorities, string? Comment);
 public record DemoSceneEventRequest(string WorkflowId, string SceneId, int TimeSpentSec); // Phase 68
