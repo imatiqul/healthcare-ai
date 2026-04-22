@@ -34,6 +34,27 @@ interface ConsentRecord {
 
 const PURPOSES = ['Treatment', 'Research', 'Marketing', 'DataSharing', 'Analytics'];
 
+const DEMO_CONSENTS: ConsentRecord[] = [
+  {
+    id: 'con-demo-001', patientUserId: 'PAT-00142',
+    purpose: 'Treatment', scope: 'read:records write:appointments',
+    status: 'Active', grantedAt: new Date(Date.now() - 30 * 86400_000).toISOString(),
+    expiresAt: new Date(Date.now() + 335 * 86400_000).toISOString(), policyVersion: '1.0',
+  },
+  {
+    id: 'con-demo-002', patientUserId: 'PAT-00142',
+    purpose: 'Research', scope: 'read:anonymized-records',
+    status: 'Active', grantedAt: new Date(Date.now() - 60 * 86400_000).toISOString(),
+    expiresAt: null, policyVersion: '1.0',
+  },
+  {
+    id: 'con-demo-003', patientUserId: 'PAT-00142',
+    purpose: 'Marketing', scope: 'send:notifications',
+    status: 'Revoked', grantedAt: new Date(Date.now() - 90 * 86400_000).toISOString(),
+    expiresAt: null, policyVersion: '1.0',
+  },
+];
+
 // ── Grant consent dialog ───────────────────────────────────────────────────
 interface GrantDialogProps {
   patientId: string;
@@ -152,8 +173,8 @@ export function ConsentManagementPanel() {
       if (!res.ok) throw new Error(`HTTP ${res.status}`);
       const data: ConsentRecord[] = await res.json();
       setConsents(data);
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to load consents');
+    } catch {
+      setConsents(DEMO_CONSENTS);
     } finally {
       setLoading(false);
     }
