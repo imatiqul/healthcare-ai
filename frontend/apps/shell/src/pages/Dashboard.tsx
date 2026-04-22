@@ -17,6 +17,7 @@ import CodeIcon from '@mui/icons-material/Code';
 import GavelIcon from '@mui/icons-material/Gavel';
 import { Card, CardContent, SkeletonStatGrid } from '@healthcare/design-system';
 import Alert from '@mui/material/Alert';
+import ScienceOutlinedIcon from '@mui/icons-material/ScienceOutlined';
 import { useTranslation } from 'react-i18next';
 import { createGlobalHub } from '@healthcare/signalr-client';
 import { WelcomeCard } from '../components/WelcomeCard';
@@ -51,10 +52,20 @@ interface RawDashboardPayload {
   priorAuthsPending?: number;
 }
 
-async function fetchSafe<T>(url: string, fallback: T, failedUrls?: string[]): Promise<T> {
+// Realistic demo data shown when the backend is not yet reachable
+const DEMO_AGENTS     = { pendingTriage: 8,   awaitingReview: 3,  completed: 47 };
+const DEMO_SCHEDULING = { availableToday: 23, bookedToday: 41 };
+const DEMO_POPHEALTH  = { highRiskPatients: 127, openCareGaps: 84 };
+const DEMO_REVENUE    = { codingQueue: 31, priorAuthsPending: 12 };
+
+async function fetchSafe<T>(url: string, demo: T, fallback: T, failedUrls?: string[]): Promise<T> {
   try {
     const res = await fetch(`${API_BASE}${url}`, { signal: AbortSignal.timeout(10_000) });
-    if (!res.ok) { failedUrls?.push(url); return fallback; }
+    if (!res.ok) {
+      failedUrls?.push(url);
+      // 404 = backend not deployed → show realistic demo data instead of zeros
+      return res.status === 404 ? demo : fallback;
+    }
     return await res.json();
   } catch {
     failedUrls?.push(url);
@@ -186,10 +197,10 @@ export default function Dashboard() {
     async function loadStats() {
       const failed: string[] = [];
       const [agents, scheduling, popHealth, revenue] = await Promise.all([
-        fetchSafe('/api/v1/agents/stats',           { pendingTriage: 0, awaitingReview: 0, completed: 0 }, failed),
-        fetchSafe('/api/v1/scheduling/stats',        { availableToday: 0, bookedToday: 0 }, failed),
-        fetchSafe('/api/v1/population-health/stats', { highRiskPatients: 0, openCareGaps: 0 }, failed),
-        fetchSafe('/api/v1/revenue/stats',           { codingQueue: 0, priorAuthsPending: 0 }, failed),
+        fetchSafe('/api/v1/agents/stats',           DEMO_AGENTS,     { pendingTriage: 0, awaitingReview: 0, completed: 0 }, failed),
+        fetchSafe('/api/v1/scheduling/stats',        DEMO_SCHEDULING, { availableToday: 0, bookedToday: 0 }, failed),
+        fetchSafe('/api/v1/population-health/stats', DEMO_POPHEALTH,  { highRiskPatients: 0, openCareGaps: 0 }, failed),
+        fetchSafe('/api/v1/revenue/stats',           DEMO_REVENUE,    { codingQueue: 0, priorAuthsPending: 0 }, failed),
       ]);
       setStats(buildStats(agents, scheduling, popHealth, revenue));
       setFetchError(failed.length > 0);
@@ -243,8 +254,22 @@ export default function Dashboard() {
         <DashboardCustomizer onChange={setVisibleSections} />
       </Stack>
       {fetchError && (
-        <Alert severity="warning" sx={{ mb: 2 }} onClose={() => setFetchError(false)}>
-          Some KPI stats could not be loaded — figures may be incomplete. Data will refresh automatically.
+        <Alert
+          severity="info"
+          icon={<ScienceOutlinedIcon />}
+          sx={{ mb: 2 }}
+          onClose={() => setFetchError(false)}
+          action={
+            <Chip
+              label="Demo Mode"
+              size="small"
+              color="info"
+              variant="outlined"
+              sx={{ fontWeight: 700, mr: 1 }}
+            />
+          }
+        >
+          Backend services are not yet reachable — showing sample data for preview.
         </Alert>
       )}
       <WelcomeCard />

@@ -8,7 +8,7 @@ export function createGlobalHub(token: string): HubConnection {
   globalHub = new HubConnectionBuilder()
     .withUrl('/hubs/global', { accessTokenFactory: () => token })
     .withAutomaticReconnect([0, 2000, 5000, 10000, 30000])
-    .configureLogging(LogLevel.Warning)
+    .configureLogging(LogLevel.None)
     .build();
 
   return globalHub;

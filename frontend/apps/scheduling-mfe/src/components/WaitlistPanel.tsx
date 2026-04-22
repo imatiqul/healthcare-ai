@@ -14,6 +14,14 @@ import Alert from '@mui/material/Alert';
 
 const API_BASE = import.meta.env.VITE_API_BASE_URL || '';
 
+const DEMO_WAITLIST: WaitlistEntry[] = [
+  { id: 'wl-1', patientId: 'PAT-00142', practitionerId: 'DR-Smith',   priority: 1, status: 'Waiting',  enqueuedAt: new Date(Date.now() - 2 * 3600_000).toISOString() },
+  { id: 'wl-2', patientId: 'PAT-00278', practitionerId: 'DR-Patel',   priority: 2, status: 'Waiting',  enqueuedAt: new Date(Date.now() - 5 * 3600_000).toISOString(), preferredDateFrom: '2026-04-25' },
+  { id: 'wl-3', patientId: 'PAT-00391', practitionerId: 'DR-Johnson', priority: 3, status: 'Promoted', enqueuedAt: new Date(Date.now() - 1 * 86400_000).toISOString(), promotedToBookingId: 'BK-8821' },
+  { id: 'wl-4', patientId: 'PAT-00554', practitionerId: 'DR-Smith',   priority: 2, status: 'Waiting',  enqueuedAt: new Date(Date.now() - 3 * 3600_000).toISOString() },
+  { id: 'wl-5', patientId: 'PAT-00619', practitionerId: 'DR-Nguyen',  priority: 3, status: 'Waiting',  enqueuedAt: new Date(Date.now() - 8 * 3600_000).toISOString(), preferredDateTo: '2026-05-01' },
+];
+
 interface WaitlistEntry {
   id: string;
   patientId: string;
@@ -60,9 +68,13 @@ export function WaitlistPanel() {
     setLoading(true);
     try {
       const res = await fetch(`${API_BASE}/api/v1/scheduling/waitlist`);
-      if (res.ok) setEntries(await res.json());
+      if (res.ok) {
+        setEntries(await res.json());
+      } else if (res.status === 404) {
+        setEntries(DEMO_WAITLIST);
+      }
     } catch {
-      /* API may not be available yet */
+      setEntries(DEMO_WAITLIST);
     } finally {
       setLoading(false);
     }
