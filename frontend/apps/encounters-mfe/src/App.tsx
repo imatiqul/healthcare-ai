@@ -22,6 +22,7 @@ import { FhirObservationViewer } from './components/FhirObservationViewer';
 import { LabDeltaFlagsPanel } from './components/LabDeltaFlagsPanel';
 import { FhirEverythingViewer } from './components/FhirEverythingViewer';
 import { DrugInteractionChecker } from './components/DrugInteractionChecker';
+import { PatientSummaryCard } from './components/PatientSummaryCard';
 
 const DEMO_PATIENTS = [
   { id: 'PAT-00142', label: 'PAT-00142 · Diabetes / HTN' },
@@ -78,6 +79,9 @@ export default function App() {
           />
         ))}
       </Stack>
+
+      {/* ── Patient summary at-a-glance ── */}
+      <PatientSummaryCard patientId={patientId} />
 
       {/* ── Tab Navigation ── */}
       <Box sx={{ borderBottom: 1, borderColor: 'divider', mb: 3 }}>

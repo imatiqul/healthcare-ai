@@ -21,7 +21,7 @@ import CheckCircleIcon from '@mui/icons-material/CheckCircle';
 
 // ── Data ──────────────────────────────────────────────────────────────────────
 
-export const CURRENT_VERSION = 'v56';
+export const CURRENT_VERSION = 'v57';
 const SEEN_KEY = 'hq:whats-new-seen';
 
 interface FeatureEntry {
@@ -37,6 +37,16 @@ interface Release {
 }
 
 export const RELEASES: Release[] = [
+  {
+    version: 'v57',
+    title:   'Patient Summary Card, Richer Voice Sessions & Demo Action Hints',
+    date:    'April 2026',
+    features: [
+      { title: 'Patient at-a-glance card in Clinical Encounters',       description: 'A rich summary card now appears above the Encounters tabs showing patient name, age, gender, active conditions, ML readmission risk bar, active medication count, allergy count, and time since last visit. The card loads from the API and falls back to demo data when offline.' },
+      { title: 'Voice session history now shows full clinical context',  description: 'Each voice session entry now displays the patient’s full name, session duration (for both live and ended sessions), a two-line transcript snippet, and the AI-generated clinical note. Session list expanded to four rich demo entries covering Diabetes, Cardiac, Oncology, and Orthopedic scenarios.' },
+      { title: 'Demo guide step action hints',                           description: 'The interactive demo guide now shows a “Try this” tip card for every step when running offline. Each hint is step-specific — telling attendees exactly what to click or say to experience the feature (e.g., what to speak for Voice Intake, which patient to select in Scheduling).' },
+    ],
+  },
   {
     version: 'v56',
     title:   'Full Platform Offline Resilience — Zero Error States',

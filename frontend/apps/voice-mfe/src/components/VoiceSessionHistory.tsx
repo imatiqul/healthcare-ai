@@ -12,18 +12,51 @@ import { Card, CardHeader, CardTitle, CardContent } from '@healthcare/design-sys
 const API_BASE = import.meta.env.VITE_API_BASE_URL || '';
 
 const DEMO_SESSIONS: VoiceSessionSummary[] = [
-  { id: 'vs-1', patientId: 'PAT-00142', status: 'Ended',      startedAt: new Date(Date.now() - 55 * 60_000).toISOString() },
-  { id: 'vs-2', patientId: 'PAT-00278', status: 'Ended',      startedAt: new Date(Date.now() - 2 * 3600_000).toISOString() },
-  { id: 'vs-3', patientId: 'PAT-00391', status: 'Ended',      startedAt: new Date(Date.now() - 3 * 3600_000).toISOString() },
+  {
+    id: 'vs-1', patientId: 'PAT-00142', patientName: 'Alice Morgan',
+    status: 'Ended',
+    startedAt: new Date(Date.now() - 55 * 60_000).toISOString(),
+    endedAt:   new Date(Date.now() - 41 * 60_000).toISOString(),
+    transcriptSnippet: 'Patient: "My blood sugar was 280 this morning and I have a bad headache." — Clinician: "Are you taking your Metformin as prescribed?"',
+    aiNote: 'Glycaemic control gap identified. HbA1c review recommended. HEDIS Comprehensive Diabetes Care gap flagged.',
+  },
+  {
+    id: 'vs-2', patientId: 'PAT-00278', patientName: 'James Chen',
+    status: 'Ended',
+    startedAt: new Date(Date.now() - 2 * 3_600_000).toISOString(),
+    endedAt:   new Date(Date.now() - 108 * 60_000).toISOString(),
+    transcriptSnippet: 'Patient: "I had palpitations and mild chest discomfort since yesterday." — Clinician: "Any shortness of breath or arm pain?"',
+    aiNote: 'Cardiac event workup initiated. INR monitoring gap — Warfarin dosing review required. Cardiology referral placed.',
+  },
+  {
+    id: 'vs-3', patientId: 'PAT-00315', patientName: "Sarah O'Brien",
+    status: 'Ended',
+    startedAt: new Date(Date.now() - 3 * 3_600_000).toISOString(),
+    endedAt:   new Date(Date.now() - 162 * 60_000).toISOString(),
+    transcriptSnippet: 'Patient: "The nausea is better this cycle but the fatigue is really affecting me." — Clinician: "Let\'s check your CBC and electrolytes."',
+    aiNote: 'Chemo cycle 4 of 6. CBC ordered. Anti-emetic protocol updated. Fatigue management plan initiated.',
+  },
+  {
+    id: 'vs-4', patientId: 'PAT-00391', patientName: 'Robert Singh',
+    status: 'Ended',
+    startedAt: new Date(Date.now() - 5 * 3_600_000).toISOString(),
+    endedAt:   new Date(Date.now() - 282 * 60_000).toISOString(),
+    transcriptSnippet: 'Patient: "The knee pain is much worse on stairs and after sitting for long periods." — Clinician: "How long has this been going on?"',
+    aiNote: 'Orthopedic referral recommended. NSAID prescription reviewed for renal function. Physiotherapy plan ordered.',
+  },
 ];
 
 type SessionStatus = 'Live' | 'Ended' | 'Connecting';
 
 interface VoiceSessionSummary {
-  id: string;
-  patientId: string;
-  status: SessionStatus;
-  startedAt: string;
+  id:                  string;
+  patientId:           string;
+  patientName?:        string;
+  status:              SessionStatus;
+  startedAt:           string;
+  endedAt?:            string;
+  transcriptSnippet?:  string;
+  aiNote?:             string;
 }
 
 function statusColor(s: SessionStatus): 'success' | 'warning' | 'default' {
@@ -32,12 +65,12 @@ function statusColor(s: SessionStatus): 'success' | 'warning' | 'default' {
   return 'default';
 }
 
-function formatDuration(startedAt: string): string {
-  const start = new Date(startedAt);
-  const now = new Date();
-  const diffMs = now.getTime() - start.getTime();
-  const mins = Math.floor(diffMs / 60000);
-  const secs = Math.floor((diffMs % 60000) / 1000);
+function formatDuration(startedAt: string, endedAt?: string): string {
+  const start  = new Date(startedAt);
+  const end    = endedAt ? new Date(endedAt) : new Date();
+  const diffMs = end.getTime() - start.getTime();
+  const mins   = Math.floor(diffMs / 60000);
+  const secs   = Math.floor((diffMs % 60000) / 1000);
   if (mins > 60) {
     const hours = Math.floor(mins / 60);
     return `${hours}h ${mins % 60}m`;
@@ -125,9 +158,15 @@ export function VoiceSessionHistory() {
           {sessions.map((session, idx) => (
             <Stack key={session.id}>
               <Stack direction="row" justifyContent="space-between" alignItems="flex-start">
-                <Stack spacing={0.5}>
-                  <Stack direction="row" spacing={1} alignItems="center">
-                    <Typography variant="body2" fontWeight={600}>
+                <Stack spacing={0.5} sx={{ flex: 1 }}>
+                  {/* Patient + status */}
+                  <Stack direction="row" spacing={1} alignItems="center" flexWrap="wrap">
+                    {session.patientName ? (
+                      <Typography variant="body2" fontWeight={700}>
+                        {session.patientName}
+                      </Typography>
+                    ) : null}
+                    <Typography variant="caption" color="text.secondary" sx={{ fontFamily: 'monospace' }}>
                       {session.patientId}
                     </Typography>
                     <Chip
@@ -136,12 +175,31 @@ export function VoiceSessionHistory() {
                       size="small"
                     />
                   </Stack>
+
+                  {/* Timestamps + duration */}
                   <Typography variant="caption" color="text.secondary">
-                    Started: {new Date(session.startedAt).toLocaleString()}
+                    {new Date(session.startedAt).toLocaleString()}
+                    {' · '}
+                    <span style={{ fontWeight: 600 }}>
+                      {formatDuration(session.startedAt, session.endedAt)}
+                    </span>
                   </Typography>
-                  {session.status === 'Live' && (
-                    <Typography variant="caption" color="success.main">
-                      Duration: {formatDuration(session.startedAt)}
+
+                  {/* Transcript snippet */}
+                  {session.transcriptSnippet && (
+                    <Typography
+                      variant="caption"
+                      color="text.secondary"
+                      sx={{ fontStyle: 'italic', display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden' }}
+                    >
+                      {session.transcriptSnippet}
+                    </Typography>
+                  )}
+
+                  {/* AI clinical note */}
+                  {session.aiNote && (
+                    <Typography variant="caption" sx={{ color: 'primary.main', fontWeight: 500 }}>
+                      AI: {session.aiNote}
                     </Typography>
                   )}
                 </Stack>

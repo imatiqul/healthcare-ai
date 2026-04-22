@@ -15,6 +15,8 @@ import Chip from '@mui/material/Chip';
 import NavigateNextIcon from '@mui/icons-material/NavigateNext';
 import CheckCircleIcon from '@mui/icons-material/CheckCircle';
 import SmartToyIcon from '@mui/icons-material/SmartToy';
+import LightbulbIcon from '@mui/icons-material/Lightbulb';
+import AlertTitle from '@mui/material/AlertTitle';
 import { FeedbackDialog } from '../components/FeedbackDialog';
 import { OverallFeedbackDialog } from '../components/OverallFeedbackDialog';
 
@@ -29,6 +31,16 @@ const STEP_LABELS = [
   'Revenue Cycle',
   'Population Health',
 ];
+
+// Per-step action hints shown to the demo attendee while offline
+const STEP_HINTS: Record<number, string> = {
+  0: 'Explore the dashboard — your clinical KPIs show live triage, scheduling, and revenue data. Click any card to jump to that section.',
+  1: 'Click ▶ Record and speak: “Patient reports chest pain radiating to the left arm, 8/10 severity, started 2 hours ago.” Watch real-time transcription appear.',
+  2: 'Select a P1 case from the queue, read the AI reasoning, then click Claim to assign it to yourself for human review.',
+  3: 'Use the quick-select chips to pick Alice Morgan (PAT-00142), then book a follow-up appointment slot in the calendar.',
+  4: 'Review the pending ICD-10 coding jobs — click Approve Codes to confirm the AI suggestion and advance the claim to Submitted.',
+  5: 'Navigate to HEDIS to see the Comprehensive Diabetes Care gap for PAT-00142, then click Generate Care Plan.',
+};
 
 const STEP_ROUTES: Record<string, string> = {
   Welcome: '/',
@@ -244,6 +256,14 @@ export default function DemoLive() {
           <Alert severity="info" sx={{ mb: 3 }}>
             <strong>Explore this module:</strong> In a full deployment, this step would navigate to{' '}
             <strong>{STEP_ROUTES[stepInfo.step]}</strong> to see the live feature.
+          </Alert>
+        )}
+
+        {/* Offline step action hint */}
+        {!stepInfo && STEP_HINTS[activeStep] !== undefined && (
+          <Alert severity="info" icon={<LightbulbIcon />} sx={{ mb: 3 }}>
+            <AlertTitle sx={{ fontWeight: 700 }}>Try this</AlertTitle>
+            {STEP_HINTS[activeStep]}
           </Alert>
         )}
 
