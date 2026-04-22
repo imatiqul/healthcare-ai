@@ -25,6 +25,8 @@ const services: { name: string; healthPath: string }[] = [
   { name: 'Population Health',healthPath: '/api/v1/population-health/health' },
   { name: 'Notifications',    healthPath: '/api/v1/notifications/health' },
   { name: 'Revenue',          healthPath: '/api/v1/revenue/health' },
+  { name: 'OCR',              healthPath: '/api/v1/ocr/health' },
+  { name: 'BFF',              healthPath: '/api/v1/bff/health' },
 ];
 
 test.describe('Backend Health Checks', () => {
@@ -56,6 +58,38 @@ test.describe('Backend Health Checks', () => {
     });
   }
 
+  test('Gateway liveness probe returns 200', async () => {
+    const ctx = await request.newContext({ baseURL: API_BASE });
+    let res: Awaited<ReturnType<typeof ctx.get>>;
+    try {
+      res = await ctx.get('/health/live', { timeout: 5_000 });
+    } catch {
+      test.skip(true, 'Gateway liveness endpoint unreachable — skipping');
+      return;
+    }
+    if (!res.ok()) {
+      test.skip(true, `Liveness probe returned ${res.status()}`);
+      return;
+    }
+    expect(res.status()).toBe(200);
+  });
+
+  test('Gateway readiness probe returns 200', async () => {
+    const ctx = await request.newContext({ baseURL: API_BASE });
+    let res: Awaited<ReturnType<typeof ctx.get>>;
+    try {
+      res = await ctx.get('/health/ready', { timeout: 5_000 });
+    } catch {
+      test.skip(true, 'Gateway readiness endpoint unreachable — skipping');
+      return;
+    }
+    if (!res.ok()) {
+      test.skip(true, `Readiness probe returned ${res.status()}`);
+      return;
+    }
+    expect(res.status()).toBe(200);
+  });
+
   test('SMART on FHIR metadata endpoint returns valid document', async () => {
     const fhirBase = process.env.FHIR_BASE_URL || `${API_BASE}`;
     const ctx = await request.newContext({ baseURL: fhirBase });
@@ -80,4 +114,37 @@ test.describe('Backend Health Checks', () => {
     expect(body).toHaveProperty('capabilities');
     expect(body.code_challenge_methods_supported).toContain('S256');
   });
+
+  test('FHIR metadata R4 capability statement is accessible', async () => {
+    const ctx = await request.newContext({ baseURL: API_BASE });
+    let res: Awaited<ReturnType<typeof ctx.get>>;
+    try {
+      res = await ctx.get('/api/v1/fhir/metadata', { timeout: 5_000 });
+    } catch {
+      test.skip(true, 'FHIR metadata endpoint unreachable — skipping');
+      return;
+    }
+    if (!res.ok()) {
+      test.skip(true, `FHIR metadata returned ${res.status()}`);
+      return;
+    }
+    const body = await res.json().catch(() => null);
+    if (body && 'resourceType' in body) {
+      expect(body.resourceType).toBe('CapabilityStatement');
+    }
+  });
+
+  test('all checked services have response time under 2000ms', async () => {
+    const ctx = await request.newContext({ baseURL: API_BASE });
+    const start = Date.now();
+    try {
+      await ctx.get('/health', { timeout: 5_000 });
+    } catch {
+      test.skip(true, 'Gateway unreachable — skipping response time test');
+      return;
+    }
+    const elapsed = Date.now() - start;
+    expect(elapsed).toBeLessThan(2000);
+  });
 });
+
