@@ -24,6 +24,7 @@ import TrendingUpIcon from '@mui/icons-material/TrendingUp';
 import CalendarMonthIcon from '@mui/icons-material/CalendarMonth';
 import MicIcon from '@mui/icons-material/Mic';
 import SmartToyIcon from '@mui/icons-material/SmartToy';
+import AttachMoneyIcon from '@mui/icons-material/AttachMoney';
 import { useGlobalStore } from '../store';
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
@@ -52,6 +53,7 @@ function buildLinks(patientId: string): QuickLink[] {
     { label: 'Encounters',        href: `/encounters?patientId=${patientId}`,        icon: <MedicalInformationIcon sx={{ fontSize: 14 }} /> },
     { label: 'Population Health', href: `/population-health?patientId=${patientId}`, icon: <TrendingUpIcon         sx={{ fontSize: 14 }} /> },
     { label: 'Scheduling',        href: `/scheduling?patientId=${patientId}`,         icon: <CalendarMonthIcon      sx={{ fontSize: 14 }} /> },
+    { label: 'Revenue Cycle',     href: `/revenue?patientId=${patientId}`,            icon: <AttachMoneyIcon        sx={{ fontSize: 14 }} /> },
     { label: 'Voice Session',     href: `/voice?patientId=${patientId}`,              icon: <MicIcon                sx={{ fontSize: 14 }} /> },
     { label: 'Triage',            href: `/triage?patientId=${patientId}`,             icon: <SmartToyIcon           sx={{ fontSize: 14 }} /> },
   ];

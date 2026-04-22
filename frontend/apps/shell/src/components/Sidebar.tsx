@@ -345,6 +345,7 @@ function SidebarContent({ onClose, collapsed = false }: { onClose?: () => void; 
                         component={Link}
                         to={item.href}
                         selected={isActive}
+                        aria-current={isActive ? 'page' : undefined}
                         onClick={onClose}
                         sx={{
                           borderRadius: 2,

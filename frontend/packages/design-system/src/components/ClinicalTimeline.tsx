@@ -13,16 +13,6 @@ type EventType =
   | 'note'
   | 'discharge';
 
-const _eventColors: Record<EventType, string> = {
-  triage:     'error',
-  encounter:  'primary',
-  medication: 'warning',
-  lab:        'info',
-  imaging:    'secondary',
-  note:       'grey',
-  discharge:  'success',
-};
-
 export interface ClinicalEvent {
   id: string;
   type: EventType;

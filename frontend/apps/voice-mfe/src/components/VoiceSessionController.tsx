@@ -33,6 +33,7 @@ function useMicCapture(sessionId: string | null, apiBase: string, onTranscript: 
   const streamRef        = useRef<MediaStream | null>(null);
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
   const audioBlobChunks  = useRef<Blob[]>([]);
+  const isMountedRef     = useRef(true);
   const [recording,  setRecording]  = useState(false);
   const [micError,   setMicError]   = useState<string | null>(null);
   // Object URL for the most recent completed recording — revoked on each new start
@@ -78,6 +79,11 @@ function useMicCapture(sessionId: string | null, apiBase: string, onTranscript: 
       mr.onstop = () => {
         const blob = new Blob(audioBlobChunks.current, { type: mimeType });
         const url  = URL.createObjectURL(blob);
+        if (!isMountedRef.current) {
+          // Component already unmounted — revoke immediately to prevent leak
+          URL.revokeObjectURL(url);
+          return;
+        }
         prevAudioUrl.current = url;
         setAudioUrl(url);
       };
@@ -116,7 +122,9 @@ function useMicCapture(sessionId: string | null, apiBase: string, onTranscript: 
 
   // Cleanup object URL on unmount
   useEffect(() => {
+    isMountedRef.current = true;
     return () => {
+      isMountedRef.current = false;
       stopRecording();
       if (prevAudioUrl.current) URL.revokeObjectURL(prevAudioUrl.current);
     };

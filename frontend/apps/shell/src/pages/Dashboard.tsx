@@ -153,9 +153,9 @@ function AIDailyBriefing({ stats }: { stats: DashboardStats[] }) {
         <Chip label="Live" size="small" color="primary" variant="outlined" sx={{ height: 18, fontSize: '0.6rem', fontWeight: 700 }} />
       </Stack>
       <Stack spacing={1}>
-        {insights.map((insight, i) => (
+        {insights.map((insight) => (
           <Stack
-            key={i}
+            key={`${insight.severity}-${insight.href}`}
             direction="row"
             spacing={1}
             alignItems="flex-start"
@@ -245,7 +245,14 @@ function StatCard({ stat }: { stat: DashboardStats }) {
         {stat.trend !== undefined && (
           <Box mt={1} sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
             <TrendBadge trend={stat.trend} />
-            <Typography variant="caption" color="text.disabled" sx={{ fontSize: '0.65rem' }}>Go →</Typography>
+            <Typography
+              variant="caption"
+              color="text.disabled"
+              sx={{ fontSize: '0.65rem' }}
+              aria-hidden="true"
+            >
+              View →
+            </Typography>
           </Box>
         )}
       </CardContent>

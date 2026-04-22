@@ -54,15 +54,34 @@ export interface BookingCreatedDetail {
   patientId: string;
 }
 
+export interface TriageApprovedDetail {
+  workflowId: string;
+  sessionId: string;
+  patientId?: string;
+  triageLevel: string;
+  approvedBy: string; // userId of the clinician who approved
+}
+
+export interface NavigationRequestedDetail {
+  /** Target route path e.g. '/triage', '/scheduling?patientId=123' */
+  path: string;
+  /** Optional human-readable reason for the navigation (used by AI Copilot) */
+  reason?: string;
+  /** When true, open in a new browser tab */
+  openInNewTab?: boolean;
+}
+
 // ── Event name constants ─────────────────────────────────────────────────────
 
 export const MFE_EVENTS = {
-  TRANSCRIPT_COMPLETED: 'mfe:transcript:completed',
-  AGENT_DECISION:       'mfe:agent:decision',
-  ESCALATION_REQUIRED:  'mfe:escalation:required',
-  PATIENT_SELECTED:     'mfe:patient:selected',
-  SLOT_RESERVED:        'mfe:slot:reserved',
-  BOOKING_CREATED:      'mfe:booking:created',
+  TRANSCRIPT_COMPLETED:  'mfe:transcript:completed',
+  AGENT_DECISION:        'mfe:agent:decision',
+  ESCALATION_REQUIRED:   'mfe:escalation:required',
+  PATIENT_SELECTED:      'mfe:patient:selected',
+  SLOT_RESERVED:         'mfe:slot:reserved',
+  BOOKING_CREATED:       'mfe:booking:created',
+  TRIAGE_APPROVED:       'mfe:triage:approved',
+  NAVIGATION_REQUESTED:  'mfe:navigation:requested',
 } as const;
 
 export type MfeEventName = (typeof MFE_EVENTS)[keyof typeof MFE_EVENTS];
@@ -123,3 +142,15 @@ export const onSlotReserved = (handler: MfeEventHandler<SlotReservedDetail>) =>
 
 export const onBookingCreated = (handler: MfeEventHandler<BookingCreatedDetail>) =>
   onMfeEvent<BookingCreatedDetail>(MFE_EVENTS.BOOKING_CREATED, handler);
+
+export const emitTriageApproved = (detail: TriageApprovedDetail) =>
+  emitMfeEvent<TriageApprovedDetail>(MFE_EVENTS.TRIAGE_APPROVED, detail);
+
+export const onTriageApproved = (handler: MfeEventHandler<TriageApprovedDetail>) =>
+  onMfeEvent<TriageApprovedDetail>(MFE_EVENTS.TRIAGE_APPROVED, handler);
+
+export const emitNavigationRequested = (detail: NavigationRequestedDetail) =>
+  emitMfeEvent<NavigationRequestedDetail>(MFE_EVENTS.NAVIGATION_REQUESTED, detail);
+
+export const onNavigationRequested = (handler: MfeEventHandler<NavigationRequestedDetail>) =>
+  onMfeEvent<NavigationRequestedDetail>(MFE_EVENTS.NAVIGATION_REQUESTED, handler);

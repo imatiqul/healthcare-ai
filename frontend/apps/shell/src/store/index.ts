@@ -47,6 +47,9 @@ export interface GlobalState {
   markDemoComplete:      () => void;
 }
 
+/** Scenes per workflow — kept in sync with demoScripts. Index = workflow number (0-based). */
+export const SCENES_PER_WORKFLOW = [3, 3, 3, 3, 3, 3, 3, 3] as const;
+
 export const useGlobalStore = create<GlobalState>((set) => ({
   currentPatientId: null,
   activeSessionId:  null,
@@ -92,7 +95,6 @@ export const useGlobalStore = create<GlobalState>((set) => ({
 
   advanceDemoScene: () =>
     set((state) => {
-      const SCENES_PER_WORKFLOW = [3, 3, 3, 3, 3, 3, 3, 3]; // kept in sync with demoScripts
       const allIndices = Array.from({ length: SCENES_PER_WORKFLOW.length }, (_, i) => i);
       const indices = state.demoWorkflowIndices.length > 0 ? state.demoWorkflowIndices : allIndices;
       const sceneCount = SCENES_PER_WORKFLOW[state.demoWorkflowIdx] ?? 3;
@@ -111,7 +113,6 @@ export const useGlobalStore = create<GlobalState>((set) => ({
 
   prevDemoScene: () =>
     set((state) => {
-      const SCENES_PER_WORKFLOW = [3, 3, 3, 3, 3, 3, 3, 3];
       const allIndices = Array.from({ length: SCENES_PER_WORKFLOW.length }, (_, i) => i);
       const indices = state.demoWorkflowIndices.length > 0 ? state.demoWorkflowIndices : allIndices;
       if (state.demoSceneIdx > 0) {
