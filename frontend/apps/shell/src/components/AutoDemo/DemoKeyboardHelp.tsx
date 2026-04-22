@@ -19,12 +19,15 @@ interface DemoKeyboardHelpProps {
 }
 
 const SHORTCUTS: Array<{ keys: string[]; description: string }> = [
-  { keys: ['Space'],     description: 'Pause / Resume demo' },
-  { keys: ['→'],         description: 'Next scene' },
-  { keys: ['←'],         description: 'Previous scene' },
+  { keys: ['Space'],       description: 'Pause / Resume demo' },
+  { keys: ['→'],           description: 'Next scene' },
+  { keys: ['←'],           description: 'Previous scene' },
   { keys: ['1',' – ','8'], description: 'Jump to workflow 1–8' },
-  { keys: ['Esc'],       description: 'Exit demo' },
-  { keys: ['?'],         description: 'Show this shortcut guide' },
+  { keys: ['R'],           description: 'Restart from first workflow' },
+  { keys: ['N'],           description: 'Toggle narrator panel' },
+  { keys: ['F'],           description: 'Toggle fullscreen' },
+  { keys: ['Esc'],         description: 'Exit demo (or exit fullscreen)' },
+  { keys: ['?'],           description: 'Show this shortcut guide' },
 ];
 
 export function DemoKeyboardHelp({ onClose }: DemoKeyboardHelpProps) {

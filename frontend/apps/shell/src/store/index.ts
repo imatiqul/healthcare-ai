@@ -30,6 +30,9 @@ export interface GlobalState {
   // Phase 64 additions
   demoWorkflowIndices:   number[];  // which workflow indices to include; empty = all 8
   setDemoWorkflowIndices:(indices: number[]) => void;
+  // Phase 67 additions
+  narratorVisible:       boolean;   // show/hide the NarratorPanel (N key)
+  setNarratorVisible:   (visible: boolean) => void;
   startSelfDrivenDemo:   (clientName: string, company: string) => void;
   advanceDemoScene:      () => void;
   prevDemoScene:         () => void;
@@ -67,7 +70,10 @@ export const useGlobalStore = create<GlobalState>((set) => ({
   isDemoComplete:  false,
   // Phase 64 additions
   demoWorkflowIndices: [],
+  // Phase 67 additions
+  narratorVisible: true,
 
+  setNarratorVisible: (visible) => set({ narratorVisible: visible }),
   setDemoWorkflowIndices: (indices) => set({ demoWorkflowIndices: indices }),
 
   startSelfDrivenDemo: (clientName, company) =>
@@ -117,7 +123,7 @@ export const useGlobalStore = create<GlobalState>((set) => ({
 
   pauseDemo:  () => set({ demoPaused: true }),
   resumeDemo: () => set({ demoPaused: false }),
-  exitDemo:   () => set({ isDemoActive: false, demoWorkflowIdx: 0, demoSceneIdx: 0, demoPaused: false, isDemoComplete: false, demoSpeed: 1 }),
+  exitDemo:   () => set({ isDemoActive: false, demoWorkflowIdx: 0, demoSceneIdx: 0, demoPaused: false, isDemoComplete: false, demoSpeed: 1, narratorVisible: true }),
 
   setDemoScene: (workflowIdx, sceneIdx) =>
     set({ demoWorkflowIdx: workflowIdx, demoSceneIdx: sceneIdx, demoPaused: false }),

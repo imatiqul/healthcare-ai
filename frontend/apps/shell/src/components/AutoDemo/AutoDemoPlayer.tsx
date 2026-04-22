@@ -33,6 +33,9 @@ export function AutoDemoPlayer() {
     demoPaused,
     demoSpeed,
     isDemoComplete,
+    demoWorkflowIndices,
+    narratorVisible,
+    setNarratorVisible,
     advanceDemoScene,
     prevDemoScene,
     pauseDemo,
@@ -45,6 +48,7 @@ export function AutoDemoPlayer() {
   const [countdown, setCountdown]         = useState(30);
   const [showHelp, setShowHelp]           = useState(false);
   const [elapsedSec, setElapsedSec]       = useState(0);  // Phase 65 — demo elapsed timer
+  const [isFullscreen, setIsFullscreen]   = useState(false); // Phase 67
 
   // Stable refs so interval callbacks always see the latest values
   const narrationRef    = useRef<ReturnType<typeof setInterval> | null>(null);
@@ -66,6 +70,21 @@ export function AutoDemoPlayer() {
   useEffect(() => { exitRef.current         = exitDemo; },         [exitDemo]);
   useEffect(() => { setDemoSceneRef.current = setDemoScene; },     [setDemoScene]);
   useEffect(() => { demoSpeedRef.current    = demoSpeed; },        [demoSpeed]);
+
+  // ── Fullscreen helpers ────────────────────────────────────────────────────
+  const toggleFullscreen = useCallback(() => {
+    if (!document.fullscreenElement) {
+      document.documentElement.requestFullscreen().catch(() => { /* denied */ });
+    } else {
+      document.exitFullscreen().catch(() => { /* denied */ });
+    }
+  }, []);
+
+  useEffect(() => {
+    const onFsChange = () => setIsFullscreen(!!document.fullscreenElement);
+    document.addEventListener('fullscreenchange', onFsChange);
+    return () => document.removeEventListener('fullscreenchange', onFsChange);
+  }, []);
 
   // ── Keyboard shortcuts ────────────────────────────────────────────────────
   useEffect(() => {
@@ -94,8 +113,25 @@ export function AutoDemoPlayer() {
           e.preventDefault();
           setShowHelp(prev => !prev);
           break;
-        default:
-          // 1–8 → jump to that workflow (index 0–7)
+        case 'f':
+        case 'F':
+          e.preventDefault();
+          toggleFullscreen();
+          break;
+        case 'n':
+        case 'N': {
+          e.preventDefault();
+          setNarratorVisible(!narratorVisible);
+          break;
+        }
+        case 'r':
+        case 'R': {
+          e.preventDefault();
+          // Restart from first selected workflow, scene 0
+          const firstWf = demoWorkflowIndices.length > 0 ? demoWorkflowIndices[0] : 0;
+          setDemoSceneRef.current(firstWf, 0);
+          break;
+        }
           if (e.key >= '1' && e.key <= '8') {
             const wfIdx = parseInt(e.key, 10) - 1;
             setDemoSceneRef.current(wfIdx, 0);
@@ -104,7 +140,7 @@ export function AutoDemoPlayer() {
     };
     window.addEventListener('keydown', handleKey);
     return () => window.removeEventListener('keydown', handleKey);
-  }, [isDemoActive]);
+  }, [isDemoActive, narratorVisible, demoWorkflowIndices, toggleFullscreen, setNarratorVisible]);
 
   // ── Live KPI badge — fetch once when demo starts ──────────────────────────
   const API_BASE = (import.meta as { env: Record<string, string> }).env.VITE_API_BASE_URL ?? '';
@@ -212,20 +248,24 @@ export function AutoDemoPlayer() {
       {isDemoComplete && <DemoCompletionOverlay />}
       {!isDemoComplete && (
         <>
-          <DemoNarratorPanel
-            workflow={workflow}
-            scene={scene}
-            narrationText={narrationText}
-            workflowIdx={demoWorkflowIdx}
-            sceneIdx={demoSceneIdx}
-            countdown={countdown}
-            totalSec={scene.durationSec}
-            liveKpi={liveKpi}
-          />
+          {narratorVisible && (
+            <DemoNarratorPanel
+              workflow={workflow}
+              scene={scene}
+              narrationText={narrationText}
+              workflowIdx={demoWorkflowIdx}
+              sceneIdx={demoSceneIdx}
+              countdown={countdown}
+              totalSec={scene.durationSec}
+              liveKpi={liveKpi}
+            />
+          )}
           <DemoControlBar
             countdown={countdown}
             totalSec={scene.durationSec}
             elapsedSec={elapsedSec}
+            isFullscreen={isFullscreen}
+            onToggleFullscreen={toggleFullscreen}
           />
         </>
       )}

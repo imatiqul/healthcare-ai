@@ -20,20 +20,26 @@ import CloseIcon from '@mui/icons-material/Close';
 import SmartToyIcon from '@mui/icons-material/SmartToy';
 import ContentCopyIcon from '@mui/icons-material/ContentCopy';
 import CheckIcon from '@mui/icons-material/Check';
+import FullscreenIcon from '@mui/icons-material/Fullscreen';
+import FullscreenExitIcon from '@mui/icons-material/FullscreenExit';
+import VisibilityIcon from '@mui/icons-material/Visibility';
+import VisibilityOffIcon from '@mui/icons-material/VisibilityOff';
 import { useGlobalStore } from '../../store';
 import { DEMO_WORKFLOWS, getGlobalSceneIndex, TOTAL_SCENES } from './demoScripts';
 import { useState } from 'react';
 
 interface DemoControlBarProps {
-  countdown:  number;   // seconds remaining in current scene
-  totalSec:   number;   // total seconds for current scene
-  elapsedSec: number;   // Phase 65 — total demo elapsed seconds
+  countdown:           number;   // seconds remaining in current scene
+  totalSec:            number;   // total seconds for current scene
+  elapsedSec:          number;   // Phase 65 — total demo elapsed seconds
+  isFullscreen:        boolean;  // Phase 67 — current fullscreen state
+  onToggleFullscreen:  () => void; // Phase 67 — toggle fullscreen
 }
 
 const BAR_R  = 18;   // SVG circle radius
 const BAR_C  = 2 * Math.PI * BAR_R; // circumference
 
-export function DemoControlBar({ countdown, totalSec, elapsedSec }: DemoControlBarProps) {
+export function DemoControlBar({ countdown, totalSec, elapsedSec, isFullscreen, onToggleFullscreen }: DemoControlBarProps) {
   const {
     demoWorkflowIdx,
     demoSceneIdx,
@@ -42,6 +48,8 @@ export function DemoControlBar({ countdown, totalSec, elapsedSec }: DemoControlB
     demoClientName,
     demoCompany,
     demoWorkflowIndices,
+    narratorVisible,
+    setNarratorVisible,
     pauseDemo,
     resumeDemo,
     advanceDemoScene,
@@ -282,6 +290,30 @@ export function DemoControlBar({ countdown, totalSec, elapsedSec }: DemoControlB
           sx={{ color: copied ? '#66bb6a' : 'rgba(255,255,255,0.55)', '&:hover': { color: '#90caf9' } }}
         >
           {copied ? <CheckIcon sx={{ fontSize: 16 }} /> : <ContentCopyIcon sx={{ fontSize: 16 }} />}
+        </IconButton>
+      </Tooltip>
+
+      {/* Phase 67 — Toggle narrator panel */}
+      <Tooltip title={narratorVisible ? 'Hide narrator (N)' : 'Show narrator (N)'} arrow>
+        <IconButton
+          size="small"
+          onClick={() => setNarratorVisible(!narratorVisible)}
+          sx={{ color: narratorVisible ? 'rgba(255,255,255,0.55)' : 'rgba(255,120,120,0.7)', '&:hover': { color: '#fff' } }}
+        >
+          {narratorVisible
+            ? <VisibilityIcon sx={{ fontSize: 16 }} />
+            : <VisibilityOffIcon sx={{ fontSize: 16 }} />}
+        </IconButton>
+      </Tooltip>
+
+      {/* Phase 67 — Fullscreen toggle */}
+      <Tooltip title={isFullscreen ? 'Exit fullscreen (F)' : 'Fullscreen (F)'} arrow>
+        <IconButton
+          size="small"
+          onClick={onToggleFullscreen}
+          sx={{ color: 'rgba(255,255,255,0.55)', '&:hover': { color: '#fff' } }}
+        >
+          {isFullscreen ? <FullscreenExitIcon sx={{ fontSize: 18 }} /> : <FullscreenIcon sx={{ fontSize: 18 }} />}
         </IconButton>
       </Tooltip>
 
