@@ -13,7 +13,7 @@ services:
       tag: 399ddc6bcbb871243985ea96050e9572e5cb21c7
   ai-agent:
     image:
-      tag: ea25cd5a713be61409d611dbf5b82988d55bb00b
+      tag: 506ba843ea03d640cbcd8a0a7971cbd1d18ff1fd
   revenue:
     image:
       tag: 4195a2ec0fa92bfea91f18a0be28b9e348ee4de0
