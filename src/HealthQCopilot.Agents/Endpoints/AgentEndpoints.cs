@@ -74,7 +74,7 @@ public static class AgentEndpoints
             var workflows = await db.TriageWorkflows
                 .OrderByDescending(w => w.CreatedAt)
                 .Take(50)
-                .Select(w => new { w.Id, w.SessionId, Status = w.Status.ToString(), AssignedLevel = w.AssignedLevel != null ? w.AssignedLevel.ToString() : null, w.AgentReasoning, w.CreatedAt })
+                .Select(w => new { w.Id, w.SessionId, Status = w.Status.ToString(), TriageLevel = w.AssignedLevel != null ? w.AssignedLevel.ToString() : null, w.AgentReasoning, w.CreatedAt })
                 .ToListAsync(ct);
             return Results.Ok(workflows);
         });
