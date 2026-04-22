@@ -8,12 +8,12 @@ services:
       - "5433:5432"
     environment:
       POSTGRES_DB: voice_db
-      POSTGRES_USER: postgres
-      POSTGRES_PASSWORD: devpassword123
+      POSTGRES_USER: ${POSTGRES_USER:-postgres}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-devpassword123}
     volumes:
       - pgdata-voice:/var/lib/postgresql/data
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U postgres -d voice_db"]
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-postgres} -d voice_db"]
       interval: 10s
       timeout: 5s
       retries: 5
@@ -26,12 +26,12 @@ services:
       - "5434:5432"
     environment:
       POSTGRES_DB: agent_db
-      POSTGRES_USER: postgres
-      POSTGRES_PASSWORD: devpassword123
+      POSTGRES_USER: ${POSTGRES_USER:-postgres}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-devpassword123}
     volumes:
       - pgdata-agent:/var/lib/postgresql/data
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U postgres -d agent_db"]
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-postgres} -d agent_db"]
       interval: 10s
       timeout: 5s
       retries: 5
@@ -44,12 +44,12 @@ services:
       - "5435:5432"
     environment:
       POSTGRES_DB: fhir_db
-      POSTGRES_USER: postgres
-      POSTGRES_PASSWORD: devpassword123
+      POSTGRES_USER: ${POSTGRES_USER:-postgres}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-devpassword123}
     volumes:
       - pgdata-fhir:/var/lib/postgresql/data
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U postgres -d fhir_db"]
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-postgres} -d fhir_db"]
       interval: 10s
       timeout: 5s
       retries: 5
@@ -62,12 +62,12 @@ services:
       - "5436:5432"
     environment:
       POSTGRES_DB: ocr_db
-      POSTGRES_USER: postgres
-      POSTGRES_PASSWORD: devpassword123
+      POSTGRES_USER: ${POSTGRES_USER:-postgres}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-devpassword123}
     volumes:
       - pgdata-ocr:/var/lib/postgresql/data
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U postgres -d ocr_db"]
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-postgres} -d ocr_db"]
       interval: 10s
       timeout: 5s
       retries: 5
@@ -80,12 +80,12 @@ services:
       - "5437:5432"
     environment:
       POSTGRES_DB: scheduling_db
-      POSTGRES_USER: postgres
-      POSTGRES_PASSWORD: devpassword123
+      POSTGRES_USER: ${POSTGRES_USER:-postgres}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-devpassword123}
     volumes:
       - pgdata-scheduling:/var/lib/postgresql/data
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U postgres -d scheduling_db"]
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-postgres} -d scheduling_db"]
       interval: 10s
       timeout: 5s
       retries: 5
@@ -98,12 +98,12 @@ services:
       - "5438:5432"
     environment:
       POSTGRES_DB: notification_db
-      POSTGRES_USER: postgres
-      POSTGRES_PASSWORD: devpassword123
+      POSTGRES_USER: ${POSTGRES_USER:-postgres}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-devpassword123}
     volumes:
       - pgdata-notification:/var/lib/postgresql/data
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U postgres -d notification_db"]
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-postgres} -d notification_db"]
       interval: 10s
       timeout: 5s
       retries: 5
@@ -116,12 +116,12 @@ services:
       - "5439:5432"
     environment:
       POSTGRES_DB: pophealth_db
-      POSTGRES_USER: postgres
-      POSTGRES_PASSWORD: devpassword123
+      POSTGRES_USER: ${POSTGRES_USER:-postgres}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-devpassword123}
     volumes:
       - pgdata-pophealth:/var/lib/postgresql/data
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U postgres -d pophealth_db"]
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-postgres} -d pophealth_db"]
       interval: 10s
       timeout: 5s
       retries: 5
@@ -134,12 +134,12 @@ services:
       - "5440:5432"
     environment:
       POSTGRES_DB: identity_db
-      POSTGRES_USER: postgres
-      POSTGRES_PASSWORD: devpassword123
+      POSTGRES_USER: ${POSTGRES_USER:-postgres}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-devpassword123}
     volumes:
       - pgdata-identity:/var/lib/postgresql/data
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U postgres -d identity_db"]
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-postgres} -d identity_db"]
       interval: 10s
       timeout: 5s
       retries: 5
@@ -194,7 +194,7 @@ services:
       - "1433:1433"
     environment:
       ACCEPT_EULA: "Y"
-      SA_PASSWORD: "ServiceBus!Dev123"
+      SA_PASSWORD: "${SA_PASSWORD:-ServiceBus!Dev123}"
     networks:
       - healthcare-network
 
