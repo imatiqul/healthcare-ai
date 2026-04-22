@@ -21,7 +21,7 @@ import CheckCircleIcon from '@mui/icons-material/CheckCircle';
 
 // ── Data ──────────────────────────────────────────────────────────────────────
 
-export const CURRENT_VERSION = 'v53';
+export const CURRENT_VERSION = 'v54';
 const SEEN_KEY = 'hq:whats-new-seen';
 
 interface FeatureEntry {
@@ -37,6 +37,17 @@ interface Release {
 }
 
 export const RELEASES: Release[] = [
+  {
+    version: 'v54',
+    title:   'Full Offline Demo — KPIs, Reports & AI Experiments',
+    date:    'April 2026',
+    features: [
+      { title: 'Business KPI Dashboard — always populated',   description: 'The executive Business Intelligence dashboard now shows 12 realistic KPIs (tenant count, user count, AI quality score, claim overturn rate, notification delivery rate, NPS, active campaigns, and more) when the backend is offline, so every stakeholder review looks production-grade even before go-live.' },
+      { title: 'Reports & Export — demo CSV downloads',       description: 'Clicking Download on any of the 6 report types (Audit Log, Patient Risks, Care Gaps, Coding Queue, Denial Analytics, Notification Delivery) now generates and downloads a formatted demo CSV file when the backend is unavailable, complete with realistic sample data matching HealthQ Copilot\'s data model.' },
+      { title: 'A/B Experiment Summary — demo result',        description: 'The Experiment Summary panel now pre-fills the ID \'triage-prompt-v3\' and automatically shows a fully populated challenger-wins A/B result (guard pass rate 93.4% vs 87.1%, latency 289 ms vs 312 ms, statistically significant) when the backend is offline.' },
+      { title: 'Experiment field helper text',               description: 'The Experiment ID field now shows helper text confirming the demo ID is pre-filled, consistent with the XAI Explanation and ML Confidence panel patterns.' },
+    ],
+  },
   {
     version: 'v53',
     title:   'Live AI Status Indicator & Seamless Demo Experience',

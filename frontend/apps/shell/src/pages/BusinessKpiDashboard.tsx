@@ -187,6 +187,56 @@ function fmtNum(value: number | null | undefined): string {
   return value.toLocaleString();
 }
 
+// ── Demo KPI data (shown when backend is offline) ─────────────────────────
+
+const DEMO_KPI: KpiData = {
+  tenantCount:  12,
+  userCount:    847,
+  feedback: {
+    totalFeedback: 1_243,
+    averageRating: 4.3,
+    positiveCount: 1_089,
+    negativeCount: 154,
+    ingestedCount: 1_243,
+  },
+  denials: {
+    openCount:        31,
+    underAppealCount: 14,
+    overTurnRate:     0.62,
+    nearDeadlineCount: 7,
+  },
+  delivery: {
+    total:        18_420,
+    delivered:    17_984,
+    failed:       221,
+    pending:      215,
+    deliveryRate: 0.976,
+    failureRate:  0.012,
+  },
+  demoSessions: [
+    { sessionId: 'demo-sess-001', status: 'Completed', npsScore: 9 },
+    { sessionId: 'demo-sess-002', status: 'Completed', npsScore: 8 },
+    { sessionId: 'demo-sess-003', status: 'Completed', npsScore: 9 },
+    { sessionId: 'demo-sess-004', status: 'InProgress', npsScore: 0 },
+    { sessionId: 'demo-sess-005', status: 'Completed', npsScore: 7 },
+    { sessionId: 'demo-sess-006', status: 'Completed', npsScore: 10 },
+  ],
+  models: [
+    { id: 'readmission-v3', isActive: true },
+    { id: 'triage-classifier-v2', isActive: true },
+    { id: 'nlp-coder-v1', isActive: true },
+    { id: 'readmission-v2', isActive: false },
+    { id: 'triage-classifier-v1', isActive: false },
+  ],
+  campaigns: [
+    { id: 'diab-screening-2026', status: 'Active' },
+    { id: 'flu-outreach-q2',    status: 'Active' },
+    { id: 'cardiac-followup',   status: 'Active' },
+    { id: 'wellness-q1',        status: 'Completed' },
+  ],
+  loadedAt: new Date(),
+};
+
 // ── Main component ─────────────────────────────────────────────────────────
 
 export default function BusinessKpiDashboard() {
@@ -212,7 +262,7 @@ export default function BusinessKpiDashboard() {
         safeFetch<Campaign[]>('/api/v1/notifications/campaigns'),
       ]);
 
-    setKpi({
+    const loaded: KpiData = {
       tenantCount: tenants.status === 'fulfilled' ? (tenants.value?.total ?? null) : null,
       userCount:   users.status === 'fulfilled'   ? (users.value?.total ?? null)   : null,
       feedback:    feedback.status === 'fulfilled' ? feedback.value : null,
@@ -222,7 +272,16 @@ export default function BusinessKpiDashboard() {
       models:       models.status === 'fulfilled'  ? models.value   : null,
       campaigns:    campaigns.status === 'fulfilled' ? campaigns.value : null,
       loadedAt: new Date(),
-    });
+    };
+
+    // When every source returns null the backend is offline — show demo KPIs
+    const allNull =
+      loaded.tenantCount === null && loaded.userCount === null &&
+      loaded.feedback === null && loaded.denials === null &&
+      loaded.delivery === null && loaded.demoSessions === null &&
+      loaded.models === null && loaded.campaigns === null;
+
+    setKpi(allNull ? { ...DEMO_KPI, loadedAt: new Date() } : loaded);
     setLoading(false);
   }, []);
 
