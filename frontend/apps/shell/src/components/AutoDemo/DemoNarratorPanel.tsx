@@ -37,6 +37,7 @@ interface DemoNarratorPanelProps {
   sceneIdx:       number;
   countdown:      number;       // seconds remaining in current scene
   totalSec:       number;       // total seconds for current scene
+  remainingSec:   number;       // Phase 68 — seconds remaining in full tour
   liveKpi?:       LiveKpi | null;
 }
 
@@ -56,6 +57,7 @@ export function DemoNarratorPanel({
   sceneIdx,
   countdown,
   totalSec,
+  remainingSec,
   liveKpi,
 }: DemoNarratorPanelProps) {
   const { setDemoScene } = useGlobalStore();
@@ -71,6 +73,9 @@ export function DemoNarratorPanel({
   const countdownStr  = mins > 0
     ? `${mins}:${String(secs).padStart(2, '0')}`
     : `${secs}s`;
+  // Phase 68 — remaining tour time label
+  const remMins = Math.ceil(remainingSec / 60);
+  const remainingLabel = remMins <= 1 ? '<1 min left' : `~${remMins} min left`;
 
   return (
     <Box
@@ -123,6 +128,10 @@ export function DemoNarratorPanel({
           </Typography>
           <Typography variant="caption" sx={{ color: 'rgba(255,255,255,0.6)', fontSize: '0.7rem' }}>
             Scene {sceneIdx + 1} of {totalScenes} · Workflow {workflowIdx + 1}
+          </Typography>
+          {/* Phase 68 — remaining tour time */}
+          <Typography variant="caption" sx={{ color: 'rgba(255,255,255,0.35)', fontSize: '0.62rem' }}>
+            {remainingLabel}
           </Typography>
         </Box>
         <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: 0.3 }}>

@@ -17,6 +17,7 @@ import Stack from '@mui/material/Stack';
 import Chip from '@mui/material/Chip';
 import Divider from '@mui/material/Divider';
 import Tooltip from '@mui/material/Tooltip';
+import TextField from '@mui/material/TextField';
 import AutoAwesomeIcon from '@mui/icons-material/AutoAwesome';
 import ReplayIcon from '@mui/icons-material/Replay';
 import CalendarMonthIcon from '@mui/icons-material/CalendarMonth';
@@ -44,8 +45,24 @@ function npsColor(score: number): string {
 
 export function DemoCompletionOverlay() {
   const { demoClientName, demoCompany, demoWorkflowIndices, exitDemo, startSelfDrivenDemo } = useGlobalStore();
-  const [npsScore, setNpsScore]   = useState<number | null>(null);
-  const [submitted, setSubmitted] = useState(false);
+  const [npsScore, setNpsScore]           = useState<number | null>(null);
+  const [submitted, setSubmitted]         = useState(false);
+  const [priorities, setPriorities]       = useState<string[]>([]); // Phase 68
+  const [comment, setComment]             = useState('');            // Phase 68
+
+  const FEATURE_PRIORITIES = [
+    { key: 'Voice AI',          emoji: '🎙️' },
+    { key: 'AI Triage',         emoji: '🔴' },
+    { key: 'Smart Scheduling',  emoji: '📅' },
+    { key: 'Revenue Cycle',     emoji: '💰' },
+    { key: 'Population Health', emoji: '📊' },
+    { key: 'Patient Engagement',emoji: '💬' },
+  ];
+
+  const togglePriority = (key: string) =>
+    setPriorities(prev =>
+      prev.includes(key) ? prev.filter(k => k !== key) : [...prev, key]
+    );
 
   // Phase 64 — dynamic stats based on workflows actually demoed
   const workflowsShown = demoWorkflowIndices.length > 0 ? demoWorkflowIndices.length : DEMO_WORKFLOWS.length;
@@ -69,7 +86,7 @@ export function DemoCompletionOverlay() {
 
   const handleSubmit = async () => {
     if (!npsScore) return;
-    // Phase 64 — persist NPS to backend best-effort (don't block UI on failure)
+    // Phase 64/68 — persist NPS + priorities + comment to backend best-effort
     try {
       const stored = sessionStorage.getItem('demo');
       const sessionId: string | null = stored ? JSON.parse(stored).sessionId : null;
@@ -77,13 +94,30 @@ export function DemoCompletionOverlay() {
         await fetch(`${DEMO_API}/${sessionId}/complete`, {
           method:  'POST',
           headers: { 'Content-Type': 'application/json' },
-          body:    JSON.stringify({ npsScore, featurePriorities: [], comment: null }),
+          body:    JSON.stringify({
+            npsScore,
+            featurePriorities: priorities,
+            comment: comment.trim() || null,
+          }),
           signal:  AbortSignal.timeout(5_000),
         });
       }
     } catch { /* best-effort */ }
     setSubmitted(true);
   };
+
+  // Phase 68 — Book Meeting CTA with pre-populated email subject
+  const bookMeetingHref = (() => {
+    const subject = encodeURIComponent(
+      `HealthQ Copilot — Book a Meeting${demoClientName ? ` · ${demoClientName}` : ''}${demoCompany ? ` (${demoCompany})` : ''}${npsScore ? ` · NPS ${npsScore}/10` : ''}`
+    );
+    const body = encodeURIComponent(
+      `Hi,\n\nI just completed the HealthQ Copilot demo and I'd love to learn more.\n\n` +
+      (priorities.length > 0 ? `Most interested in: ${priorities.join(', ')}\n\n` : '') +
+      `Name: ${demoClientName || '—'}\nCompany: ${demoCompany || '—'}\n\nBest,\n${demoClientName || 'Demo Attendee'}`
+    );
+    return `mailto:hello@healthqcopilot.com?subject=${subject}&body=${body}`;
+  })();
 
   return (
     <Box
@@ -212,6 +246,54 @@ export function DemoCompletionOverlay() {
                   {NPS_LABELS[npsScore]}
                 </Typography>
               )}
+
+              {/* Phase 68 — Feature priority picker */}
+              <Typography variant="caption" fontWeight={700} sx={{ color: 'rgba(255,255,255,0.55)', display: 'block', mb: 0.8 }}>
+                Which module interests you most? (pick any)
+              </Typography>
+              <Stack direction="row" flexWrap="wrap" gap={0.7} mb={2}>
+                {FEATURE_PRIORITIES.map(({ key, emoji }) => {
+                  const selected = priorities.includes(key);
+                  return (
+                    <Chip
+                      key={key}
+                      label={`${emoji}\u00a0${key}`}
+                      size="small"
+                      onClick={() => togglePriority(key)}
+                      sx={{
+                        cursor:      'pointer',
+                        fontWeight:  selected ? 700 : 400,
+                        bgcolor:     selected ? 'rgba(25,118,210,0.3)' : 'rgba(255,255,255,0.07)',
+                        color:       selected ? '#90caf9' : 'rgba(255,255,255,0.5)',
+                        border:      selected ? '1px solid #1976d2' : '1px solid rgba(255,255,255,0.12)',
+                        '&:hover':   { bgcolor: 'rgba(25,118,210,0.2)' },
+                      }}
+                    />
+                  );
+                })}
+              </Stack>
+
+              {/* Phase 68 — Comment textarea */}
+              <TextField
+                fullWidth
+                multiline
+                rows={2}
+                placeholder="Any other thoughts? (optional)"
+                value={comment}
+                onChange={e => setComment(e.target.value)}
+                size="small"
+                sx={{
+                  mb: 2,
+                  '& .MuiOutlinedInput-root': {
+                    color:  'rgba(255,255,255,0.8)',
+                    fontSize: '0.8rem',
+                    '& fieldset': { borderColor: 'rgba(255,255,255,0.15)' },
+                    '&:hover fieldset': { borderColor: 'rgba(255,255,255,0.3)' },
+                    '&.Mui-focused fieldset': { borderColor: '#1976d2' },
+                  },
+                  '& .MuiInputBase-input::placeholder': { color: 'rgba(255,255,255,0.3)', opacity: 1 },
+                }}
+              />
               <Button
                 fullWidth
                 variant="contained"
@@ -252,7 +334,7 @@ export function DemoCompletionOverlay() {
                 fullWidth
                 variant="contained"
                 startIcon={<CalendarMonthIcon />}
-                href="mailto:hello@healthqcopilot.com?subject=Book%20a%20Meeting%20—%20HealthQ%20Copilot"
+                href={bookMeetingHref}
                 target="_blank"
                 sx={{
                   bgcolor:   '#6a1b9a',

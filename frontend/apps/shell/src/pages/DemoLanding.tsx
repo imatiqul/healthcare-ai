@@ -16,7 +16,7 @@ import AutoModeIcon from '@mui/icons-material/AutoMode';
 import Alert from '@mui/material/Alert';
 import CheckCircleOutlineIcon from '@mui/icons-material/CheckCircleOutline';
 import { useGlobalStore } from '../store'; // Phase 58
-import { DEMO_WORKFLOWS } from '../components/AutoDemo/demoScripts'; // Phase 64
+import { DEMO_WORKFLOWS, getTourDurationSec } from '../components/AutoDemo/demoScripts'; // Phase 64/68
 
 const API_BASE = import.meta.env.VITE_API_BASE_URL || '';
 const DEMO_API = `${API_BASE}/api/v1/agents/demo`;
@@ -254,29 +254,42 @@ export default function DemoLanding() {
 
           {/* Phase 64 — Workflow selector */}
           <Box sx={{ mt: 2, textAlign: 'left' }}>
-            <Typography variant="caption" fontWeight={700} color="text.secondary" sx={{ display: 'block', mb: 0.8 }}>
-              Customise workflows to include ({selectedWorkflows.length} of {DEMO_WORKFLOWS.length}):
-            </Typography>
+            <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', mb: 0.8 }}>
+              <Typography variant="caption" fontWeight={700} color="text.secondary">
+                Customise workflows to include ({selectedWorkflows.length} of {DEMO_WORKFLOWS.length}):
+              </Typography>
+              {/* Phase 68 — Estimated duration */}
+              <Typography variant="caption" sx={{ color: 'text.disabled', fontStyle: 'italic' }}>
+                ~{Math.ceil(getTourDurationSec(selectedWorkflows) / 60)} min
+              </Typography>
+            </Box>
             <Stack direction="row" flexWrap="wrap" gap={0.7}>
               {DEMO_WORKFLOWS.map((wf, i) => {
                 const selected = selectedWorkflows.includes(i);
+                const sceneList = wf.scenes.map(s => `• ${s.title}`).join('\n');
                 return (
-                  <Chip
+                  <Tooltip
                     key={wf.id}
-                    label={`${wf.icon}\u00a0${wf.name}`}
-                    size="small"
-                    onClick={() => toggleWorkflow(i)}
-                    sx={{
-                      cursor:      'pointer',
-                      fontSize:    11,
-                      fontWeight:  selected ? 700 : 400,
-                      bgcolor:     selected ? 'primary.main' : 'transparent',
-                      color:       selected ? '#fff' : 'text.secondary',
-                      border:      '1px solid',
-                      borderColor: selected ? 'primary.main' : 'divider',
-                      '&:hover':   { bgcolor: selected ? 'primary.dark' : 'action.hover' },
-                    }}
-                  />
+                    title={<Box sx={{ whiteSpace: 'pre-line', fontSize: '0.72rem' }}>{sceneList}</Box>}
+                    arrow
+                    placement="top"
+                  >
+                    <Chip
+                      label={`${wf.icon}\u00a0${wf.name}`}
+                      size="small"
+                      onClick={() => toggleWorkflow(i)}
+                      sx={{
+                        cursor:      'pointer',
+                        fontSize:    11,
+                        fontWeight:  selected ? 700 : 400,
+                        bgcolor:     selected ? 'primary.main' : 'transparent',
+                        color:       selected ? '#fff' : 'text.secondary',
+                        border:      '1px solid',
+                        borderColor: selected ? 'primary.main' : 'divider',
+                        '&:hover':   { bgcolor: selected ? 'primary.dark' : 'action.hover' },
+                      }}
+                    />
+                  </Tooltip>
                 );
               })}
             </Stack>

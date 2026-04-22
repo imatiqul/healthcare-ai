@@ -101,6 +101,19 @@ public static class DemoEndpoints
         .WithName("GetDemoStatus")
         .WithSummary("Get current demo session status and progress");
 
+        // Phase 68 — Scene-level engagement analytics (fire-and-forget from frontend)
+        group.MapPost("/{id:guid}/scene-events", async (
+            Guid id,
+            DemoSceneEventRequest request,
+            DemoOrchestrator orchestrator,
+            CancellationToken ct) =>
+        {
+            await orchestrator.RecordSceneEventAsync(id, request.WorkflowId, request.SceneId, request.TimeSpentSec, ct);
+            return Results.Ok();
+        })
+        .WithName("RecordDemoSceneEvent")
+        .WithSummary("Record a scene view event for demo engagement analytics");
+
         // Phase 61 — Live platform insights for scene narration enrichment
         group.MapGet("/live-insights", async (
             IHttpClientFactory http,
@@ -201,6 +214,7 @@ public static class DemoEndpoints
 public record StartDemoRequest(string ClientName, string Company, string? Email);
 public record SubmitStepFeedbackRequest(string Step, int Rating, List<string> Tags, string? Comment);
 public record CompleteDemoRequest(int NpsScore, List<string> FeaturePriorities, string? Comment);
+public record DemoSceneEventRequest(string WorkflowId, string SceneId, int TimeSpentSec); // Phase 68
 
 /// <summary>Phase 61 — live KPI snapshot returned by GET /api/v1/agents/demo/live-insights</summary>
 public record DemoLiveInsights(

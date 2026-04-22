@@ -344,3 +344,43 @@ export function getGlobalSceneIndex(workflowIdx: number, sceneIdx: number): numb
 export function getTotalWorkflows(): number {
   return DEMO_WORKFLOWS.length;
 }
+
+/** Phase 68 — sum of all scene durationSec for the given workflow indices */
+export function getTourDurationSec(indices: number[]): number {
+  const wfList = indices.length > 0 ? indices : DEMO_WORKFLOWS.map((_, i) => i);
+  return wfList.reduce((acc, wi) => {
+    const wf = DEMO_WORKFLOWS[wi];
+    if (!wf) return acc;
+    return acc + wf.scenes.reduce((s, sc) => s + sc.durationSec, 0);
+  }, 0);
+}
+
+/** Phase 68 — seconds remaining from current position to end of selected tour */
+export function getRemainingTourSec(
+  workflowIdx: number,
+  sceneIdx:    number,
+  indices:     number[],
+  sceneCountdown: number,
+): number {
+  const wfList = indices.length > 0 ? indices : DEMO_WORKFLOWS.map((_, i) => i);
+  const curPos = wfList.indexOf(workflowIdx);
+  if (curPos === -1) return 0;
+
+  let remaining = sceneCountdown; // rest of current scene
+
+  // Remaining scenes in current workflow
+  const curWf = DEMO_WORKFLOWS[workflowIdx];
+  if (curWf) {
+    for (let s = sceneIdx + 1; s < curWf.scenes.length; s++) {
+      remaining += curWf.scenes[s].durationSec;
+    }
+  }
+
+  // Full workflows after current
+  for (let p = curPos + 1; p < wfList.length; p++) {
+    const wf = DEMO_WORKFLOWS[wfList[p]];
+    if (wf) remaining += wf.scenes.reduce((s, sc) => s + sc.durationSec, 0);
+  }
+
+  return remaining;
+}

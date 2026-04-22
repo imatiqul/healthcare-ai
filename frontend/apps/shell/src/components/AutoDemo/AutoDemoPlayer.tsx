@@ -14,7 +14,7 @@
 import { useEffect, useRef, useState, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useGlobalStore } from '../../store';
-import { DEMO_WORKFLOWS } from './demoScripts';
+import { DEMO_WORKFLOWS, getRemainingTourSec } from './demoScripts';
 import { DemoNarratorPanel } from './DemoNarratorPanel';
 import { DemoControlBar } from './DemoControlBar';
 import { DemoCompletionOverlay } from './DemoCompletionOverlay';
@@ -49,6 +49,7 @@ export function AutoDemoPlayer() {
   const [showHelp, setShowHelp]           = useState(false);
   const [elapsedSec, setElapsedSec]       = useState(0);  // Phase 65 — demo elapsed timer
   const [isFullscreen, setIsFullscreen]   = useState(false); // Phase 67
+  const sceneStartRef = useRef<number>(Date.now()); // Phase 68 — track time-on-scene
 
   // Stable refs so interval callbacks always see the latest values
   const narrationRef    = useRef<ReturnType<typeof setInterval> | null>(null);
@@ -182,6 +183,29 @@ export function AutoDemoPlayer() {
     // Navigate to the scene's route
     navigate(scene.route);
 
+    // Phase 68 — fire scene-view event to backend (best-effort, no await)
+    {
+      const timeSpent = Math.round((Date.now() - sceneStartRef.current) / 1000);
+      sceneStartRef.current = Date.now();
+      try {
+        const stored = sessionStorage.getItem('demo');
+        const sid: string | null = stored ? JSON.parse(stored).sessionId : null;
+        if (sid && !sid.startsWith('demo-local-')) {
+          const API_BASE_URL = (import.meta as { env: Record<string,string> }).env.VITE_API_BASE_URL ?? '';
+          void fetch(`${API_BASE_URL}/api/v1/agents/demo/${sid}/scene-events`, {
+            method:  'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body:    JSON.stringify({
+              workflowId:   DEMO_WORKFLOWS[demoWorkflowIdx]?.id ?? '',
+              sceneId:      scene.id,
+              timeSpentSec: timeSpent,
+            }),
+            signal: AbortSignal.timeout(4_000),
+          });
+        }
+      } catch { /* silent — analytics are best-effort */ }
+    }
+
     // Reset narration
     clearNarration();
     setNarrationText('');
@@ -257,6 +281,7 @@ export function AutoDemoPlayer() {
               sceneIdx={demoSceneIdx}
               countdown={countdown}
               totalSec={scene.durationSec}
+              remainingSec={getRemainingTourSec(demoWorkflowIdx, demoSceneIdx, demoWorkflowIndices, countdown)}
               liveKpi={liveKpi}
             />
           )}

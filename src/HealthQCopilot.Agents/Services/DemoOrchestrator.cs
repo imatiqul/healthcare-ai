@@ -252,6 +252,17 @@ public sealed class DemoOrchestrator
         return insight;
     }
 
+    // Phase 68 — Scene-level engagement analytics (best-effort, fire-and-forget from frontend)
+    public Task RecordSceneEventAsync(Guid sessionId, string workflowId, string sceneId, int timeSpentSec, CancellationToken ct)
+    {
+        _logger.LogInformation(
+            "Scene event: session={SessionId} workflow={WorkflowId} scene={SceneId} timeSpent={TimeSpentSec}s",
+            sessionId, workflowId, sceneId, timeSpentSec);
+        // Stored as structured log only — no DB migration needed.
+        // Future: write to a DemoSceneEvent table for richer analytics.
+        return Task.CompletedTask;
+    }
+
     private async Task<string> GetStepNarrationAsync(Guid guideSessionId, DemoStep step, CancellationToken ct)
     {
         if (!Steps.TryGetValue(step, out var def))
