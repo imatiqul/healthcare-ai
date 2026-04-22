@@ -21,8 +21,13 @@ import MenuItem from '@mui/material/MenuItem';
 import Select from '@mui/material/Select';
 import FormControl from '@mui/material/FormControl';
 import InputLabel from '@mui/material/InputLabel';
+import ToggleButton from '@mui/material/ToggleButton';
+import ToggleButtonGroup from '@mui/material/ToggleButtonGroup';
 import TuneIcon from '@mui/icons-material/Tune';
-import { Card, CardHeader, CardTitle, CardContent, Button } from '@healthcare/design-system';
+import LightModeIcon from '@mui/icons-material/LightMode';
+import DarkModeIcon from '@mui/icons-material/DarkMode';
+import SettingsBrightnessIcon from '@mui/icons-material/SettingsBrightness';
+import { Card, CardHeader, CardTitle, CardContent, Button, useColorMode } from '@healthcare/design-system';
 
 // ── Types & constants ─────────────────────────────────────────────────────────
 
@@ -76,6 +81,7 @@ export default function UserPreferencesPanel() {
   const [prefs, setPrefs]   = useState<UserPreferences>(loadPreferences);
   const [saved, setSaved]   = useState(false);
   const [error, setError]   = useState('');
+  const { mode, toggleMode } = useColorMode();
 
   const update = <K extends keyof UserPreferences>(key: K, value: UserPreferences[K]) => {
     setPrefs(prev => ({ ...prev, [key]: value }));
@@ -210,6 +216,36 @@ export default function UserPreferencesPanel() {
               </Box>
             }
           />
+        </CardContent>
+      </Card>
+
+      {/* ── Appearance ── */}
+      <Card sx={{ mb: 3 }}>
+        <CardHeader><CardTitle>Appearance</CardTitle></CardHeader>
+        <CardContent>
+          <Stack spacing={1}>
+            <Typography variant="body2" fontWeight={500}>Color Theme</Typography>
+            <Typography variant="caption" color="text.secondary">
+              Choose light, dark, or follow your OS setting. The toggle in the top bar also switches theme instantly.
+            </Typography>
+            <ToggleButtonGroup
+              exclusive
+              value={mode}
+              onChange={(_, v) => { if (v && v !== mode) toggleMode(); }}
+              aria-label="Color theme"
+              size="small"
+            >
+              <ToggleButton value="light" aria-label="Light mode">
+                <LightModeIcon fontSize="small" sx={{ mr: 0.5 }} /> Light
+              </ToggleButton>
+              <ToggleButton value="system" aria-label="System default">
+                <SettingsBrightnessIcon fontSize="small" sx={{ mr: 0.5 }} /> System
+              </ToggleButton>
+              <ToggleButton value="dark" aria-label="Dark mode">
+                <DarkModeIcon fontSize="small" sx={{ mr: 0.5 }} /> Dark
+              </ToggleButton>
+            </ToggleButtonGroup>
+          </Stack>
         </CardContent>
       </Card>
 

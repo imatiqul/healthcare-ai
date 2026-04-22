@@ -43,9 +43,9 @@ describe('KeyboardShortcutsModal', () => {
     expect(screen.getByText('Move selection up / down')).toBeInTheDocument();
   });
 
-  it('renders General group', () => {
+  it('renders Accessibility group', () => {
     renderModal();
-    expect(screen.getByText('General')).toBeInTheDocument();
+    expect(screen.getByText('Accessibility')).toBeInTheDocument();
     expect(screen.getByText('Move focus forward')).toBeInTheDocument();
   });
 
@@ -58,7 +58,7 @@ describe('KeyboardShortcutsModal', () => {
 
   it('shows the "Press ? to toggle" hint', () => {
     renderModal();
-    expect(screen.getByText(/Press/i)).toBeInTheDocument();
+    expect(screen.getAllByText(/Press/i).length).toBeGreaterThanOrEqual(1);
   });
 });
 

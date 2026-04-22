@@ -12,6 +12,7 @@ vi.mock('@healthcare/design-system', () => ({
   Button:      ({ children, onClick, 'aria-label': ariaLabel }: any) => (
     <button onClick={onClick} aria-label={ariaLabel}>{children}</button>
   ),
+  useColorMode: () => ({ mode: 'light', toggleMode: vi.fn() }),
 }));
 
 beforeEach(() => {

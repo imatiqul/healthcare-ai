@@ -6,6 +6,8 @@ import TextField from '@mui/material/TextField';
 import InputAdornment from '@mui/material/InputAdornment';
 import Divider from '@mui/material/Divider';
 import Chip from '@mui/material/Chip';
+import ToggleButton from '@mui/material/ToggleButton';
+import ToggleButtonGroup from '@mui/material/ToggleButtonGroup';
 import { Card, CardHeader, CardTitle, CardContent, Badge } from '@healthcare/design-system';
 import { emitPatientSelected } from '@healthcare/mfe-events';
 
@@ -28,12 +30,18 @@ const RISK_BADGE: Record<string, 'danger' | 'warning' | 'default' | 'success'> =
   Low: 'success',
 };
 
+const RISK_LEVELS = ['All', 'Critical', 'High', 'Moderate', 'Low'] as const;
+type RiskFilter = typeof RISK_LEVELS[number];
+
 export function PatientSearch() {
-  const [query, setQuery]       = useState('');
-  const [results, setResults]   = useState<PatientSummary[]>([]);
-  const [loading, setLoading]   = useState(false);
-  const [searched, setSearched] = useState(false);
-  const debounceRef             = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const [query, setQuery]             = useState('');
+  const [results, setResults]         = useState<PatientSummary[]>([]);
+  const [loading, setLoading]         = useState(false);
+  const [searched, setSearched]       = useState(false);
+  const [riskFilter, setRiskFilter]   = useState<RiskFilter>('All');
+  const [careGapsOnly, setCareGapsOnly] = useState(false);
+  const [sortAsc, setSortAsc]         = useState(false); // false = highest risk first
+  const debounceRef                   = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const search = useCallback(async (q: string) => {
     if (!q.trim()) { setResults([]); setSearched(false); return; }
@@ -68,6 +76,12 @@ export function PatientSearch() {
     emitPatientSelected({ patientId: p.patientId, riskLevel: p.riskLevel });
   }
 
+  // Apply client-side smart filters + sort on fetched results
+  const visibleResults = results
+    .filter(p => riskFilter === 'All' || p.riskLevel === riskFilter)
+    .filter(p => !careGapsOnly || p.openCareGaps > 0)
+    .sort((a, b) => sortAsc ? a.riskScore - b.riskScore : b.riskScore - a.riskScore);
+
   return (
     <Card>
       <CardHeader>
@@ -81,6 +95,7 @@ export function PatientSearch() {
             placeholder="Search by patient ID or name..."
             value={query}
             onChange={handleChange}
+            inputProps={{ 'aria-label': 'Search patients' }}
             InputProps={{
               startAdornment: (
                 <InputAdornment position="start">
@@ -89,6 +104,42 @@ export function PatientSearch() {
               ),
             }}
           />
+
+          {/* Smart filter controls — shown once results are available */}
+          {results.length > 0 && (
+            <Stack direction="row" spacing={1} alignItems="center" flexWrap="wrap" useFlexGap>
+              <ToggleButtonGroup
+                size="small"
+                exclusive
+                value={riskFilter}
+                onChange={(_, v) => v && setRiskFilter(v as RiskFilter)}
+                aria-label="Filter by risk level"
+              >
+                {RISK_LEVELS.map(level => (
+                  <ToggleButton key={level} value={level} sx={{ textTransform: 'none', py: 0.25, px: 1 }}>
+                    {level}
+                  </ToggleButton>
+                ))}
+              </ToggleButtonGroup>
+
+              <Chip
+                label="Care gaps only"
+                size="small"
+                variant={careGapsOnly ? 'filled' : 'outlined'}
+                color={careGapsOnly ? 'warning' : 'default'}
+                onClick={() => setCareGapsOnly(v => !v)}
+                aria-pressed={careGapsOnly}
+              />
+
+              <Chip
+                label={sortAsc ? 'Risk ↑' : 'Risk ↓'}
+                size="small"
+                variant="outlined"
+                onClick={() => setSortAsc(v => !v)}
+                aria-label={sortAsc ? 'Sort by risk ascending' : 'Sort by risk descending'}
+              />
+            </Stack>
+          )}
 
           {loading && (
             <Typography variant="caption" color="text.secondary" textAlign="center">
@@ -102,12 +153,22 @@ export function PatientSearch() {
             </Typography>
           )}
 
-          {results.length > 0 && (
+          {!loading && searched && results.length > 0 && visibleResults.length === 0 && (
+            <Typography variant="caption" color="text.disabled" textAlign="center" sx={{ py: 2 }}>
+              No patients match the active filters.
+            </Typography>
+          )}
+
+          {visibleResults.length > 0 && (
             <Stack spacing={1} divider={<Divider />}>
-              {results.map((p) => (
+              {visibleResults.map((p) => (
                 <Box
                   key={p.id}
+                  role="button"
+                  tabIndex={0}
                   onClick={() => selectPatient(p)}
+                  onKeyDown={(e) => (e.key === 'Enter' || e.key === ' ') && selectPatient(p)}
+                  aria-label={`Select patient ${p.fullName ?? p.patientId}, risk ${p.riskLevel}`}
                   sx={{
                     display: 'flex',
                     alignItems: 'center',
@@ -117,6 +178,7 @@ export function PatientSearch() {
                     borderRadius: 1,
                     px: 0.5,
                     '&:hover': { bgcolor: 'action.hover' },
+                    '&:focus-visible': { outline: '2px solid', outlineColor: 'primary.main', outlineOffset: 2 },
                   }}
                 >
                   <Box>

@@ -33,6 +33,19 @@ const GROUPS: ShortcutGroup[] = [
     ],
   },
   {
+    label: 'Go to page  (press G, then…)',
+    shortcuts: [
+      { keys: ['G', 'D'],  description: 'Dashboard' },
+      { keys: ['G', 'T'],  description: 'Triage' },
+      { keys: ['G', 'S'],  description: 'Scheduling' },
+      { keys: ['G', 'P'],  description: 'Population Health' },
+      { keys: ['G', 'R'],  description: 'Revenue Cycle' },
+      { keys: ['G', 'E'],  description: 'Encounters' },
+      { keys: ['G', 'V'],  description: 'Voice Sessions' },
+      { keys: ['G', 'N'],  description: 'Notifications' },
+    ],
+  },
+  {
     label: 'Command Palette',
     shortcuts: [
       { keys: ['↑', '↓'],        description: 'Move selection up / down' },
@@ -41,11 +54,12 @@ const GROUPS: ShortcutGroup[] = [
     ],
   },
   {
-    label: 'General',
+    label: 'Accessibility',
     shortcuts: [
       { keys: ['Tab'],            description: 'Move focus forward' },
       { keys: ['Shift', 'Tab'],   description: 'Move focus backward' },
       { keys: ['Space / Enter'],  description: 'Activate button or link' },
+      { keys: ['Alt', 'M'],       description: 'Skip to main content' },
     ],
   },
 ];

@@ -1,5 +1,5 @@
-import { lazy, Suspense, Component, useEffect, type ReactNode, type ErrorInfo } from 'react';
-import { Routes, Route, useLocation } from 'react-router-dom';
+import { lazy, Suspense, Component, useEffect, useRef, type ReactNode, type ErrorInfo } from 'react';
+import { Routes, Route, useLocation, useNavigate } from 'react-router-dom';
 import Box from '@mui/material/Box';
 import Typography from '@mui/material/Typography';
 import Button from '@mui/material/Button';
@@ -150,9 +150,11 @@ class MfeErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundaryState>
 
 export default function App() {
   const location = useLocation();
+  const navigate = useNavigate();
   const isDemoRoute = location.pathname.startsWith('/demo');
   const { open: paletteOpen, openPalette, closePalette }         = useCommandPalette();
   const { open: shortcutsOpen, closeModal: closeShortcuts } = useKeyboardShortcutsModal();
+  const gKeyRef = useRef(false); // Phase 56 — tracks first key of G+* sequences
 
   // Phase 56 — keep browser tab title in sync with unread notification count
   useEffect(() => {
@@ -175,6 +177,35 @@ export default function App() {
     };
   }, []);
 
+  // Phase 56 — G+* quick navigation shortcuts (G then D/T/S/P/R/E/V/N)
+  useEffect(() => {
+    const GO_MAP: Record<string, string> = {
+      d: '/', t: '/triage', s: '/scheduling',
+      p: '/population-health', r: '/revenue',
+      e: '/encounters', v: '/voice', n: '/notifications',
+    };
+    let timer: ReturnType<typeof setTimeout>;
+    const handler = (e: KeyboardEvent) => {
+      const tag = (e.target as HTMLElement).tagName;
+      if (tag === 'INPUT' || tag === 'TEXTAREA' || tag === 'SELECT') return;
+      if (e.ctrlKey || e.metaKey || e.altKey) return;
+      if (e.key === 'g' || e.key === 'G') {
+        gKeyRef.current = true;
+        clearTimeout(timer);
+        timer = setTimeout(() => { gKeyRef.current = false; }, 1000);
+        return;
+      }
+      if (gKeyRef.current) {
+        const dest = GO_MAP[e.key.toLowerCase()];
+        if (dest) { e.preventDefault(); navigate(dest); }
+        gKeyRef.current = false;
+        clearTimeout(timer);
+      }
+    };
+    window.addEventListener('keydown', handler);
+    return () => { window.removeEventListener('keydown', handler); clearTimeout(timer); };
+  }, [navigate]);
+
   // Demo routes render without shell chrome (no sidebar, topnav, or copilot)
   if (isDemoRoute) {
     return (
@@ -189,6 +220,18 @@ export default function App() {
 
   return (
     <SidebarProvider>
+      {/* Phase 56 — skip-to-main-content link for keyboard/screen-reader users */}
+      <Box
+        component="a"
+        href="#main-content"
+        sx={{
+          position: 'absolute', top: -9999, left: -9999,
+          '&:focus': { top: 8, left: 8, zIndex: 9999, p: 1, px: 2, borderRadius: 1,
+            bgcolor: 'primary.main', color: 'primary.contrastText', fontWeight: 700 },
+        }}
+      >
+        Skip to main content
+      </Box>
       <Box sx={{ display: 'flex', height: '100vh' }}>
         <Sidebar />
         <Box sx={{ flex: 1, display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
@@ -197,7 +240,7 @@ export default function App() {
           <AppBreadcrumbs />
           <AnnouncementBanner />
           <PatientContextBar />
-          <Box component="main" sx={{ flex: 1, overflow: 'auto', p: { xs: 2, md: 3 }, bgcolor: 'background.default' }}>
+          <Box id="main-content" component="main" sx={{ flex: 1, overflow: 'auto', p: { xs: 2, md: 3 }, bgcolor: 'background.default' }}>
             {/* PageTracker runs on every navigation — outside Routes so it captures all paths */}
             <PageTracker />
             <Suspense fallback={<Loading />}>

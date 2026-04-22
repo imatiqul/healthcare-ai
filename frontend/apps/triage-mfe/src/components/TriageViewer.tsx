@@ -4,6 +4,7 @@ import Typography from '@mui/material/Typography';
 import Box from '@mui/material/Box';
 import CircularProgress from '@mui/material/CircularProgress';
 import Alert from '@mui/material/Alert';
+import Chip from '@mui/material/Chip';
 import { Card, CardHeader, CardTitle, CardContent, Badge, Button } from '@healthcare/design-system';
 import { onEscalationRequired, onAgentDecision } from '@healthcare/mfe-events';
 import { HitlEscalationModal } from './HitlEscalationModal';
@@ -25,6 +26,8 @@ export function TriageViewer() {
   const [showEscalation, setShowEscalation] = useState(false);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [statusFilter, setStatusFilter] = useState<'All' | 'AwaitingHumanReview' | 'Completed' | 'Processing'>('All');
+  const [levelFilter, setLevelFilter] = useState<'All' | 'P1_Immediate' | 'P2_Urgent' | 'P3_Standard'>('All');
   const abortRef = useRef<AbortController | null>(null);
 
   async function fetchWorkflows() {
@@ -77,8 +80,45 @@ export function TriageViewer() {
     );
   }
 
+  const visibleWorkflows = workflows
+    .filter(wf => statusFilter === 'All' || wf.status === statusFilter)
+    .filter(wf => levelFilter === 'All' || wf.triageLevel === levelFilter);
+
+  const statusOptions: Array<typeof statusFilter> = ['All', 'AwaitingHumanReview', 'Completed', 'Processing'];
+  const levelOptions: Array<typeof levelFilter> = ['All', 'P1_Immediate', 'P2_Urgent', 'P3_Standard'];
+
   return (
     <>
+      {/* Filter bar */}
+      <Stack direction="row" spacing={1} flexWrap="wrap" useFlexGap sx={{ mb: 2 }} aria-label="Triage filters">
+        <Stack direction="row" spacing={0.5} alignItems="center">
+          <Typography variant="caption" color="text.secondary">Status:</Typography>
+          {statusOptions.map(s => (
+            <Chip
+              key={s}
+              label={s === 'AwaitingHumanReview' ? 'Awaiting Review' : s}
+              size="small"
+              variant={statusFilter === s ? 'filled' : 'outlined'}
+              color={statusFilter === s ? 'primary' : 'default'}
+              onClick={() => setStatusFilter(s)}
+            />
+          ))}
+        </Stack>
+        <Stack direction="row" spacing={0.5} alignItems="center">
+          <Typography variant="caption" color="text.secondary">Level:</Typography>
+          {levelOptions.map(l => (
+            <Chip
+              key={l}
+              label={l === 'All' ? 'All' : l.replace('_', ' ')}
+              size="small"
+              variant={levelFilter === l ? 'filled' : 'outlined'}
+              color={levelFilter === l ? (l === 'P1_Immediate' ? 'error' : l === 'P2_Urgent' ? 'warning' : 'default') : 'default'}
+              onClick={() => setLevelFilter(l)}
+            />
+          ))}
+        </Stack>
+      </Stack>
+
       <Stack spacing={2}>
         {error && (
           <Alert severity="error" onClose={() => setError(null)}>{error}</Alert>
@@ -92,7 +132,16 @@ export function TriageViewer() {
             </CardContent>
           </Card>
         )}
-        {workflows.map((wf) => (
+        {!error && workflows.length > 0 && visibleWorkflows.length === 0 && (
+          <Card>
+            <CardContent>
+              <Typography color="text.disabled" textAlign="center" sx={{ py: 4 }}>
+                No workflows match the active filters.
+              </Typography>
+            </CardContent>
+          </Card>
+        )}
+        {visibleWorkflows.map((wf) => (
           <Card key={wf.id} sx={{ cursor: 'pointer', '&:hover': { boxShadow: 3 } }}
                 onClick={() => setSelectedWorkflow(wf.id)}>
             <CardHeader>
