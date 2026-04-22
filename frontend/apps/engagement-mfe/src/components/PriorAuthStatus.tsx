@@ -16,6 +16,26 @@ interface PriorAuth {
   denialReason?: string;
 }
 
+const DEMO_PRIOR_AUTHS: PriorAuth[] = [
+  {
+    id: 'pa-demo-1',
+    patientId: 'demo-patient-1',
+    procedure: 'MRI Brain with Contrast',
+    status: 'Pending',
+    insurancePayer: 'BlueCross BlueShield',
+    requestedAt: new Date(Date.now() - 3 * 24 * 60 * 60_000).toISOString(),
+  },
+  {
+    id: 'pa-demo-2',
+    patientId: 'demo-patient-1',
+    procedure: 'Physical Therapy (12 sessions)',
+    status: 'Approved',
+    insurancePayer: 'Aetna',
+    requestedAt: new Date(Date.now() - 10 * 24 * 60 * 60_000).toISOString(),
+    resolvedAt: new Date(Date.now() - 7 * 24 * 60 * 60_000).toISOString(),
+  },
+];
+
 type BadgeVariant = 'success' | 'warning' | 'danger' | 'default';
 
 function authStatusVariant(status: string): BadgeVariant {

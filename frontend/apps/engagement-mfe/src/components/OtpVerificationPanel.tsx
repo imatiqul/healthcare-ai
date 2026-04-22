@@ -62,6 +62,7 @@ export function OtpVerificationPanel() {
     } finally {
       setLoading(false);
     }
+  }, [phoneNumber, userId]);
 
   const verifyOtp = useCallback(async () => {
     if (code.trim().length < 4 || !otpId) return;

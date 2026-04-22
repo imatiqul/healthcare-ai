@@ -19,6 +19,15 @@ interface PatientProfile {
   fhirPatientId: string | null;
 }
 
+const DEMO_PROFILE: PatientProfile = {
+  id: 'demo-patient-1',
+  externalId: 'EXT-001',
+  email: 'demo.patient@healthq.example',
+  displayName: 'Demo Patient',
+  isActive: true,
+  fhirPatientId: 'fhir-demo-001',
+};
+
 export function PatientProfilePanel() {
   const [profile, setProfile] = useState<PatientProfile | null>(null);
   const [loading, setLoading] = useState(false);

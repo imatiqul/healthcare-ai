@@ -37,6 +37,7 @@ export function SlotCalendar() {
   const [slots, setSlots] = useState<Slot[]>([]);
   const [selectedDate, setSelectedDate] = useState(new Date().toISOString().split('T')[0]);
   const [fetchError, setFetchError] = useState<string | null>(null);
+  const [reserveError, setReserveError] = useState<string | null>(null);
 
   useEffect(() => {
     fetchSlots();
@@ -94,6 +95,7 @@ export function SlotCalendar() {
       </CardHeader>
       <CardContent>
         {fetchError && <Alert severity="error" sx={{ mb: 1 }} onClose={() => setFetchError(null)}>{fetchError}</Alert>}
+        {reserveError && <Alert severity="warning" sx={{ mb: 1 }} onClose={() => setReserveError(null)}>{reserveError}</Alert>}
         {!fetchError && slots.length === 0 ? (
           <Typography color="text.disabled" textAlign="center" sx={{ py: 4 }}>
             No available slots for this date

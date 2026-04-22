@@ -91,7 +91,7 @@ public class DemoEndpointTests : IClassFixture<PostgresFixture>
         });
 
         // Validation layer should reject — 400 or 422
-        ((int)response.StatusCode).Should().BeOneOf(400, 422,
+        ((int)response.StatusCode).Should().BeOneOf(new[] { 400, 422 },
             "missing clientName should produce a validation error");
     }
 
@@ -379,7 +379,7 @@ public class DemoEndpointTests : IClassFixture<PostgresFixture>
 
         var response = await _client.PostAsJsonAsync("/api/v1/demo/scene-event", body);
 
-        ((int)response.StatusCode).Should().BeOneOf(200, 201, 204,
+        ((int)response.StatusCode).Should().BeOneOf(new[] { 200, 201, 204 },
             "scene event telemetry should be accepted regardless of audienceGroup");
     }
 
