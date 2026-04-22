@@ -215,3 +215,159 @@ test.describe.serial('Cross-Service Clinical Journey', () => {
     expect(latest.riskScore).toBeGreaterThan(0);
   });
 });
+
+// ─── Phase 71: Audience-group demo journey ────────────────────────────────────
+/**
+ * Validates the self-driven demo API flow introduced in Phase 71:
+ *
+ *   1. GET  /api/v1/demo/kpi/audience?group=<group>  → proof-point KPIs per group
+ *   2. POST /api/v1/agents/demo/start (audienceGroup) → session created
+ *   3. POST /api/v1/agents/demo/{id}/next             → step advances
+ *   4. POST /api/v1/demo/scene-event (audienceGroup)  → telemetry accepted
+ *   5. POST /api/v1/agents/demo/{id}/complete         → NPS + group recorded
+ *
+ * Like the clinical journey, calls that fail due to the backend being
+ * unreachable are skipped rather than hard-failed so CI stays green.
+ */
+test.describe.serial('Phase 71 — Audience-Group Demo Journey', () => {
+  let ctx: Awaited<ReturnType<typeof request.newContext>>;
+  let demoSessionId: string | null = null;
+  const AUDIENCE_GROUP = 'practitioners';
+
+  test.beforeAll(async () => {
+    ctx = await request.newContext({ baseURL: API_BASE });
+  });
+
+  test.afterAll(async () => {
+    await ctx.dispose();
+  });
+
+  // Step A: Audience KPI endpoint returns proof points ─────────────────────
+  test('Step A — Audience KPI returns proof points for practitioners', async () => {
+    const result = await tryRequest(
+      ctx,
+      'get',
+      `/api/v1/demo/kpi/audience?group=${AUDIENCE_GROUP}`,
+    );
+
+    if (result.status === 0) {
+      test.skip(true, 'Agents service unreachable — skipping Phase 71 demo journey');
+      return;
+    }
+
+    expect(result.ok).toBe(true);
+    const data = result.data as Record<string, unknown>;
+    expect(data).toHaveProperty('group', AUDIENCE_GROUP);
+    expect(data).toHaveProperty('proofPoints');
+    expect(Array.isArray(data.proofPoints)).toBe(true);
+    expect((data.proofPoints as unknown[]).length).toBeGreaterThan(0);
+  });
+
+  // Step B: Start demo with audienceGroup ──────────────────────────────────
+  test('Step B — Start demo session with audienceGroup', async () => {
+    const result = await tryRequest(ctx, 'post', '/api/v1/agents/demo/start', {
+      clientName:    'E2E Journey Test',
+      company:       'Journey Clinic',
+      email:         'e2e@journey.test',
+      audienceGroup: AUDIENCE_GROUP,
+    });
+
+    if (result.status === 0) {
+      test.skip(true, 'Agents service unreachable');
+      return;
+    }
+
+    expect(result.ok).toBe(true);
+    const data = result.data as Record<string, unknown>;
+    expect(data).toHaveProperty('sessionId');
+    demoSessionId = data.sessionId as string;
+    expect(typeof demoSessionId).toBe('string');
+  });
+
+  // Step C: Advance demo step ───────────────────────────────────────────────
+  test('Step C — Advance to next step', async () => {
+    if (!demoSessionId) {
+      test.skip(true, 'No demo session from Step B');
+      return;
+    }
+
+    const result = await tryRequest(
+      ctx,
+      'post',
+      `/api/v1/agents/demo/${encodeURIComponent(demoSessionId)}/next`,
+    );
+
+    if (result.status === 0) {
+      test.skip(true, 'Agents service unreachable');
+      return;
+    }
+
+    expect(result.ok).toBe(true);
+    const data = result.data as Record<string, unknown>;
+    expect(data).toHaveProperty('currentStep');
+    expect(data).toHaveProperty('narration');
+  });
+
+  // Step D: Scene event telemetry with audienceGroup ───────────────────────
+  test('Step D — Scene event telemetry includes audienceGroup', async () => {
+    const result = await tryRequest(ctx, 'post', '/api/v1/demo/scene-event', {
+      sessionId:     demoSessionId ?? 'e2e-fallback',
+      workflowId:    'voice-intake',
+      sceneIndex:    0,
+      eventType:     'scene_start',
+      durationSec:   30,
+      audienceGroup: AUDIENCE_GROUP,
+      clientName:    'E2E Journey Test',
+      company:       'Journey Clinic',
+    });
+
+    // 200/201/204 all acceptable; 404/500 indicate a contract break
+    if (result.status === 0) {
+      test.skip(true, 'Agents service unreachable for scene event');
+      return;
+    }
+    expect([200, 201, 204]).toContain(result.status);
+  });
+
+  // Step E: Complete demo with audienceGroup ───────────────────────────────
+  test('Step E — Complete demo with NPS and audienceGroup', async () => {
+    if (!demoSessionId) {
+      test.skip(true, 'No demo session from Step B');
+      return;
+    }
+
+    // Advance through remaining steps until completion is reachable
+    for (let i = 0; i < 8; i++) {
+      const adv = await tryRequest(
+        ctx,
+        'post',
+        `/api/v1/agents/demo/${encodeURIComponent(demoSessionId)}/next`,
+      );
+      if (!adv.ok) break;
+      const d = adv.data as Record<string, unknown>;
+      if (d.isCompleted) break;
+    }
+
+    const result = await tryRequest(
+      ctx,
+      'post',
+      `/api/v1/agents/demo/${encodeURIComponent(demoSessionId)}/complete`,
+      {
+        npsScore:          9,
+        featurePriorities: ['Voice AI', 'AI Triage', 'SOAP Notes'],
+        comment:           'Excellent practitioners demo',
+        audienceGroup:     AUDIENCE_GROUP,   // Phase 71
+      },
+    );
+
+    if (result.status === 0) {
+      test.skip(true, 'Agents service unreachable for demo completion');
+      return;
+    }
+
+    expect(result.ok).toBe(true);
+    const data = result.data as Record<string, unknown>;
+    expect(data).toHaveProperty('npsScore');
+    expect(data.npsScore).toBe(9);
+  });
+});
