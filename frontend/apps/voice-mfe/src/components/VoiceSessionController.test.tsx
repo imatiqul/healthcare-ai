@@ -70,6 +70,30 @@ describe('getMicrophoneFallbackMessage', () => {
 
     expect(message).toMatch(/temporarily unavailable/i);
   });
+
+  it('maps missing microphone devices to a specific message', () => {
+    const message = getMicrophoneFallbackMessage({
+      name: 'NotFoundError',
+      message: 'Requested device not found',
+    });
+
+    expect(message).toMatch(/no microphone device/i);
+  });
+
+  it('maps busy microphone devices to a recovery message', () => {
+    const message = getMicrophoneFallbackMessage({
+      name: 'NotReadableError',
+      message: 'Could not start audio source',
+    });
+
+    expect(message).toMatch(/microphone is busy/i);
+  });
+
+  it('maps secure-context requirements to an https message', () => {
+    const message = getMicrophoneFallbackMessage(new Error('Microphone access requires a secure context over HTTPS.'));
+
+    expect(message).toMatch(/secure https connection/i);
+  });
 });
 
 describe('getPcmWorkletModuleCandidates', () => {

@@ -271,6 +271,114 @@ test.describe('Regression — Voice MFE @regression', () => {
     await transcriptInput.fill('Patient reports dizziness and mild nausea.');
     await expect(transcriptInput).toHaveValue('Patient reports dizziness and mild nausea.');
   });
+
+  test('[BUG-010] Voice page gracefully falls back when AudioWorklet module load fails', async ({ page }) => {
+    await page.addInitScript(() => {
+      const fakeTrack = { stop: () => {} };
+      const fakeStream = {
+        getTracks: () => [fakeTrack],
+      };
+
+      const allowMicAccess = async () => fakeStream as unknown as MediaStream;
+
+      if (!navigator.mediaDevices) {
+        Object.defineProperty(navigator, 'mediaDevices', {
+          configurable: true,
+          value: { getUserMedia: allowMicAccess },
+        });
+      } else {
+        navigator.mediaDevices.getUserMedia = allowMicAccess;
+      }
+
+      class FakeMediaRecorder {
+        state: RecordingState = 'inactive';
+        ondataavailable: ((event: BlobEvent) => void) | null = null;
+        onstop: (() => void) | null = null;
+
+        static isTypeSupported() {
+          return true;
+        }
+
+        constructor(_stream: MediaStream, _options?: MediaRecorderOptions) {}
+
+        start() {
+          this.state = 'recording';
+        }
+
+        stop() {
+          this.state = 'inactive';
+          this.onstop?.();
+        }
+      }
+
+      class FakeAudioContext {
+        audioWorklet = {
+          addModule: async () => {
+            throw new Error("Unable to load a worklet's module.");
+          },
+        };
+
+        createMediaStreamSource() {
+          return {
+            connect: () => {},
+          };
+        }
+
+        close = async () => {};
+      }
+
+      Object.defineProperty(window, 'MediaRecorder', {
+        configurable: true,
+        writable: true,
+        value: FakeMediaRecorder,
+      });
+
+      Object.defineProperty(window, 'AudioContext', {
+        configurable: true,
+        writable: true,
+        value: FakeAudioContext,
+      });
+    });
+
+    await page.route('**/api/v1/voice/sessions', (route) => {
+      const method = route.request().method();
+
+      if (method === 'POST') {
+        return route.fulfill({
+          status: 200,
+          contentType: 'application/json',
+          body: JSON.stringify({ id: 'sess-worklet-fallback-001' }),
+        });
+      }
+
+      if (method === 'GET') {
+        return route.fulfill({
+          status: 200,
+          contentType: 'application/json',
+          body: JSON.stringify([]),
+        });
+      }
+
+      return route.continue();
+    });
+
+    await page.goto('/voice');
+    await page.waitForLoadState('networkidle');
+
+    await page.getByRole('button', { name: 'Start Session' }).click();
+    const recordButton = page.getByRole('button', { name: 'Record Audio' });
+    await expect(recordButton).toBeVisible({ timeout: 10_000 });
+
+    await recordButton.click();
+
+    await expect(page.getByText(/Microphone unavailable:/i)).toBeVisible({ timeout: 10_000 });
+    await expect(page.getByText(/(failed to load|load a worklet's module)/i)).toBeVisible();
+
+    const transcriptInput = page.getByPlaceholder(/Patient reports chest pain, shortness of breath/i);
+    await expect(transcriptInput).toBeVisible();
+    await transcriptInput.fill('Patient reports mild cough and fatigue for two days.');
+    await expect(transcriptInput).toHaveValue('Patient reports mild cough and fatigue for two days.');
+  });
 });
 
 // ── CSP / Media ───────────────────────────────────────────────────────────────
