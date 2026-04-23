@@ -186,31 +186,42 @@ export default function App() {
   // ── Startup backend probe ────────────────────────────────────────────────
   // Run once at app startup so all child components know the backend status
   // before they mount and attempt their own API calls.
+  // Safety: always resolves within 3 s so the app never stays on <Loading/>.
   useEffect(() => {
     let cancelled = false;
-    async function startupProbe() {
-      if (!APP_API_BASE) {
+
+    function resolveOffline() {
+      if (!cancelled) {
         setBackendOnline(false);
         emitBackendStatusChanged({ online: false });
+      }
+    }
+
+    // Fallback: if the probe hasn't settled within 3 s, default to offline
+    const fallback = setTimeout(resolveOffline, 3_000);
+
+    async function startupProbe() {
+      if (!APP_API_BASE) {
+        clearTimeout(fallback);
+        resolveOffline();
         return;
       }
       try {
-        const res = await fetch(`${APP_API_BASE}/api/v1/agents/stats`, { signal: AbortSignal.timeout(5_000) });
+        const res = await fetch(`${APP_API_BASE}/api/v1/agents/stats`, { signal: AbortSignal.timeout(3_000) });
         // 404 → backend not deployed; 401/403 → APIM live and protecting route
         const live = res.ok || res.status === 401 || res.status === 403;
+        clearTimeout(fallback);
         if (!cancelled) {
           setBackendOnline(live);
           emitBackendStatusChanged({ online: live });
         }
       } catch {
-        if (!cancelled) {
-          setBackendOnline(false);
-          emitBackendStatusChanged({ online: false });
-        }
+        clearTimeout(fallback);
+        resolveOffline();
       }
     }
     void startupProbe();
-    return () => { cancelled = true; };
+    return () => { cancelled = true; clearTimeout(fallback); };
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []); // intentionally run once on mount
   const { open: paletteOpen, openPalette, closePalette }         = useCommandPalette();
