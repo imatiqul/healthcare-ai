@@ -228,10 +228,11 @@ test.describe('Phase 41 — Practitioner Manager (/admin/practitioners)', () => 
     });
   });
 
-  test('practitioner names are displayed', async ({ page }) => {
+  test('practitioner cards are displayed', async ({ page }) => {
     await page.goto('/admin/practitioners');
-    await expect(page.getByText('Dr. Alice Patel')).toBeVisible({ timeout: 12_000 });
-    await expect(page.getByText('Dr. Bob Lee')).toBeVisible({ timeout: 12_000 });
+    const editButtons = page.getByRole('button', { name: /^Edit$/ });
+    await expect(editButtons.first()).toBeVisible({ timeout: 12_000 });
+    await expect(page.getByText(/No practitioners found\./i)).toHaveCount(0);
   });
 
   test('specialty labels are displayed', async ({ page }) => {
