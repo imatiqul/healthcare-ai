@@ -37,7 +37,9 @@ describe('HitlEscalationModal', () => {
   it('shows agent reasoning text', () => {
     global.fetch = vi.fn() as unknown as typeof fetch;
     render(<HitlEscalationModal {...defaultProps} />);
-    expect(screen.getByText(/Chest pain with ST elevation/)).toBeInTheDocument();
+    return waitFor(() => {
+      expect(screen.getByText(/Chest pain.*ST elevation/i)).toBeInTheDocument();
+    });
   });
 
   it('requires a note before approving — approve button disabled without note', () => {

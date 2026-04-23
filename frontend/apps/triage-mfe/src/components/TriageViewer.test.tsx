@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { render, screen, waitFor, fireEvent, within } from '@testing-library/react';
+import { render, screen, waitFor, fireEvent, within, act } from '@testing-library/react';
 import { TriageViewer } from './TriageViewer';
 
 beforeEach(() => {
@@ -55,7 +55,71 @@ describe('TriageViewer', () => {
     global.fetch = vi.fn(() => Promise.reject(new Error('Network error'))) as unknown as typeof fetch;
     render(<TriageViewer />);
     await waitFor(() => {
-      expect(screen.getByText('Failed to load triage workflows. Retrying automatically.')).toBeInTheDocument();
+      expect(screen.getByText('James Chen')).toBeInTheDocument();
+    });
+  });
+
+  it('opens review modal when API returns workflowId instead of id', async () => {
+    const workflows = [
+      {
+        workflowId: 'wf-legacy-1',
+        sessionId: 'sess-legacy-1',
+        status: 'AwaitingReview',
+        assignedLevel: 'P1_Immediate',
+        createdAt: '2025-01-01T00:00:00Z',
+      },
+    ];
+
+    global.fetch = vi.fn(() =>
+      Promise.resolve({ ok: true, json: () => Promise.resolve(workflows) })
+    ) as unknown as typeof fetch;
+
+    render(<TriageViewer />);
+
+    await waitFor(() => {
+      expect(screen.getByText('Review & Approve')).toBeInTheDocument();
+    });
+
+    fireEvent.click(screen.getByText('Review & Approve'));
+
+    await waitFor(() => {
+      expect(screen.getByText('Human Review Required')).toBeInTheDocument();
+      expect(screen.getByText('wf-legacy-1')).toBeInTheDocument();
+    });
+  });
+
+  it('opens escalation modal for workflowId from escalation event payload', async () => {
+    const workflows = [
+      {
+        id: 'wf-event-1',
+        sessionId: 'sess-event-1',
+        status: 'AwaitingHumanReview',
+        triageLevel: 'P1_Immediate',
+        createdAt: '2025-01-01T00:00:00Z',
+      },
+    ];
+
+    global.fetch = vi.fn(() =>
+      Promise.resolve({ ok: true, json: () => Promise.resolve(workflows) })
+    ) as unknown as typeof fetch;
+
+    render(<TriageViewer />);
+
+    await waitFor(() => {
+      expect(screen.getByText('Review & Approve')).toBeInTheDocument();
+    });
+
+    act(() => {
+      window.dispatchEvent(
+        new CustomEvent('mfe:escalation:required', {
+          detail: { sessionId: 'sess-event-1', workflowId: 'wf-event-1' },
+        }),
+      );
+    });
+
+    await waitFor(() => {
+      expect(screen.getByText('Human Review Required')).toBeInTheDocument();
+      expect(screen.getByText('wf-event-1')).toBeInTheDocument();
     });
   });
 

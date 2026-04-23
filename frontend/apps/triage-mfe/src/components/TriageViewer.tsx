@@ -95,6 +95,100 @@ interface TriageWorkflow {
   createdAt: string;
 }
 
+function pickStringField(record: Record<string, unknown>, keys: string[]): string | undefined {
+  for (const key of keys) {
+    const value = record[key];
+    if (typeof value === 'string' && value.trim()) {
+      return value.trim();
+    }
+  }
+  return undefined;
+}
+
+function normalizeWorkflowStatus(status?: string): string {
+  if (!status) return 'Processing';
+  const normalized = status.replace(/[\s_-]/g, '').toLowerCase();
+
+  if (normalized === 'awaitinghumanreview' || normalized === 'awaitingreview' || normalized === 'pendingreview') {
+    return 'AwaitingHumanReview';
+  }
+
+  if (normalized === 'completed' || normalized === 'resolved' || normalized === 'approved') {
+    return 'Completed';
+  }
+
+  if (normalized === 'processing' || normalized === 'inprogress' || normalized === 'pending') {
+    return 'Processing';
+  }
+
+  return status;
+}
+
+function normalizeWorkflowLevel(level: unknown): string {
+  if (typeof level === 'number') {
+    const byEnum = ['P1_Immediate', 'P2_Urgent', 'P3_Standard', 'P4_NonUrgent'];
+    return byEnum[level] ?? 'Pending';
+  }
+
+  if (typeof level !== 'string' || !level.trim()) return 'Pending';
+
+  const trimmed = level.trim();
+  const normalized = trimmed.replace(/[\s_-]/g, '').toLowerCase();
+
+  if (normalized === 'p1immediate') return 'P1_Immediate';
+  if (normalized === 'p2urgent') return 'P2_Urgent';
+  if (normalized === 'p3standard') return 'P3_Standard';
+  if (normalized === 'p4nonurgent') return 'P4_NonUrgent';
+
+  return trimmed;
+}
+
+function normalizeWorkflow(raw: unknown, index: number): TriageWorkflow | null {
+  if (!raw || typeof raw !== 'object') return null;
+
+  const record = raw as Record<string, unknown>;
+  const sessionId = pickStringField(record, ['sessionId', 'SessionId'])
+    ?? pickStringField(record, ['id', 'Id', 'workflowId', 'WorkflowId'])
+    ?? `session-${index + 1}`;
+
+  const id = pickStringField(record, ['id', 'Id', 'workflowId', 'WorkflowId']) ?? sessionId;
+  const status = normalizeWorkflowStatus(pickStringField(record, ['status', 'Status']));
+  const triageLevel = normalizeWorkflowLevel(
+    record.triageLevel
+      ?? record.TriageLevel
+      ?? record.assignedLevel
+      ?? record.AssignedLevel,
+  );
+
+  const createdAtRaw = pickStringField(record, ['createdAt', 'CreatedAt']);
+  const createdAt = createdAtRaw && !Number.isNaN(Date.parse(createdAtRaw))
+    ? createdAtRaw
+    : new Date().toISOString();
+
+  const confidenceRaw = record.confidenceScore ?? record.ConfidenceScore ?? record.confidence ?? record.Confidence;
+  const confidenceScore = typeof confidenceRaw === 'number' && Number.isFinite(confidenceRaw)
+    ? confidenceRaw
+    : undefined;
+
+  return {
+    id,
+    sessionId,
+    patientName: pickStringField(record, ['patientName', 'PatientName']),
+    status,
+    triageLevel,
+    confidenceScore,
+    agentReasoning: pickStringField(record, ['agentReasoning', 'AgentReasoning', 'reasoning', 'Reasoning']),
+    createdAt,
+  };
+}
+
+function normalizeWorkflowList(data: unknown): TriageWorkflow[] {
+  if (!Array.isArray(data)) return [];
+  return data
+    .map((raw, index) => normalizeWorkflow(raw, index))
+    .filter((workflow): workflow is TriageWorkflow => workflow !== null);
+}
+
 export function TriageViewer() {
   const [workflows, setWorkflows] = useState<TriageWorkflow[]>([]);
   const [selectedWorkflow, setSelectedWorkflow] = useState<string | null>(null);
@@ -106,6 +200,7 @@ export function TriageViewer() {
   // null = unknown (waiting for first probe), true = live, false = down
   const [backendOnline, setBackendOnlineLocal] = useState<boolean | null>(null);
   const abortRef       = useRef<AbortController | null>(null);
+  const workflowsRef   = useRef<TriageWorkflow[]>([]);
   // Adaptive poll: 5 s when backend is live, 30 s when returning 404/errors to
   // avoid flooding the APIM gateway (and browser console) when not yet deployed.
   const intervalRef    = useRef<ReturnType<typeof setInterval> | null>(null);
@@ -137,7 +232,12 @@ export function TriageViewer() {
         throw new Error(`Server error (${res.status})`);
       }
       const data = await res.json();
-      setWorkflows(data);
+      const normalized = normalizeWorkflowList(data);
+      if (Array.isArray(data) && data.length === 0) {
+        setWorkflows([]);
+      } else {
+        setWorkflows(normalized.length > 0 ? normalized : DEMO_WORKFLOWS);
+      }
       setError(null);
       // Backend is live — ensure we're polling at the fast 5-second cadence
       if (pollDelayRef.current !== 5_000) schedulePoll(5_000);
@@ -157,8 +257,19 @@ export function TriageViewer() {
   const fetchWorkflows = doFetch;
 
   useEffect(() => {
+    workflowsRef.current = workflows;
+  }, [workflows]);
+
+  useEffect(() => {
     void doFetch();
-    const offEscalation = onEscalationRequired(() => setShowEscalation(true));
+    const offEscalation = onEscalationRequired(({ detail }) => {
+      const incomingId = detail.workflowId ?? detail.sessionId;
+      const fallbackWorkflowId = workflowsRef.current.find(wf => wf.status === 'AwaitingHumanReview')?.id
+        ?? workflowsRef.current[0]?.id
+        ?? null;
+      setSelectedWorkflow(incomingId ?? fallbackWorkflowId);
+      setShowEscalation(true);
+    });
     const offDecision   = onAgentDecision(() => void doFetch());
     // When shell announces the backend went offline, immediately switch to demo
     // data without waiting for the next poll cycle.
@@ -221,6 +332,9 @@ export function TriageViewer() {
   const visibleWorkflows = workflows
     .filter(wf => statusFilter === 'All' || wf.status === statusFilter)
     .filter(wf => levelFilter === 'All' || wf.triageLevel === levelFilter);
+  const selectedWorkflowData = selectedWorkflow
+    ? workflows.find(wf => wf.id === selectedWorkflow || wf.sessionId === selectedWorkflow)
+    : null;
 
   const statusOptions: Array<typeof statusFilter> = ['All', 'AwaitingHumanReview', 'Completed', 'Processing'];
   const levelOptions: Array<typeof levelFilter> = ['All', 'P1_Immediate', 'P2_Urgent', 'P3_Standard'];
@@ -344,9 +458,9 @@ export function TriageViewer() {
       </Stack>
       {showEscalation && selectedWorkflow && (
         <HitlEscalationModal
-          workflowId={selectedWorkflow}
-          triageLevel={workflows.find(w => w.id === selectedWorkflow)?.triageLevel}
-          agentReasoning={workflows.find(w => w.id === selectedWorkflow)?.agentReasoning}
+          workflowId={selectedWorkflowData?.id ?? selectedWorkflow}
+          triageLevel={selectedWorkflowData?.triageLevel}
+          agentReasoning={selectedWorkflowData?.agentReasoning}
           onApprove={() => { setShowEscalation(false); fetchWorkflows(); }}
           onClose={() => setShowEscalation(false)}
         />
