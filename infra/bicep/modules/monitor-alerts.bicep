@@ -121,7 +121,7 @@ resource availabilityAlert 'Microsoft.Insights/metricAlerts@2018-03-01' = {
           name: 'availability'
           metricName: 'availabilityResults/availabilityPercentage'
           operator: 'LessThan'
-          threshold: 99.9
+          threshold: json('99.9')
           timeAggregation: 'Average'
           criterionType: 'StaticThresholdCriterion'
         }

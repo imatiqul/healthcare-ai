@@ -108,4 +108,5 @@ output b2cTenantDomain string = b2cTenantDomain
 output b2cTenantId string = b2cDirectory.properties.tenantId
 output b2cAuthority string = 'https://${b2cDomainName}.b2clogin.com/${b2cTenantDomain}/B2C_1_signup_signin/v2.0'
 output b2cSignUpSignInPolicyName string = 'B2C_1_signup_signin'
+#disable-next-line outputs-should-not-contain-secrets
 output b2cPasswordResetPolicyName string = 'B2C_1_password_reset'

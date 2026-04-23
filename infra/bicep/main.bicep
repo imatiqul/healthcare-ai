@@ -170,7 +170,6 @@ module b2c 'modules/b2c.bicep' = {
     countryCode: b2cCountryCode
     keyVaultId: keyVault.outputs.keyVaultId
   }
-  dependsOn: [keyVault]
 }
 
 // Azure Event Hubs – HIPAA-compliant immutable audit stream for all PHI access + AI decisions
@@ -191,10 +190,9 @@ module monitorAlerts 'modules/monitor-alerts.bicep' = {
   params: {
     envName: envName
     location: location
-    appInsightsId: appInsights.outputs.connectionString    // workaround — real ID via reference
+    appInsightsId: appInsights.outputs.resourceId
     logAnalyticsWorkspaceId: logAnalytics.outputs.workspaceId
   }
-  dependsOn: [appInsights, logAnalytics]
 }
 
 output aksClusterName string = aks.outputs.clusterName
