@@ -278,12 +278,6 @@ export default function App() {
     return () => { window.removeEventListener('keydown', handler); clearTimeout(timer); };
   }, [navigate]);
 
-  // While the startup probe is pending, show a skeleton so components never
-  // mount before knowing whether the backend is reachable.
-  if (!isDemoRoute && backendOnline === null) {
-    return <Loading />;
-  }
-
   // Demo routes render without shell chrome (no sidebar, topnav, or copilot)
   if (isDemoRoute) {
     return (

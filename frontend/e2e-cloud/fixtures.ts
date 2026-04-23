@@ -26,7 +26,8 @@ export const test = base.extend<object>({
     // The probe URL is an absolute APIM URL, so we match on the path suffix.
     await page.addInitScript(() => {
       const _fetch = window.fetch.bind(window);
-      window.fetch = (input: RequestInfo | URL, init?: RequestInit) => {
+      // @ts-ignore — no TypeScript annotations inside addInitScript (browser context)
+      window.fetch = (input, init) => {
         const url = typeof input === 'string' ? input : input instanceof URL ? input.href : input.url;
         if (url.includes('/api/v1/agents/stats')) {
           return Promise.resolve(

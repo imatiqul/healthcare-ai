@@ -144,6 +144,6 @@ export const useGlobalStore = create<GlobalState>((set) => ({
   markDemoComplete: ()      => set({ isDemoComplete: true, demoPaused: true }),
 
   // Backend availability
-  backendOnline:    null,
+  backendOnline:    false,  // start offline; probe upgrades to true when backend is live
   setBackendOnline: (online) => set({ backendOnline: online }),
 }));
