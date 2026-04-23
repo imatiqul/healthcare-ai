@@ -40,6 +40,16 @@ test.describe('Cloud — Shell SWA', () => {
   test('shell loads and renders dashboard @smoke', async ({ page }) => {
     await page.goto('/');
     await expect(page).toHaveTitle(/HealthQ|Healthcare/i);
+    // Diagnostic: log root HTML to understand what's in the DOM during CI
+    await page.waitForTimeout(2000);
+    const rootHTML = await page.locator('#root').innerHTML().catch(() => 'ROOT_NOT_FOUND');
+    console.log('[DIAG] #root innerHTML (first 600 chars):', rootHTML.substring(0, 600));
+    const allTestIds = await page.locator('[data-testid]').evaluateAll(
+      (els) => els.map((el) => el.getAttribute('data-testid'))
+    );
+    console.log('[DIAG] All data-testid values in DOM:', JSON.stringify(allTestIds));
+    const mediaWidth = await page.evaluate(() => window.innerWidth);
+    console.log('[DIAG] window.innerWidth:', mediaWidth);
     // data-testid="shell-sidebar" is set on <aside> in Sidebar.tsx
     await expect(page.getByTestId('shell-sidebar')).toBeVisible({ timeout: 20_000 });
   });
