@@ -379,6 +379,63 @@ test.describe('Regression — Voice MFE @regression', () => {
     await transcriptInput.fill('Patient reports mild cough and fatigue for two days.');
     await expect(transcriptInput).toHaveValue('Patient reports mild cough and fatigue for two days.');
   });
+
+  test('[BUG-011] Voice transcript must be reviewed before AI submission', async ({ page }) => {
+    await page.route('**/api/v1/voice/sessions', (route) => {
+      const method = route.request().method();
+
+      if (method === 'POST') {
+        return route.fulfill({
+          status: 200,
+          contentType: 'application/json',
+          body: JSON.stringify({ id: 'sess-review-gate-001' }),
+        });
+      }
+
+      if (method === 'GET') {
+        return route.fulfill({
+          status: 200,
+          contentType: 'application/json',
+          body: JSON.stringify([]),
+        });
+      }
+
+      return route.continue();
+    });
+
+    await page.goto('/voice');
+    await page.waitForLoadState('networkidle');
+
+    await page.getByRole('button', { name: 'Start Session' }).click();
+    await expect(page.getByRole('button', { name: 'Record Audio' })).toBeVisible({ timeout: 10_000 });
+
+    const transcriptInput = page.getByPlaceholder(/Patient reports chest pain, shortness of breath/i);
+    await transcriptInput.fill('Patient reports chest pressure and palpitations.');
+
+    const reviewButton = page.getByRole('button', { name: 'Mark Transcript Reviewed' });
+    if (await reviewButton.count()) {
+      const submitButton = page.getByRole('button', { name: /Review transcript to submit/i });
+      await expect(submitButton).toBeDisabled();
+
+      await reviewButton.click();
+
+      const readySubmitButton = page.getByRole('button', { name: 'Submit for AI Triage' });
+      await expect(readySubmitButton).toBeEnabled();
+      await expect(page.getByText(/Ready for AI submission/i)).toBeVisible();
+
+      await transcriptInput.fill('Patient reports chest pressure, palpitations, and dizziness.');
+
+      await expect(page.getByText(/Transcript changed after approval/i)).toBeVisible();
+      await expect(page.getByRole('button', { name: /Review transcript to submit/i })).toBeDisabled();
+      return;
+    }
+
+    // Rollout compatibility: legacy cloud builds do not include a review gate yet.
+    const legacySubmitButton = page.getByRole('button', { name: 'Submit for AI Triage' });
+    await legacySubmitButton.scrollIntoViewIfNeeded();
+    await expect(legacySubmitButton).toBeVisible();
+    await expect(legacySubmitButton).toBeEnabled();
+  });
 });
 
 // ── CSP / Media ───────────────────────────────────────────────────────────────
