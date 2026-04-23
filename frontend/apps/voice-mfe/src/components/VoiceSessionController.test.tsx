@@ -1,5 +1,6 @@
-import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { render, screen } from '@testing-library/react';
+import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
+import { render, screen, waitFor } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
 import {
   VoiceSessionController,
   getApprovedTranscriptForSubmission,
@@ -28,6 +29,10 @@ beforeEach(() => {
   vi.restoreAllMocks();
 });
 
+afterEach(() => {
+  vi.unstubAllGlobals();
+});
+
 describe('VoiceSessionController', () => {
   it('renders voice session card', () => {
     render(<VoiceSessionController />);
@@ -50,6 +55,79 @@ describe('VoiceSessionController', () => {
     render(<VoiceSessionController />);
     const endBtn = screen.getByText('End Session');
     expect(endBtn.closest('button')).toBeDisabled();
+  });
+
+  it('requires transcript review before enabling AI submission and re-requires after transcript edits', async () => {
+    const user = userEvent.setup();
+    const fetchMock = vi.fn().mockRejectedValue(new Error('offline'));
+    vi.stubGlobal('fetch', fetchMock);
+
+    render(<VoiceSessionController />);
+
+    await user.click(screen.getByRole('button', { name: 'Start Session' }));
+
+    await waitFor(() => {
+      expect(screen.getByRole('button', { name: 'Record Audio' })).toBeInTheDocument();
+    });
+
+    const transcriptInput = screen.getByPlaceholderText(/Patient reports chest pain, shortness of breath/i);
+    await user.type(transcriptInput, 'Patient reports chest pressure and palpitations.');
+
+    const gatedSubmitButton = screen.getByRole('button', { name: /Review transcript to submit/i });
+    expect(gatedSubmitButton).toBeDisabled();
+
+    await user.click(screen.getByRole('button', { name: 'Mark Transcript Reviewed' }));
+
+    const readySubmitButton = screen.getByRole('button', { name: 'Submit for AI Triage' });
+    expect(readySubmitButton).toBeEnabled();
+
+    await user.type(transcriptInput, ' Dizziness now present.');
+
+    expect(screen.getByText(/Transcript changed after approval/i)).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /Review transcript to submit/i })).toBeDisabled();
+  });
+
+  it('submits the approved reviewed transcript snapshot', async () => {
+    const user = userEvent.setup();
+    const fetchMock = vi
+      .fn()
+      .mockRejectedValueOnce(new Error('offline'))
+      .mockResolvedValueOnce({ ok: true, json: async () => ({ accepted: true }) })
+      .mockResolvedValueOnce({
+        ok: true,
+        json: async () => ({
+          assignedLevel: 'P3_Standard',
+          agentReasoning: 'Clinical indicators are stable and suitable for standard triage flow.',
+        }),
+      });
+
+    vi.stubGlobal('fetch', fetchMock);
+
+    render(<VoiceSessionController />);
+
+    await user.click(screen.getByRole('button', { name: 'Start Session' }));
+
+    await waitFor(() => {
+      expect(screen.getByRole('button', { name: 'Record Audio' })).toBeInTheDocument();
+    });
+
+    const transcriptInput = screen.getByPlaceholderText(/Patient reports chest pain, shortness of breath/i);
+    await user.type(transcriptInput, 'Patient reports chest pain');
+
+    await user.click(screen.getByRole('button', { name: 'Mark Transcript Reviewed' }));
+    await user.type(transcriptInput, '   ');
+
+    await user.click(screen.getByRole('button', { name: 'Submit for AI Triage' }));
+
+    await waitFor(() => {
+      expect(fetchMock).toHaveBeenCalledTimes(3);
+    });
+
+    const transcriptPayload = JSON.parse(String((fetchMock.mock.calls[1]?.[1] as { body?: string })?.body));
+    const triagePayload = JSON.parse(String((fetchMock.mock.calls[2]?.[1] as { body?: string })?.body));
+
+    expect(transcriptPayload.transcriptText).toBe('Patient reports chest pain');
+    expect(triagePayload.transcriptText).toBe('Patient reports chest pain');
   });
 });
 
