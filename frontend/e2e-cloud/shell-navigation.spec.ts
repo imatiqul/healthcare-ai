@@ -34,7 +34,7 @@ test.describe('Shell App — Cloud Navigation', () => {
     await expect(sidebar.getByText('Voice Sessions')).toBeVisible();
     await expect(sidebar.getByText('Triage')).toBeVisible();
     await expect(sidebar.getByText('Scheduling')).toBeVisible();
-    await expect(page.locator('a[href="/population-health"]')).toBeVisible();
+    await expect(sidebar.getByText('Population Health')).toBeVisible();
     await expect(sidebar.getByText('Revenue Cycle')).toBeVisible();
   });
 
