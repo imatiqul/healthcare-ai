@@ -13,7 +13,7 @@ export default defineConfig({
   reporter: process.env.CI
     ? [['github'], ['html', { open: 'never' }], ['list']]
     : [['html'], ['list']],
-  timeout: 45_000,   // 45 s — cloud SWAs can be slower than localhost
+  timeout: 90_000,   // 90 s — MF2 version-first init can take 30-40s on cold CI (fetching 7 MFE remoteEntry files)
   use: {
     baseURL: process.env.SHELL_URL || 'https://gentle-tree-03115af0f.7.azurestaticapps.net',
     trace: 'on-first-retry',

@@ -40,28 +40,60 @@ test.describe('Cloud — Shell SWA', () => {
   test('shell loads and renders dashboard @smoke', async ({ page }) => {
     await page.goto('/');
     await expect(page).toHaveTitle(/HealthQ|Healthcare/i);
-    // Diagnostic: log root HTML to understand what's in the DOM during CI
-    await page.waitForTimeout(2000);
+    // ── Capture ALL browser console messages before goto so we don't miss early errors ──
+    const consoleMessages: string[] = [];
+    const pageErrors: string[] = [];
+    page.on('console', (msg) => {
+      consoleMessages.push(`[${msg.type().toUpperCase()}] ${msg.text()}`);
+    });
+    page.on('pageerror', (err) => {
+      pageErrors.push(`[PAGEERROR] ${err.message}`);
+    });
+
+    await page.goto('/');
+
+    // Wait for React to mount (poll #root children) up to 40s — covers cold MF2 init
+    await page.waitForFunction(
+      () => (document.getElementById('root')?.children.length ?? 0) > 0,
+      { timeout: 40_000 },
+    ).catch(() => { /* timeout — fall through to diagnostic */ });
+
+    // Diagnostic: dump state for CI triage
     const rootHTML = await page.locator('#root').innerHTML().catch(() => 'ROOT_NOT_FOUND');
-    console.log('[DIAG] #root innerHTML (first 600 chars):', rootHTML.substring(0, 600));
+    console.log('[DIAG] #root innerHTML (first 800 chars):', rootHTML.substring(0, 800));
     const allTestIds = await page.locator('[data-testid]').evaluateAll(
       (els) => els.map((el) => el.getAttribute('data-testid'))
     );
     console.log('[DIAG] All data-testid values in DOM:', JSON.stringify(allTestIds));
     const mediaWidth = await page.evaluate(() => window.innerWidth);
     console.log('[DIAG] window.innerWidth:', mediaWidth);
+
+    // Dump ALL browser console messages so we can see JS errors / MF2 failures
+    const errors = consoleMessages.filter(m => m.startsWith('[ERROR]'));
+    console.log('[DIAG] Browser console errors:', JSON.stringify(errors));
+    console.log('[DIAG] Page errors (uncaught):', JSON.stringify(pageErrors));
+    console.log('[DIAG] All console messages:', JSON.stringify(consoleMessages.slice(0, 30)));
+
+    // MF2 global init state — tells us if initPromise is still pending
+    const mfState = await page.evaluate(() => {
+      const key = '__mf_init____mf__virtual/shell__mf_v__runtimeInit__mf_v__.js__';
+      const s = (globalThis as Record<string, unknown>)[key];
+      return s ? 'EXISTS' : 'MISSING';
+    }).catch(() => 'EVAL_ERROR');
+    console.log('[DIAG] MF2 initPromise globalThis key:', mfState);
+
     // data-testid="shell-sidebar" is set on <aside> in Sidebar.tsx
-    await expect(page.getByTestId('shell-sidebar')).toBeVisible({ timeout: 20_000 });
+    await expect(page.getByTestId('shell-sidebar')).toBeVisible({ timeout: 5_000 });
   });
 
   test('shell renders navigation sidebar @smoke', async ({ page }) => {
     await page.goto('/');
-    await expect(page.getByTestId('shell-sidebar')).toBeVisible({ timeout: 20_000 });
+    await expect(page.getByTestId('shell-sidebar')).toBeVisible({ timeout: 40_000 });
   });
 
   test('shell renders header @smoke', async ({ page }) => {
     await page.goto('/');
-    await expect(page.getByText(/Healthcare|HealthQ/i).first()).toBeVisible({ timeout: 20_000 });
+    await expect(page.getByText(/Healthcare|HealthQ/i).first()).toBeVisible({ timeout: 40_000 });
   });
 });
 

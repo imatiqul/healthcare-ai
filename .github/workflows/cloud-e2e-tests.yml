@@ -54,7 +54,7 @@ jobs:
   smoke-gate:
     name: Smoke Gate (@smoke tests only)
     runs-on: ubuntu-latest
-    timeout-minutes: 5
+    timeout-minutes: 15
     # Only run after a successful upstream deploy, or always on schedule/manual
     if: >
       github.event_name == 'workflow_dispatch' ||
@@ -219,7 +219,7 @@ jobs:
     name: AI Failure Triage
     needs: full-e2e
     runs-on: ubuntu-latest
-    timeout-minutes: 5
+    timeout-minutes: 8
     # Only run when the E2E suite produced failures worth triaging
     if: >
       always() &&
