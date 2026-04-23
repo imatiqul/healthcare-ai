@@ -129,6 +129,65 @@ describe('VoiceSessionController', () => {
     expect(transcriptPayload.transcriptText).toBe('Patient reports chest pain');
     expect(triagePayload.transcriptText).toBe('Patient reports chest pain');
   });
+
+  it('keeps transcript reviewed when only whitespace changes after approval', async () => {
+    const user = userEvent.setup();
+    const fetchMock = vi.fn().mockRejectedValue(new Error('offline'));
+    vi.stubGlobal('fetch', fetchMock);
+
+    render(<VoiceSessionController />);
+
+    await user.click(screen.getByRole('button', { name: 'Start Session' }));
+
+    await waitFor(() => {
+      expect(screen.getByRole('button', { name: 'Record Audio' })).toBeInTheDocument();
+    });
+
+    const transcriptInput = screen.getByPlaceholderText(/Patient reports chest pain, shortness of breath/i);
+    await user.type(transcriptInput, 'Patient reports chest pain');
+    await user.click(screen.getByRole('button', { name: 'Mark Transcript Reviewed' }));
+
+    expect(screen.getByRole('button', { name: 'Submit for AI Triage' })).toBeEnabled();
+
+    await user.type(transcriptInput, '   ');
+
+    expect(screen.getByRole('button', { name: 'Submit for AI Triage' })).toBeEnabled();
+    expect(screen.queryByText(/Transcript changed after approval/i)).not.toBeInTheDocument();
+  });
+
+  it('disables transcript editing while AI submission is in progress', async () => {
+    const user = userEvent.setup();
+    const fetchMock = vi
+      .fn()
+      .mockRejectedValueOnce(new Error('offline'))
+      .mockResolvedValueOnce({ ok: true, json: async () => ({ accepted: true }) })
+      .mockResolvedValueOnce({
+        ok: true,
+        json: async () => ({
+          assignedLevel: 'P2_Urgent',
+          agentReasoning: 'Urgent follow-up is recommended based on symptom progression.',
+        }),
+      });
+
+    vi.stubGlobal('fetch', fetchMock);
+
+    render(<VoiceSessionController />);
+
+    await user.click(screen.getByRole('button', { name: 'Start Session' }));
+
+    await waitFor(() => {
+      expect(screen.getByRole('button', { name: 'Record Audio' })).toBeInTheDocument();
+    });
+
+    const transcriptInput = screen.getByPlaceholderText(/Patient reports chest pain, shortness of breath/i);
+    await user.type(transcriptInput, 'Patient reports worsening dyspnea.');
+    await user.click(screen.getByRole('button', { name: 'Mark Transcript Reviewed' }));
+    await user.click(screen.getByRole('button', { name: 'Submit for AI Triage' }));
+
+    await waitFor(() => {
+      expect(transcriptInput).toBeDisabled();
+    });
+  });
 });
 
 describe('getMicrophoneFallbackMessage', () => {
