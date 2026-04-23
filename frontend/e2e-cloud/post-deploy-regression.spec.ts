@@ -598,6 +598,86 @@ test.describe('Regression — Voice MFE @regression', () => {
     await expect(legacySubmitButton).toBeVisible();
     await expect(legacySubmitButton).toBeEnabled();
   });
+
+  test('[BUG-014] Voice submits the same reviewed transcript payload to transcript and triage APIs', async ({ page }) => {
+    let transcriptPayloadText: string | null = null;
+    let triagePayloadText: string | null = null;
+
+    await page.route('**/api/v1/voice/sessions', (route) => {
+      const method = route.request().method();
+
+      if (method === 'POST') {
+        return route.fulfill({
+          status: 200,
+          contentType: 'application/json',
+          body: JSON.stringify({ id: 'sess-payload-parity-001' }),
+        });
+      }
+
+      if (method === 'GET') {
+        return route.fulfill({
+          status: 200,
+          contentType: 'application/json',
+          body: JSON.stringify([]),
+        });
+      }
+
+      return route.continue();
+    });
+
+    await page.route('**/api/v1/voice/sessions/*/transcript', async (route) => {
+      const payload = route.request().postDataJSON() as { transcriptText?: string };
+      transcriptPayloadText = typeof payload?.transcriptText === 'string' ? payload.transcriptText : null;
+      await route.fulfill({
+        status: 200,
+        contentType: 'application/json',
+        body: JSON.stringify({ accepted: true }),
+      });
+    });
+
+    await page.route('**/api/v1/agents/triage', async (route) => {
+      const payload = route.request().postDataJSON() as { transcriptText?: string };
+      triagePayloadText = typeof payload?.transcriptText === 'string' ? payload.transcriptText : null;
+      await route.fulfill({
+        status: 200,
+        contentType: 'application/json',
+        body: JSON.stringify({
+          assignedLevel: 'P2_Urgent',
+          agentReasoning: 'Urgent follow-up is recommended based on symptom progression.',
+        }),
+      });
+    });
+
+    await page.goto('/voice');
+    await page.waitForLoadState('networkidle');
+
+    await page.getByRole('button', { name: 'Start Session' }).click();
+    await expect(page.getByRole('button', { name: 'Record Audio' })).toBeVisible({ timeout: 10_000 });
+
+    const transcriptInput = page.getByPlaceholder(/Patient reports chest pain, shortness of breath/i);
+    const reviewedTranscript = 'Patient reports intermittent dizziness and chest discomfort.';
+    await transcriptInput.fill(reviewedTranscript);
+
+    const reviewButton = page.getByRole('button', { name: 'Mark Transcript Reviewed' });
+    if (await reviewButton.count()) {
+      await reviewButton.click();
+      await page.getByRole('button', { name: 'Submit for AI Triage' }).click();
+
+      await expect(page.getByText(/Triage Result:/i)).toBeVisible({ timeout: 20_000 });
+      expect(transcriptPayloadText).toBe(reviewedTranscript);
+      expect(triagePayloadText).toBe(reviewedTranscript);
+      return;
+    }
+
+    // Rollout compatibility: legacy cloud builds do not include a review gate yet.
+    const legacyTranscript = 'Patient reports persistent cough and fatigue.';
+    await transcriptInput.fill(legacyTranscript);
+    await page.getByRole('button', { name: 'Submit for AI Triage' }).click();
+
+    await expect(page.getByText(/Triage Result:/i)).toBeVisible({ timeout: 20_000 });
+    expect(transcriptPayloadText).toBe(legacyTranscript);
+    expect(triagePayloadText).toBe(legacyTranscript);
+  });
 });
 
 // ── CSP / Media ───────────────────────────────────────────────────────────────
