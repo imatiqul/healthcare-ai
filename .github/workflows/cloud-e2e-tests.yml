@@ -157,6 +157,11 @@ jobs:
           ENGAGEMENT_URL: https://agreeable-hill-0d3115b0f.7.azurestaticapps.net
           PLAYWRIGHT_JSON_OUTPUT_NAME: test-results/results.json
 
+      - name: Verify platform feature coverage (100%)
+        id: platform-coverage
+        if: always()
+        run: node e2e-cloud/verify-platform-feature-coverage.mjs test-results/results.json
+
       - name: Write E2E summary
         if: always()
         run: |
@@ -169,6 +174,15 @@ jobs:
             echo "⚠️ Some E2E tests failed — check the HTML report artifact below." >> $GITHUB_STEP_SUMMARY
           else
             echo "⏭️ E2E suite was skipped or cancelled." >> $GITHUB_STEP_SUMMARY
+          fi
+
+          echo "" >> $GITHUB_STEP_SUMMARY
+          if [ "${{ steps.platform-coverage.outcome }}" = "success" ]; then
+            echo "✅ Platform feature coverage gate passed (100% route coverage)." >> $GITHUB_STEP_SUMMARY
+          elif [ "${{ steps.platform-coverage.outcome }}" = "failure" ]; then
+            echo "❌ Platform feature coverage gate failed (below 100% route coverage)." >> $GITHUB_STEP_SUMMARY
+          else
+            echo "⏭️ Platform feature coverage gate did not run." >> $GITHUB_STEP_SUMMARY
           fi
           echo "" >> $GITHUB_STEP_SUMMARY
           echo "Trigger: \`${{ github.event_name }}\` | Branch: \`${{ github.ref_name }}\` | SHA: \`${{ github.sha }}\`" >> $GITHUB_STEP_SUMMARY
@@ -188,6 +202,14 @@ jobs:
           name: cloud-e2e-results-json-${{ github.run_number }}
           path: frontend/test-results/results.json
           retention-days: 7
+
+      - name: Upload platform feature coverage report
+        uses: actions/upload-artifact@v4
+        if: ${{ !cancelled() }}
+        with:
+          name: platform-feature-coverage-${{ github.run_number }}
+          path: frontend/test-results/platform-feature-coverage.json
+          retention-days: 14
 
       # Notify Slack on failure — configure SLACK_WEBHOOK_URL as a repo secret
       - name: Notify Slack on failure
