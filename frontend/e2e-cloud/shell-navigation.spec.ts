@@ -29,7 +29,7 @@ test.describe('Shell App — Cloud Navigation', () => {
 
   test('sidebar navigation links are present', async ({ page }) => {
     await page.goto('/');
-    const sidebar = page.locator('aside, nav, [class*="sidebar"], [class*="Sidebar"]').first();
+    const sidebar = page.getByTestId('shell-sidebar');
     await expect(sidebar.getByText('Dashboard')).toBeVisible();
     await expect(sidebar.getByText('Voice Sessions')).toBeVisible();
     await expect(sidebar.getByText('Triage')).toBeVisible();
@@ -41,13 +41,13 @@ test.describe('Shell App — Cloud Navigation', () => {
   // Phase 41 — new sidebar nav items
   test('sidebar shows Clinical Alerts nav item', async ({ page }) => {
     await page.goto('/');
-    const sidebar = page.locator('aside, nav, [class*="sidebar"], [class*="Sidebar"]').first();
+    const sidebar = page.getByTestId('shell-sidebar');
     await expect(sidebar.getByText('Clinical Alerts')).toBeVisible({ timeout: 10_000 });
   });
 
   test('sidebar shows Reports & Export nav item', async ({ page }) => {
     await page.goto('/');
-    const sidebar = page.locator('aside, nav, [class*="sidebar"], [class*="Sidebar"]').first();
+    const sidebar = page.getByTestId('shell-sidebar');
     await expect(sidebar.getByText('Reports & Export')).toBeVisible({ timeout: 10_000 });
   });
 

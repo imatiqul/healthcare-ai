@@ -428,6 +428,7 @@ export function Sidebar() {
   return (
     <Box
       component="aside"
+      data-testid="shell-sidebar"
       sx={{
         width: collapsed ? SIDEBAR_COLLAPSED : SIDEBAR_WIDTH,
         flexShrink: 0,

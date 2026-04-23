@@ -310,7 +310,7 @@ export default function App() {
       >
         Skip to main content
       </Box>
-      <Box sx={{ display: 'flex', height: '100vh' }}>
+      <Box data-testid="shell-app" sx={{ display: 'flex', height: '100vh' }}>
         <Sidebar />
         <Box sx={{ flex: 1, display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
           <TopNav onOpenSearch={openPalette} />
