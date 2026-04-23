@@ -45,6 +45,10 @@ export interface GlobalState {
   setDemoScene:          (workflowIdx: number, sceneIdx: number) => void;
   setDemoSpeed:          (speed: number) => void;
   markDemoComplete:      () => void;
+
+  // Backend availability — null = unknown, true = reachable, false = down/demo mode
+  backendOnline:         boolean | null;
+  setBackendOnline:      (online: boolean) => void;
 }
 
 /** Scenes per workflow — kept in sync with demoScripts. Index = workflow number (0-based). */
@@ -138,4 +142,8 @@ export const useGlobalStore = create<GlobalState>((set) => ({
   // Phase 61
   setDemoSpeed:    (speed)  => set({ demoSpeed: speed }),
   markDemoComplete: ()      => set({ isDemoComplete: true, demoPaused: true }),
+
+  // Backend availability
+  backendOnline:    null,
+  setBackendOnline: (online) => set({ backendOnline: online }),
 }));

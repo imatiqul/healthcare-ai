@@ -1,5 +1,7 @@
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 
+const API_BASE = import.meta.env.VITE_API_BASE_URL || '';
+
 // ── DICOM Viewer Component ────────────────────────────────────────────────────
 //
 // Provides an embedded DICOM imaging viewer for the Encounters MFE.
@@ -90,7 +92,7 @@ export const DicomViewer: React.FC<DicomViewerProps> = ({
     if (study || studyMeta) return;
 
     const controller = new AbortController();
-    fetch(`/api/v1/fhir/imaging/${encodeURIComponent(studyId)}`, {
+    fetch(`${API_BASE}/api/v1/fhir/imaging/${encodeURIComponent(studyId)}`, {
       signal: controller.signal,
       headers: { Accept: 'application/json' },
     })

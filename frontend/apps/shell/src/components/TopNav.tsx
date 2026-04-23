@@ -35,6 +35,7 @@ import { ContextualHelpPanel } from './ContextualHelpPanel'; // Phase 37
 import { WhatsNewPanel, useWhatsNewBadge } from './WhatsNewPanel'; // Phase 38
 import { PatientQuickSearch } from './PatientQuickSearch'; // Phase 47
 import { useGlobalStore } from '../store'; // Phase 63
+import { emitBackendStatusChanged } from '@healthcare/mfe-events'; // Phase 64
 
 const API_BASE = import.meta.env.VITE_API_BASE_URL || '';
 
@@ -45,18 +46,29 @@ type AiBackendStatus = 'checking' | 'live' | 'demo';
 
 function useAiStatus(): AiBackendStatus {
   const [status, setStatus] = useState<AiBackendStatus>('checking');
+  const setBackendOnline = useGlobalStore(s => s.setBackendOnline);
 
   const probe = useCallback(async () => {
-    if (!API_BASE) { setStatus('demo'); return; }
+    if (!API_BASE) {
+      setStatus('demo');
+      setBackendOnline(false);
+      emitBackendStatusChanged({ online: false });
+      return;
+    }
     try {
       const res = await fetch(`${API_BASE}/api/v1/agents/stats`, { signal: AbortSignal.timeout(5_000) });
       // 404 means APIM is reachable but the route isn't configured (backend not deployed) → demo
       // 401/403 means APIM is live and protecting the route → live
-      setStatus(res.ok || res.status === 401 || res.status === 403 ? 'live' : 'demo');
+      const live = res.ok || res.status === 401 || res.status === 403;
+      setStatus(live ? 'live' : 'demo');
+      setBackendOnline(live);
+      emitBackendStatusChanged({ online: live });
     } catch {
       setStatus('demo');
+      setBackendOnline(false);
+      emitBackendStatusChanged({ online: false });
     }
-  }, []);
+  }, [setBackendOnline]);
 
   useEffect(() => {
     void probe();

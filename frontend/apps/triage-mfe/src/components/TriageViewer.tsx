@@ -7,7 +7,7 @@ import Chip from '@mui/material/Chip';
 import LinearProgress from '@mui/material/LinearProgress';
 import Skeleton from '@mui/material/Skeleton';
 import { Card, CardHeader, CardTitle, CardContent, Badge, Button, useStreamText } from '@healthcare/design-system';
-import { onEscalationRequired, onAgentDecision } from '@healthcare/mfe-events';
+import { onEscalationRequired, onAgentDecision, onBackendStatusChanged } from '@healthcare/mfe-events';
 import { HitlEscalationModal } from './HitlEscalationModal';
 
 /**
@@ -103,6 +103,8 @@ export function TriageViewer() {
   const [error, setError] = useState<string | null>(null);
   const [statusFilter, setStatusFilter] = useState<'All' | 'AwaitingHumanReview' | 'Completed' | 'Processing'>('All');
   const [levelFilter, setLevelFilter] = useState<'All' | 'P1_Immediate' | 'P2_Urgent' | 'P3_Standard'>('All');
+  // null = unknown (waiting for first probe), true = live, false = down
+  const [backendOnline, setBackendOnlineLocal] = useState<boolean | null>(null);
   const abortRef       = useRef<AbortController | null>(null);
   // Adaptive poll: 5 s when backend is live, 30 s when returning 404/errors to
   // avoid flooding the APIM gateway (and browser console) when not yet deployed.
@@ -116,6 +118,13 @@ export function TriageViewer() {
   }
 
   async function doFetch() {
+    // If the global health check already confirmed the backend is down, skip the
+    // fetch entirely and show demo data — avoids 404s in the browser console.
+    if (backendOnline === false) {
+      setWorkflows(prev => prev.length > 0 ? prev : DEMO_WORKFLOWS);
+      setLoading(false);
+      return;
+    }
     // Abort previous in-flight request
     abortRef.current?.abort();
     const controller = new AbortController();
@@ -151,15 +160,25 @@ export function TriageViewer() {
     void doFetch();
     const offEscalation = onEscalationRequired(() => setShowEscalation(true));
     const offDecision   = onAgentDecision(() => void doFetch());
+    // When shell announces the backend went offline, immediately switch to demo
+    // data without waiting for the next poll cycle.
+    const offStatus = onBackendStatusChanged(({ detail }) => {
+      setBackendOnlineLocal(detail.online);
+      if (!detail.online) {
+        setWorkflows(prev => prev.length > 0 ? prev : DEMO_WORKFLOWS);
+        setLoading(false);
+      }
+    });
     intervalRef.current = setInterval(doFetch, 5_000);
     return () => {
       abortRef.current?.abort();
       offEscalation();
       offDecision();
+      offStatus();
       if (intervalRef.current) clearInterval(intervalRef.current);
     };
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [backendOnline]);
 
   function getTriageBadgeVariant(level: string) {
     switch (level) {

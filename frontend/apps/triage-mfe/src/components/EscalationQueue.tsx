@@ -5,6 +5,7 @@ import TextField from '@mui/material/TextField';
 import Alert from '@mui/material/Alert';
 import Divider from '@mui/material/Divider';
 import { Card, CardHeader, CardTitle, CardContent, Badge, Button } from '@healthcare/design-system';
+import { onBackendStatusChanged } from '@healthcare/mfe-events';
 
 const API_BASE = import.meta.env.VITE_API_BASE_URL || '';
 
@@ -46,10 +47,18 @@ export function EscalationQueue() {
   const [actionId, setActionId]     = useState<string | null>(null);
   const [note, setNote]             = useState('');
   const [actionError, setActionError] = useState<string | null>(null);
+  // null = unknown (waiting for first probe from shell), true = live, false = down
+  const [backendOnline, setBackendOnlineLocal] = useState<boolean | null>(null);
 
   const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
   const fetchQueue = useCallback(async () => {
+    // If the global health check confirmed backend is down, skip fetch — avoid 404 noise.
+    if (backendOnline === false) {
+      setItems(DEMO_ESCALATIONS);
+      setLoading(false);
+      return;
+    }
     setLoading(true);
     setError(null);
     try {
@@ -75,12 +84,21 @@ export function EscalationQueue() {
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [backendOnline]);
 
   useEffect(() => {
     void fetchQueue();
+    // When shell announces the backend went offline, immediately show demo data
+    const offStatus = onBackendStatusChanged(({ detail }) => {
+      setBackendOnlineLocal(detail.online);
+      if (!detail.online) {
+        setItems(DEMO_ESCALATIONS);
+        setLoading(false);
+      }
+    });
     intervalRef.current = setInterval(() => void fetchQueue(), 10_000);
     return () => {
+      offStatus();
       if (intervalRef.current) clearInterval(intervalRef.current);
     };
   }, [fetchQueue]);

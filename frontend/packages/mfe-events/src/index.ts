@@ -71,17 +71,23 @@ export interface NavigationRequestedDetail {
   openInNewTab?: boolean;
 }
 
+export interface BackendStatusChangedDetail {
+  /** true = APIM/backend is reachable, false = down/not deployed, null = checking */
+  online: boolean;
+}
+
 // ── Event name constants ─────────────────────────────────────────────────────
 
 export const MFE_EVENTS = {
-  TRANSCRIPT_COMPLETED:  'mfe:transcript:completed',
-  AGENT_DECISION:        'mfe:agent:decision',
-  ESCALATION_REQUIRED:   'mfe:escalation:required',
-  PATIENT_SELECTED:      'mfe:patient:selected',
-  SLOT_RESERVED:         'mfe:slot:reserved',
-  BOOKING_CREATED:       'mfe:booking:created',
-  TRIAGE_APPROVED:       'mfe:triage:approved',
-  NAVIGATION_REQUESTED:  'mfe:navigation:requested',
+  TRANSCRIPT_COMPLETED:    'mfe:transcript:completed',
+  AGENT_DECISION:          'mfe:agent:decision',
+  ESCALATION_REQUIRED:     'mfe:escalation:required',
+  PATIENT_SELECTED:        'mfe:patient:selected',
+  SLOT_RESERVED:           'mfe:slot:reserved',
+  BOOKING_CREATED:         'mfe:booking:created',
+  TRIAGE_APPROVED:         'mfe:triage:approved',
+  NAVIGATION_REQUESTED:    'mfe:navigation:requested',
+  BACKEND_STATUS_CHANGED:  'mfe:backend:status',
 } as const;
 
 export type MfeEventName = (typeof MFE_EVENTS)[keyof typeof MFE_EVENTS];
@@ -154,3 +160,12 @@ export const emitNavigationRequested = (detail: NavigationRequestedDetail) =>
 
 export const onNavigationRequested = (handler: MfeEventHandler<NavigationRequestedDetail>) =>
   onMfeEvent<NavigationRequestedDetail>(MFE_EVENTS.NAVIGATION_REQUESTED, handler);
+
+export const emitBackendStatusChanged = (detail: BackendStatusChangedDetail) =>
+  window.dispatchEvent(new CustomEvent<BackendStatusChangedDetail>(MFE_EVENTS.BACKEND_STATUS_CHANGED, { detail, bubbles: false }));
+
+export const onBackendStatusChanged = (handler: MfeEventHandler<BackendStatusChangedDetail>) => {
+  const listener = handler as EventListener;
+  window.addEventListener(MFE_EVENTS.BACKEND_STATUS_CHANGED, listener);
+  return () => window.removeEventListener(MFE_EVENTS.BACKEND_STATUS_CHANGED, listener);
+};
