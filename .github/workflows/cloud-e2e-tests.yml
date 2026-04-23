@@ -162,7 +162,7 @@ jobs:
         if: always()
         run: node e2e-cloud/verify-platform-feature-coverage.mjs test-results/results.json
 
-      - name: Verify platform action coverage (100%)
+      - name: Verify platform action coverage (100% + role slices)
         id: platform-action-coverage
         if: always()
         run: node e2e-cloud/verify-platform-action-coverage.mjs test-results/results.json
@@ -192,9 +192,9 @@ jobs:
 
           echo "" >> $GITHUB_STEP_SUMMARY
           if [ "${{ steps.platform-action-coverage.outcome }}" = "success" ]; then
-            echo "✅ Platform action coverage gate passed (100% action coverage)." >> $GITHUB_STEP_SUMMARY
+            echo "✅ Platform action coverage gate passed (100% global + role-slice coverage)." >> $GITHUB_STEP_SUMMARY
           elif [ "${{ steps.platform-action-coverage.outcome }}" = "failure" ]; then
-            echo "❌ Platform action coverage gate failed (below 100% action coverage)." >> $GITHUB_STEP_SUMMARY
+            echo "❌ Platform action coverage gate failed (global and/or role-slice coverage below 100%)." >> $GITHUB_STEP_SUMMARY
           else
             echo "⏭️ Platform action coverage gate did not run." >> $GITHUB_STEP_SUMMARY
           fi

@@ -1,0 +1,87 @@
+{
+  "roles": [
+    {
+      "id": "admin",
+      "name": "Platform Admin",
+      "allActions": true
+    },
+    {
+      "id": "clinician",
+      "name": "Clinician",
+      "requiredActionIds": [
+        "sidebar-dashboard",
+        "sidebar-notifications",
+        "sidebar-alerts",
+        "sidebar-voice",
+        "sidebar-triage",
+        "sidebar-encounters",
+        "sidebar-scheduling",
+        "sidebar-population-health",
+        "sidebar-revenue",
+        "sidebar-patient-portal",
+        "tab-voice-session",
+        "tab-voice-history",
+        "tab-triage-ai",
+        "tab-triage-coder",
+        "tab-scheduling-calendar",
+        "tab-scheduling-book",
+        "tab-scheduling-waitlist",
+        "tab-pop-risk-overview",
+        "tab-pop-care-gaps",
+        "tab-pop-risk-trajectory",
+        "tab-pop-sdoh",
+        "tab-pop-cost",
+        "tab-pop-hedis",
+        "tab-revenue-coding",
+        "tab-revenue-prior-auth",
+        "tab-revenue-denials",
+        "tab-encounters-overview",
+        "tab-encounters-medications",
+        "tab-encounters-records",
+        "tab-encounters-fhir",
+        "tab-encounters-drug",
+        "preferences-save"
+      ]
+    },
+    {
+      "id": "auditor",
+      "name": "Auditor",
+      "requiredActionIds": [
+        "sidebar-dashboard",
+        "sidebar-notifications",
+        "sidebar-alerts",
+        "sidebar-business",
+        "sidebar-governance",
+        "sidebar-admin-audit",
+        "sidebar-admin-break-glass",
+        "sidebar-admin-health",
+        "sidebar-admin-guide-history",
+        "sidebar-admin-reports",
+        "sidebar-admin-settings",
+        "tab-governance-overview",
+        "tab-governance-evaluate",
+        "tab-governance-register",
+        "tab-governance-experiments",
+        "tab-governance-xai",
+        "tab-governance-ml-confidence"
+      ]
+    },
+    {
+      "id": "patient",
+      "name": "Patient",
+      "requiredActionIds": [
+        "sidebar-dashboard",
+        "sidebar-notifications",
+        "sidebar-patient-portal",
+        "tab-portal-main",
+        "tab-portal-registration",
+        "tab-portal-documents",
+        "tab-portal-notifications",
+        "tab-portal-consent",
+        "tab-portal-campaigns",
+        "demo-start-guided",
+        "demo-start-self-driven"
+      ]
+    }
+  ]
+}
