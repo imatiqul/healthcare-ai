@@ -162,6 +162,11 @@ jobs:
         if: always()
         run: node e2e-cloud/verify-platform-feature-coverage.mjs test-results/results.json
 
+      - name: Verify platform action coverage (100%)
+        id: platform-action-coverage
+        if: always()
+        run: node e2e-cloud/verify-platform-action-coverage.mjs test-results/results.json
+
       - name: Write E2E summary
         if: always()
         run: |
@@ -183,6 +188,15 @@ jobs:
             echo "❌ Platform feature coverage gate failed (below 100% route coverage)." >> $GITHUB_STEP_SUMMARY
           else
             echo "⏭️ Platform feature coverage gate did not run." >> $GITHUB_STEP_SUMMARY
+          fi
+
+          echo "" >> $GITHUB_STEP_SUMMARY
+          if [ "${{ steps.platform-action-coverage.outcome }}" = "success" ]; then
+            echo "✅ Platform action coverage gate passed (100% action coverage)." >> $GITHUB_STEP_SUMMARY
+          elif [ "${{ steps.platform-action-coverage.outcome }}" = "failure" ]; then
+            echo "❌ Platform action coverage gate failed (below 100% action coverage)." >> $GITHUB_STEP_SUMMARY
+          else
+            echo "⏭️ Platform action coverage gate did not run." >> $GITHUB_STEP_SUMMARY
           fi
           echo "" >> $GITHUB_STEP_SUMMARY
           echo "Trigger: \`${{ github.event_name }}\` | Branch: \`${{ github.ref_name }}\` | SHA: \`${{ github.sha }}\`" >> $GITHUB_STEP_SUMMARY
@@ -209,6 +223,14 @@ jobs:
         with:
           name: platform-feature-coverage-${{ github.run_number }}
           path: frontend/test-results/platform-feature-coverage.json
+          retention-days: 14
+
+      - name: Upload platform action coverage report
+        uses: actions/upload-artifact@v4
+        if: ${{ !cancelled() }}
+        with:
+          name: platform-action-coverage-${{ github.run_number }}
+          path: frontend/test-results/platform-action-coverage.json
           retention-days: 14
 
       # Notify Slack on failure — configure SLACK_WEBHOOK_URL as a repo secret
