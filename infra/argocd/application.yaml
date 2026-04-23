@@ -8,7 +8,7 @@ metadata:
 spec:
   project: default
   source:
-    repoURL: https://github.com/imatiqul/healthcare-ai.git
+    repoURL: https://github.com/imatiqul/azure-ai-cloud-healthcare.git
     targetRevision: main
     path: infra/helm
     helm:

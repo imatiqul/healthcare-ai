@@ -295,7 +295,7 @@ az deployment sub create \
 az containerapp update \
   --name healthq-voice \
   --resource-group healthq-copilot-rg \
-  --image ghcr.io/imatiqul/healthcare-ai/healthq-copilot-voice:latest
+  --image ghcr.io/imatiqul/azure-ai-cloud-healthcare/healthq-copilot-voice:latest
 ```
 
 ---

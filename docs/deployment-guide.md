@@ -65,8 +65,8 @@ pnpm --version         # 9+
 ## Step 1 — Clone the Repository
 
 ```bash
-git clone https://github.com/imatiqul/healthcare-ai
-cd healthcare-ai
+git clone https://github.com/imatiqul/azure-ai-cloud-healthcare
+cd azure-ai-cloud-healthcare
 
 # Install all frontend dependencies via Turborepo
 cd frontend && pnpm install && cd ..
@@ -327,7 +327,7 @@ az group create \
 az staticwebapp create \
   --name healthq-copilot-shell \
   --resource-group healthq-copilot-rg \
-  --source https://github.com/imatiqul/healthcare-ai \
+  --source https://github.com/imatiqul/azure-ai-cloud-healthcare \
   --branch main \
   --app-location "frontend/apps/shell" \
   --output-location ".next" \
@@ -337,7 +337,7 @@ az staticwebapp create \
 az staticwebapp create \
   --name healthq-copilot-voice-mfe \
   --resource-group healthq-copilot-rg \
-  --source https://github.com/imatiqul/healthcare-ai \
+  --source https://github.com/imatiqul/azure-ai-cloud-healthcare \
   --branch main \
   --app-location "frontend/apps/voice-mfe" \
   --output-location "dist" \
@@ -383,7 +383,7 @@ az containerapp create \
   --name voice-service \
   --resource-group healthq-copilot-rg \
   --environment healthq-copilot-env \
-  --image ghcr.io/imatiqul/healthcare-ai/healthq-copilot/voice:latest \
+  --image ghcr.io/imatiqul/azure-ai-cloud-healthcare/healthq-copilot/voice:latest \
   --target-port 5001 \
   --ingress internal \
   --min-replicas 0 \
@@ -581,7 +581,7 @@ git commit -m "feat: initial HealthQCopilot deployment"
 git push origin main
 
 # Watch the pipeline at:
-# https://github.com/imatiqul/healthcare-ai/actions
+# https://github.com/imatiqul/azure-ai-cloud-healthcare/actions
 ```
 
 

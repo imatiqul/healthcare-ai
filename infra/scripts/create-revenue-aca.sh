@@ -5,7 +5,7 @@
 RESOURCE_GROUP="healthq-copilot-rg"
 ACA_ENV="healthq-copilot-env"
 SERVICE_NAME="revenue"
-IMAGE="ghcr.io/imatiqul/healthcare-ai/healthq-copilot/revenue:latest"
+IMAGE="ghcr.io/imatiqul/azure-ai-cloud-healthcare/healthq-copilot/revenue:latest"
 
 echo "Creating ACA container app: $SERVICE_NAME"
 

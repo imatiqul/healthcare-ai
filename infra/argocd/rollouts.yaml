@@ -74,7 +74,7 @@ spec:
     spec:
       containers:
         - name: agents
-          image: ghcr.io/imatiqul/healthcare-ai/healthq-copilot-agents:latest
+          image: ghcr.io/imatiqul/azure-ai-cloud-healthcare/healthq-copilot-agents:latest
           ports:
             - containerPort: 8080
           envFrom:
@@ -121,7 +121,7 @@ spec:
     spec:
       containers:
         - name: voice
-          image: ghcr.io/imatiqul/healthcare-ai/healthq-copilot-voice:latest
+          image: ghcr.io/imatiqul/azure-ai-cloud-healthcare/healthq-copilot-voice:latest
           ports:
             - containerPort: 8080
           envFrom:
@@ -166,7 +166,7 @@ spec:
     spec:
       containers:
         - name: fhir
-          image: ghcr.io/imatiqul/healthcare-ai/healthq-copilot-fhir:latest
+          image: ghcr.io/imatiqul/azure-ai-cloud-healthcare/healthq-copilot-fhir:latest
           ports:
             - containerPort: 8080
           envFrom:
@@ -209,7 +209,7 @@ spec:
     spec:
       containers:
         - name: identity
-          image: ghcr.io/imatiqul/healthcare-ai/healthq-copilot-identity:latest
+          image: ghcr.io/imatiqul/azure-ai-cloud-healthcare/healthq-copilot-identity:latest
           ports:
             - containerPort: 8080
           envFrom:
@@ -252,7 +252,7 @@ spec:
     spec:
       containers:
         - name: notifications
-          image: ghcr.io/imatiqul/healthcare-ai/healthq-copilot-notifications:latest
+          image: ghcr.io/imatiqul/azure-ai-cloud-healthcare/healthq-copilot-notifications:latest
           ports:
             - containerPort: 8080
           envFrom:
@@ -295,7 +295,7 @@ spec:
     spec:
       containers:
         - name: revenue
-          image: ghcr.io/imatiqul/healthcare-ai/healthq-copilot-revenuecycle:latest
+          image: ghcr.io/imatiqul/azure-ai-cloud-healthcare/healthq-copilot-revenuecycle:latest
           ports:
             - containerPort: 8080
           envFrom:
@@ -338,7 +338,7 @@ spec:
     spec:
       containers:
         - name: pophealth
-          image: ghcr.io/imatiqul/healthcare-ai/healthq-copilot-populationhealth:latest
+          image: ghcr.io/imatiqul/azure-ai-cloud-healthcare/healthq-copilot-populationhealth:latest
           ports:
             - containerPort: 8080
           envFrom:
@@ -381,7 +381,7 @@ spec:
     spec:
       containers:
         - name: scheduling
-          image: ghcr.io/imatiqul/healthcare-ai/healthq-copilot-scheduling:latest
+          image: ghcr.io/imatiqul/azure-ai-cloud-healthcare/healthq-copilot-scheduling:latest
           ports:
             - containerPort: 8080
           envFrom:
@@ -424,7 +424,7 @@ spec:
     spec:
       containers:
         - name: ocr
-          image: ghcr.io/imatiqul/healthcare-ai/healthq-copilot-ocr:latest
+          image: ghcr.io/imatiqul/azure-ai-cloud-healthcare/healthq-copilot-ocr:latest
           ports:
             - containerPort: 8080
           envFrom:
@@ -467,7 +467,7 @@ spec:
     spec:
       containers:
         - name: gateway
-          image: ghcr.io/imatiqul/healthcare-ai/healthq-copilot-gateway:latest
+          image: ghcr.io/imatiqul/azure-ai-cloud-healthcare/healthq-copilot-gateway:latest
           ports:
             - containerPort: 8080
           envFrom:
