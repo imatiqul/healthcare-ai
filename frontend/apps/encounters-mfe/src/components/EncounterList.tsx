@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import Stack from '@mui/material/Stack';
 import Typography from '@mui/material/Typography';
 import Button from '@mui/material/Button';
@@ -47,11 +47,7 @@ export function EncounterList({ patientId: propId }: { patientId?: string } = {}
     if (propId !== undefined) setPatientId(propId);
   }, [propId]);
 
-  useEffect(() => {
-    if (patientId) fetchEncounters(patientId);
-  }, [patientId]);
-
-  async function fetchEncounters(id: string) {
+  const fetchEncounters = useCallback(async (id: string) => {
     setLoading(true);
     setError(null);
     try {
@@ -67,7 +63,11 @@ export function EncounterList({ patientId: propId }: { patientId?: string } = {}
     } finally {
       setLoading(false);
     }
-  }
+  }, []);
+
+  useEffect(() => {
+    if (patientId) fetchEncounters(patientId);
+  }, [patientId, fetchEncounters]);
 
   function handleSearch() {
     const trimmed = searchInput.trim();

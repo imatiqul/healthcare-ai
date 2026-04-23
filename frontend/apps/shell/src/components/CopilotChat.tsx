@@ -15,6 +15,7 @@ import SendIcon from '@mui/icons-material/Send';
 import CloseIcon from '@mui/icons-material/Close';
 import DeleteSweepIcon from '@mui/icons-material/DeleteSweep';
 import { useTranslation } from 'react-i18next';
+import { onNavigationRequested } from '@healthcare/mfe-events';
 
 const HISTORY_KEY = 'healthq_chat_history';
 const MAX_HISTORY  = 50; // keep last 50 messages in localStorage
@@ -134,6 +135,26 @@ export function CopilotChat() {
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [messages]);
+
+  // Listen for cross-MFE navigation requests — an AI agent or workflow can
+  // dispatch NAVIGATION_REQUESTED to trigger shell-level routing from any MFE.
+  useEffect(() => {
+    const off = onNavigationRequested((e) => {
+      const { path, reason, openInNewTab } = e.detail;
+      if (openInNewTab) {
+        window.open(path, '_blank', 'noopener,noreferrer');
+      } else {
+        navigate(path);
+      }
+      if (reason) {
+        setMessages(prev => [
+          ...prev,
+          { role: 'assistant', content: `Navigating to **${path}**${reason ? ` — ${reason}` : ''}.` },
+        ]);
+      }
+    });
+    return off;
+  }, [navigate]);
 
   const sendMessage = useCallback(async (text: string) => {
     if (!text.trim() || loading) return;

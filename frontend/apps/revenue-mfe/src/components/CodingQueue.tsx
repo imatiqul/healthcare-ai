@@ -38,7 +38,9 @@ export function CodingQueue() {
 
   const fetchJobs = useCallback(async () => {
     try {
-      const res = await fetch(`${API_BASE}/api/v1/revenue/coding-jobs`);
+      const res = await fetch(`${API_BASE}/api/v1/revenue/coding-jobs`, {
+        signal: AbortSignal.timeout(10_000),
+      });
       if (res.ok) setItems(await res.json());
       else setItems(DEMO_CODING_ITEMS);
     } catch {

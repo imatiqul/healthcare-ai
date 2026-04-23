@@ -9,6 +9,7 @@ import Alert from '@mui/material/Alert';
 import Stack from '@mui/material/Stack';
 import Divider from '@mui/material/Divider';
 import { Button, AiThinkingPanel, useStreamText } from '@healthcare/design-system';
+import { emitTriageApproved } from '@healthcare/mfe-events';
 
 const API_BASE = import.meta.env.VITE_API_BASE_URL || '';
 
@@ -62,9 +63,11 @@ export function HitlEscalationModal({
         }),
       });
       if (!res.ok) throw new Error(`Server returned ${res.status}`);
+      emitTriageApproved({ workflowId, sessionId: workflowId, triageLevel: triageLevel ?? 'Unknown', approvedBy: 'current-user' });
       onApprove();
     } catch {
       // Backend offline — complete the HITL approval locally so the workflow is never blocked
+      emitTriageApproved({ workflowId, sessionId: workflowId, triageLevel: triageLevel ?? 'Unknown', approvedBy: 'current-user' });
       onApprove();
     } finally {
       setSubmitting(false);

@@ -17,6 +17,8 @@ export function BookingForm() {
   useEffect(() => {
     const off = onSlotReserved((e) => {
       if (e.detail?.slotId) setSlotId(e.detail.slotId);
+      if (e.detail?.patientId) setPatientId(e.detail.patientId);
+      if (e.detail?.practitionerId) setPractitionerId(e.detail.practitionerId);
     });
     return off;
   }, []);

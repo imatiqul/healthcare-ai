@@ -2,10 +2,10 @@ import { useState, useEffect, useRef } from 'react';
 import Stack from '@mui/material/Stack';
 import Typography from '@mui/material/Typography';
 import Box from '@mui/material/Box';
-import CircularProgress from '@mui/material/CircularProgress';
 import Alert from '@mui/material/Alert';
 import Chip from '@mui/material/Chip';
 import LinearProgress from '@mui/material/LinearProgress';
+import Skeleton from '@mui/material/Skeleton';
 import { Card, CardHeader, CardTitle, CardContent, Badge, Button, useStreamText } from '@healthcare/design-system';
 import { onEscalationRequired, onAgentDecision } from '@healthcare/mfe-events';
 import { HitlEscalationModal } from './HitlEscalationModal';
@@ -151,9 +151,30 @@ export function TriageViewer() {
 
   if (loading) {
     return (
-      <Box sx={{ display: 'flex', justifyContent: 'center', py: 6 }}>
-        <CircularProgress size={28} />
-      </Box>
+      <Stack spacing={2}>
+        {[0, 1, 2].map(i => (
+          <Card key={i}>
+            <CardHeader>
+              <CardTitle>
+                <Stack direction="row" justifyContent="space-between" alignItems="center">
+                  <Box sx={{ flex: 1 }}>
+                    <Skeleton variant="text" width="40%" height={20} />
+                    <Skeleton variant="text" width="25%" height={16} />
+                  </Box>
+                  <Stack direction="row" spacing={1}>
+                    <Skeleton variant="rounded" width={80} height={24} />
+                    <Skeleton variant="rounded" width={70} height={24} />
+                  </Stack>
+                </Stack>
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <Skeleton variant="text" width="90%" />
+              <Skeleton variant="text" width="70%" />
+            </CardContent>
+          </Card>
+        ))}
+      </Stack>
     );
   }
 
