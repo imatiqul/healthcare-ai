@@ -24,6 +24,7 @@ import SmartToyIcon from '@mui/icons-material/SmartToy';
 import CalendarMonthIcon from '@mui/icons-material/CalendarMonth';
 import MoneyOffIcon from '@mui/icons-material/MoneyOff';
 import { Card, CardContent } from '@healthcare/design-system';
+import { useGlobalStore } from '../store';
 
 const API_BASE = import.meta.env.VITE_API_BASE_URL || '';
 
@@ -174,9 +175,17 @@ export function ActivityFeedWidget() {
   const [events,  setEvents]  = useState<ActivityEvent[]>([]);
   const [loading, setLoading] = useState(true);
   const [failedSources, setFailedSources] = useState<string[]>([]);
+  const backendOnline = useGlobalStore(s => s.backendOnline);
 
   const load = useCallback(async () => {
     setLoading(true);
+    // Skip all API calls when backend is known offline — show demo feed immediately
+    if (backendOnline === false) {
+      setEvents(DEMO_FEED_EVENTS);
+      setFailedSources([]);
+      setLoading(false);
+      return;
+    }
     const result = await buildFeed();
     // All 4 sources failed — use demo data so dashboard is never empty
     if (result.failedSources.length === 4) {
@@ -187,7 +196,7 @@ export function ActivityFeedWidget() {
       setFailedSources(result.failedSources);
     }
     setLoading(false);
-  }, []);
+  }, [backendOnline]);
 
   useEffect(() => { void load(); }, [load]);
 

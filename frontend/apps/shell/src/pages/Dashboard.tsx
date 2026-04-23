@@ -30,6 +30,7 @@ import { DashboardCustomizer, loadVisibleSections, type DashboardSection } from 
 import { ClinicalAlertsSummaryWidget } from '../components/ClinicalAlertsSummaryWidget'; // Phase 41
 import { DashboardQuickActions } from '../components/DashboardQuickActions'; // Phase 47
 import { ActivityFeedWidget } from '../components/ActivityFeedWidget'; // Phase 53
+import { useGlobalStore } from '../store';
 
 const API_BASE = import.meta.env.VITE_API_BASE_URL || '';
 // Only attempt SignalR when the hub URL is explicitly configured.
@@ -267,6 +268,7 @@ export default function Dashboard() {
   const [fetchError, setFetchError] = useState(false);
   const [lastRefreshed, setLastRefreshed] = useState<Date | null>(null);
   const [visibleSections, setVisibleSections] = useState<DashboardSection[]>(loadVisibleSections); // Phase 37
+  const backendOnline = useGlobalStore(s => s.backendOnline);
 
   const applyPushUpdate = useCallback((payload: RawDashboardPayload) => {
     setStats(prev => prev.map(s => {
@@ -285,6 +287,14 @@ export default function Dashboard() {
   }, []);
 
   const loadStats = useCallback(async () => {
+    // Skip all API calls when backend is known offline — use demo data immediately
+    if (backendOnline === false) {
+      setStats(buildStats(DEMO_AGENTS, DEMO_SCHEDULING, DEMO_POPHEALTH, DEMO_REVENUE));
+      setFetchError(false);
+      setLastRefreshed(new Date());
+      setLoading(false);
+      return;
+    }
     const failed: string[] = [];
     const [agents, scheduling, popHealth, revenue] = await Promise.all([
       fetchSafe('/api/v1/agents/stats',           DEMO_AGENTS,     { pendingTriage: 0, awaitingReview: 0, completed: 0 }, failed),
@@ -296,18 +306,19 @@ export default function Dashboard() {
     setFetchError(failed.length > 0);
     setLastRefreshed(new Date());
     setLoading(false);
-  }, []);
+  }, [backendOnline]);
 
   // Initial load
   useEffect(() => {
     loadStats();
   }, [loadStats]);
 
-  // Auto-refresh every 30s
+  // Auto-refresh every 30s (skip when backend is offline to avoid repeated 404s)
   useEffect(() => {
+    if (backendOnline === false) return;
     const id = setInterval(loadStats, 30_000);
     return () => clearInterval(id);
-  }, [loadStats]);
+  }, [loadStats, backendOnline]);
 
   useEffect(() => {
     if (!SIGNALR_HUB_URL) return; // skip when hub not configured — avoids 405 console errors

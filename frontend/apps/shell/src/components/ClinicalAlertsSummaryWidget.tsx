@@ -13,6 +13,7 @@ import MoneyOffIcon from '@mui/icons-material/MoneyOff';
 import ArrowForwardIosIcon from '@mui/icons-material/ArrowForwardIos';
 import { Link } from 'react-router-dom';
 import { Card, CardContent } from '@healthcare/design-system';
+import { useGlobalStore } from '../store';
 
 const API_BASE = import.meta.env.VITE_API_BASE_URL || '';
 
@@ -43,10 +44,21 @@ export function ClinicalAlertsSummaryWidget() {
   });
   const [loading, setLoading] = useState(true);
   const [hasError, setHasError] = useState(false);
+  const backendOnline = useGlobalStore(s => s.backendOnline);
 
   useEffect(() => {
     async function load() {
       setLoading(true);
+      // Skip all API calls when backend is known offline — use demo counts immediately
+      if (backendOnline === false) {
+        setCounts({ criticalRisk: 5, activeBreakGlass: 2, urgentWaitlist: 3, nearDeadlineDenials: 2 });
+        try {
+          localStorage.setItem('hq:alerts-count', '12');
+          window.dispatchEvent(new CustomEvent('hq:alerts-updated'));
+        } catch { /* ignore */ }
+        setLoading(false);
+        return;
+      }
       const [risks, breakGlass, waitlist, denials] = await Promise.all([
         fetchCount(`${API_BASE}/api/v1/population-health/risks?top=20`),
         fetchCount(`${API_BASE}/api/v1/identity/break-glass`),
@@ -75,7 +87,7 @@ export function ClinicalAlertsSummaryWidget() {
       setLoading(false);
     }
     void load();
-  }, []);
+  }, [backendOnline]);
 
   const total = counts.criticalRisk + counts.activeBreakGlass + counts.urgentWaitlist + counts.nearDeadlineDenials;
 

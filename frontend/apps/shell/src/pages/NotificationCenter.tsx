@@ -124,17 +124,19 @@ function severityColor(severity: 'error' | 'warning' | 'info') {
 }
 
 // ── Page ──────────────────────────────────────────────────────────────────────
-
+import { useGlobalStore } from '../store';
 export default function NotificationCenter() {
   const navigate = useNavigate();
   const [records, setRecords] = useState<NotificationRecord[]>([]);
   const [loading, setLoading] = useState(true);
   const [filterSeverity, setFilterSeverity] = useState<'all' | 'error' | 'warning' | 'info'>('all');
   const [unreadOnly, setUnreadOnly] = useState(false);
+  const backendOnline = useGlobalStore(s => s.backendOnline);
 
   const refresh = useCallback(async () => {
     setLoading(true);
-    const liveAlerts = await fetchLiveAlerts();
+    // Skip live API calls when backend is known offline — just show stored history
+    const liveAlerts = backendOnline === false ? [] : await fetchLiveAlerts();
     const history    = loadHistory();
     const now        = new Date().toISOString();
 
@@ -148,7 +150,7 @@ export default function NotificationCenter() {
     saveHistory(merged);
     setRecords(merged);
     setLoading(false);
-  }, []);
+  }, [backendOnline]);
 
   useEffect(() => { refresh(); }, [refresh]);
 

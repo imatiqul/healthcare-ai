@@ -20,6 +20,7 @@ import { PatientContextBar } from './components/PatientContextBar';   // Phase 4
 import { OfflineIndicator } from './components/OfflineIndicator'; // Phase 37
 import { AutoDemoPlayer } from './components/AutoDemo/AutoDemoPlayer'; // Phase 58
 import { useGlobalStore } from './store'; // Phase 58
+import { emitBackendStatusChanged } from '@healthcare/mfe-events';
 import { OnboardingWizard } from './components/OnboardingWizard'; // Phase 38
 import { TabbedPageLayout } from './components/TabbedPageLayout'; // Phase 48
 const NotFoundPage = lazy(() => import('./pages/NotFoundPage')); // Phase 38
@@ -84,6 +85,8 @@ const ImmunizationPanelPage = lazy(() => import('encounters/ImmunizationPanel').
 const PractitionerManagerPage = lazy(() => import('./pages/PractitionerManager')); // Phase 30
 const BusinessKpiDashboardPage = lazy(() => import('./pages/BusinessKpiDashboard')); // Phase 31
 const PlatformHealthPanelPage  = lazy(() => import('./pages/PlatformHealthPanel'));  // Phase 31
+
+const APP_API_BASE = import.meta.env.VITE_API_BASE_URL || '';
 
 function Loading() {
   return (
@@ -178,7 +181,38 @@ export default function App() {
   const location = useLocation();
   const navigate = useNavigate();
   const isDemoRoute    = location.pathname.startsWith('/demo');
-  const { isDemoActive } = useGlobalStore(); // Phase 58
+  const { isDemoActive, backendOnline, setBackendOnline } = useGlobalStore(); // Phase 58
+
+  // ── Startup backend probe ────────────────────────────────────────────────
+  // Run once at app startup so all child components know the backend status
+  // before they mount and attempt their own API calls.
+  useEffect(() => {
+    let cancelled = false;
+    async function startupProbe() {
+      if (!APP_API_BASE) {
+        setBackendOnline(false);
+        emitBackendStatusChanged({ online: false });
+        return;
+      }
+      try {
+        const res = await fetch(`${APP_API_BASE}/api/v1/agents/stats`, { signal: AbortSignal.timeout(5_000) });
+        // 404 → backend not deployed; 401/403 → APIM live and protecting route
+        const live = res.ok || res.status === 401 || res.status === 403;
+        if (!cancelled) {
+          setBackendOnline(live);
+          emitBackendStatusChanged({ online: live });
+        }
+      } catch {
+        if (!cancelled) {
+          setBackendOnline(false);
+          emitBackendStatusChanged({ online: false });
+        }
+      }
+    }
+    void startupProbe();
+    return () => { cancelled = true; };
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []); // intentionally run once on mount
   const { open: paletteOpen, openPalette, closePalette }         = useCommandPalette();
   const { open: shortcutsOpen, closeModal: closeShortcuts } = useKeyboardShortcutsModal();
   const gKeyRef = useRef(false); // Phase 56 — tracks first key of G+* sequences
@@ -232,6 +266,12 @@ export default function App() {
     window.addEventListener('keydown', handler);
     return () => { window.removeEventListener('keydown', handler); clearTimeout(timer); };
   }, [navigate]);
+
+  // While the startup probe is pending, show a skeleton so components never
+  // mount before knowing whether the backend is reachable.
+  if (!isDemoRoute && backendOnline === null) {
+    return <Loading />;
+  }
 
   // Demo routes render without shell chrome (no sidebar, topnav, or copilot)
   if (isDemoRoute) {

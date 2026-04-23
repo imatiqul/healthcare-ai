@@ -167,7 +167,7 @@ export function TopNav({ onOpenSearch }: TopNavProps) {
   const [whatsNewOpen, setWhatsNewOpen]     = useState(false); // Phase 38
   const whatsNewCount                       = useWhatsNewBadge();  // Phase 38
   const aiStatus                            = useAiStatus();       // Phase 53
-  const { isDemoActive, demoClientName, demoCompany, exitDemo } = useGlobalStore(); // Phase 63
+  const { isDemoActive, demoClientName, demoCompany, exitDemo, backendOnline } = useGlobalStore(); // Phase 63
 
   const openUserMenu  = (e: React.MouseEvent<HTMLElement>) => setUserMenuAnchor(e.currentTarget);
   const closeUserMenu = () => setUserMenuAnchor(null);
@@ -177,8 +177,8 @@ export function TopNav({ onOpenSearch }: TopNavProps) {
   const handleSignOut = () => { closeUserMenu(); signOut(); };
 
   const loadAlerts = useCallback(() => {
-    if (isAuthenticated) fetchAlerts().then(setAlerts);
-  }, [isAuthenticated]);
+    if (isAuthenticated && backendOnline !== false) fetchAlerts().then(setAlerts);
+  }, [isAuthenticated, backendOnline]);
 
   useEffect(() => {
     loadAlerts();
