@@ -65,7 +65,7 @@ export function AllergyPanel({ patientId: propId }: { patientId?: string } = {})
     setError(null);
     try {
       const res = await fetch(`${API_BASE}/api/v1/fhir/allergies/${encodeURIComponent(id)}`, { signal: AbortSignal.timeout(10_000) });
-      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+      if (!res.ok) { setError(`HTTP ${res.status}`); return; }
       const bundle: Bundle<AllergyIntolerance> = await res.json();
       setAllergies(bundle.entry?.map(e => e.resource) ?? []);
     } catch {

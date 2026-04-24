@@ -52,7 +52,7 @@ function alertBadgeVariant(level: string): 'error' | 'warning' | 'success' {
 }
 
 export function DrugInteractionChecker() {
-  const [drugs, setDrugs] = useState<string[]>(['Metformin', 'Lisinopril', 'Atorvastatin']);
+  const [drugs, setDrugs] = useState<string[]>([]);
   const [drugInput, setDrugInput] = useState('');
   const [result, setResult] = useState<InteractionResult | null>(null);
   const [loading, setLoading] = useState(false);
@@ -79,7 +79,7 @@ export function DrugInteractionChecker() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ drugs }),
       });
-      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+      if (!res.ok) { setError(`HTTP ${res.status}`); return; }
       setResult(await res.json());
     } catch {
       setResult(DEMO_RESULT);

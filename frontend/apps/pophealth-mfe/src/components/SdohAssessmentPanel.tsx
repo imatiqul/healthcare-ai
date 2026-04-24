@@ -125,7 +125,7 @@ export function SdohAssessmentPanel() {
           assessedBy: assessedBy.trim() || undefined,
         }),
       });
-      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+      if (!res.ok) { setError(`HTTP ${res.status}`); return; }
       setResult(await res.json());
     } catch {
       setResult({ ...DEMO_SDOH_RESULT, patientId: patientId.trim() });

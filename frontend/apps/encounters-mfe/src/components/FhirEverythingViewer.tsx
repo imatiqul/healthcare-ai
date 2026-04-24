@@ -107,8 +107,7 @@ export function FhirEverythingViewer({ patientId: propId }: { patientId?: string
       const url = `${API_BASE}/api/v1/fhir/patients/${encodeURIComponent(patientId.trim())}/$everything${qs}`;
       const res = await fetch(url, { signal: AbortSignal.timeout(10_000) });
       if (!res.ok) {
-        setGrouped(DEMO_GROUPED);
-        setTotalCount(DEMO_TOTAL);
+        setError('FHIR $everything failed');
         return;
       }
       const data: unknown = await res.json();

@@ -70,7 +70,7 @@ export function LabDeltaFlagsPanel({ patientId: propId }: { patientId?: string }
           `${API_BASE}/api/v1/fhir/observations/${encodeURIComponent(patientId)}/delta-flags`,
           { signal: controller.signal },
         );
-        if (!res.ok) throw new Error(`HTTP ${res.status}`);
+        if (!res.ok) { setError(`HTTP ${res.status}`); return; }
         const data: LabDeltaFlag[] = await res.json();
         setFlags(data);
       } catch (err) {

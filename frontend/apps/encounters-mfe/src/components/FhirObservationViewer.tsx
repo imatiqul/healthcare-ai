@@ -120,7 +120,7 @@ export function FhirObservationViewer({ patientId: propId }: { patientId?: strin
       const categoryParam = category ? `?category=${encodeURIComponent(category)}` : '';
       const url = `${API_BASE}/api/v1/fhir/observations/${encodeURIComponent(id)}${categoryParam}`;
       const res = await fetch(url, { signal: AbortSignal.timeout(10_000) });
-      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+      if (!res.ok) { setError(`HTTP ${res.status}`); setSearched(true); return; }
       const raw = await res.json();
       setObservations(parseBundle(raw));
       setSearched(true);
@@ -133,8 +133,8 @@ export function FhirObservationViewer({ patientId: propId }: { patientId?: strin
   }
 
   useEffect(() => {
-    if (patientId) void fetchObservations(patientId);
-  }, [patientId]); // eslint-disable-line react-hooks/exhaustive-deps
+    if (propId) void fetchObservations(propId);
+  }, [propId]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const handleSearch = () => {
     if (!patientId.trim()) return;

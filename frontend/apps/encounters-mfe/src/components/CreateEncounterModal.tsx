@@ -75,7 +75,8 @@ export function CreateEncounterModal({ patientId, onClose, onCreated }: Props) {
 
       if (!res.ok) {
         const body = await res.text();
-        throw new Error(`HTTP ${res.status}: ${body}`);
+        setError(`HTTP ${res.status}: ${body}`);
+        return;
       }
 
       onCreated();

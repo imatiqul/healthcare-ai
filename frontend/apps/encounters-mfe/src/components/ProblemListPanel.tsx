@@ -70,7 +70,7 @@ export function ProblemListPanel({ patientId: propId }: { patientId?: string } =
     try {
       const url = `${API_BASE}/api/v1/fhir/conditions/${encodeURIComponent(id)}?clinicalStatus=${encodeURIComponent(status)}`;
       const res = await fetch(url, { signal: AbortSignal.timeout(10_000) });
-      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+      if (!res.ok) { setError(`HTTP ${res.status}`); return; }
       const bundle: Bundle<Condition> = await res.json();
       setConditions(bundle.entry?.map(e => e.resource) ?? []);
     } catch {

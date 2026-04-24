@@ -58,7 +58,7 @@ export function ImmunizationPanel({ patientId: propId }: { patientId?: string } 
     setError(null);
     try {
       const res = await fetch(`${API_BASE}/api/v1/fhir/immunizations/${encodeURIComponent(id)}`, { signal: AbortSignal.timeout(10_000) });
-      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+      if (!res.ok) { setError(`HTTP ${res.status}`); return; }
       const bundle: Bundle<Immunization> = await res.json();
       setImmunizations(bundle.entry?.map(e => e.resource) ?? []);
     } catch {

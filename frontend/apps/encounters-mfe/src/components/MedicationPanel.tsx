@@ -66,7 +66,7 @@ export function MedicationPanel({ patientId: propId }: { patientId?: string } = 
     setError(null);
     try {
       const res = await fetch(`${API_BASE}/api/v1/fhir/medications/${encodeURIComponent(id)}`, { signal: AbortSignal.timeout(10_000) });
-      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+      if (!res.ok) { setError(`HTTP ${res.status}`); return; }
       const bundle: Bundle<MedicationRequest> = await res.json();
       setMedications(bundle.entry?.map(e => e.resource) ?? []);
     } catch {

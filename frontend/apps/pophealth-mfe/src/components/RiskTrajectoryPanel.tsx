@@ -168,10 +168,11 @@ export function RiskTrajectoryPanel() {
       })
       .then(setResult)
       .catch((err: unknown) => {
-        if ((err as { name?: string }).name !== 'AbortError') {
-          setResult(DEMO_TRAJECTORY);
-          setError(null);
-        }
+        const e = err as { name?: string; message?: string };
+        if (e.name === 'AbortError') return;
+        if (e.message?.startsWith('HTTP')) { setError(e.message ?? null); return; }
+        setResult(DEMO_TRAJECTORY);
+        setError(null);
       })
       .finally(() => setLoading(false));
 

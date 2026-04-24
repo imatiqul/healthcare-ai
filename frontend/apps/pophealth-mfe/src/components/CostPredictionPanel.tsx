@@ -97,7 +97,7 @@ export function CostPredictionPanel() {
           sdohWeight,
         }),
       });
-      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+      if (!res.ok) { setError(`HTTP ${res.status}`); return; }
       setPrediction(await res.json());
     } catch {
       setPrediction({ ...DEMO_PREDICTION, patientId: patientId.trim(), riskLevel } as CostPrediction & { riskLevel: string });

@@ -111,7 +111,7 @@ export function HedisMeasuresPanel() {
         body: JSON.stringify(input),
       });
       if (!res.ok) {
-        setResponse({ ...DEMO_HEDIS_RESPONSE, patientId: patientId.trim() });
+        setError('HEDIS evaluation failed');
         return;
       }
       const data = (await res.json()) as HedisResponse;
