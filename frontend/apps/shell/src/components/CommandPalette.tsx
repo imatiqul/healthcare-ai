@@ -63,6 +63,7 @@ const ALL_ROUTES: NavEntry[] = [
   // Main
   { href: '/',                    label: 'Dashboard',           group: 'Main',        keywords: ['home', 'overview', 'summary'],                     icon: <DashboardIcon /> },
   { href: '/business',            label: 'Business KPIs',       group: 'Business',    keywords: ['kpi', 'executive', 'revenue', 'tenants'],          icon: <BarChartIcon /> },
+  { href: '/workflow-ops',        label: 'Workflow Operations', group: 'Business',    keywords: ['workflow', 'operations', 'review', 'waitlist'],    icon: <AccessTimeIcon /> },
   // Clinical
   { href: '/voice',               label: 'Voice Sessions',      group: 'Clinical',    keywords: ['voice', 'audio', 'transcript'],                    icon: <MicIcon /> },
   { href: '/triage',              label: 'AI Triage',           group: 'Clinical',    keywords: ['triage', 'icd', 'assessment', 'ai'],               icon: <SmartToyIcon /> },

@@ -9,6 +9,7 @@ import {
   setActiveWorkflow,
   upsertWorkflowHandoff,
 } from '@healthcare/mfe-events';
+import { syncWorkflowBooked } from '../lib/workflowSync';
 
 const API_BASE = import.meta.env.VITE_API_BASE_URL || '';
 
@@ -41,9 +42,17 @@ export function BookingForm() {
     return off;
   }, []);
 
-  function finalizeBooking(bookingId?: string) {
+  async function finalizeBooking(bookingId?: string) {
     const existing = getActiveWorkflowHandoff();
     if (existing) {
+      await syncWorkflowBooked(existing, {
+        bookingId,
+        slotId,
+        patientId,
+        patientName: existing.patientName,
+        practitionerId,
+      });
+
       upsertWorkflowHandoff({
         ...existing,
         slotId,
@@ -83,10 +92,10 @@ export function BookingForm() {
         throw new Error(msg || `Request failed (${res.status})`);
       }
       const data = await res.json().catch(() => null) as { id?: string; bookingId?: string } | null;
-      finalizeBooking(data?.bookingId ?? data?.id);
+      await finalizeBooking(data?.bookingId ?? data?.id);
     } catch {
       // Backend offline — confirm booking locally so the scheduling flow completes
-      finalizeBooking();
+      await finalizeBooking();
       setError(null);
     } finally {
       setSubmitting(false);

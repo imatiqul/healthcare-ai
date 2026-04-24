@@ -36,6 +36,23 @@ public class AgentDbContext : OutboxDbContext
             b.HasKey(e => e.Id);
             b.Property(e => e.Status).HasConversion<string>();
             b.Property(e => e.AssignedLevel).HasConversion<string>();
+            b.Property(e => e.EncounterStatus).HasConversion<string>();
+            b.Property(e => e.RevenueStatus).HasConversion<string>();
+            b.Property(e => e.SchedulingStatus).HasConversion<string>();
+            b.Property(e => e.NotificationStatus).HasConversion<string>();
+            b.Property(e => e.PatientId).HasMaxLength(256).IsRequired();
+            b.Property(e => e.PatientName).HasMaxLength(256);
+            b.Property(e => e.ApprovedBy).HasMaxLength(256);
+            b.Property(e => e.ApprovalNote).HasMaxLength(2048);
+            b.Property(e => e.CurrentPractitionerId).HasMaxLength(256);
+            b.Property(e => e.CurrentSlotId).HasMaxLength(256);
+            b.Property(e => e.BookingId).HasMaxLength(256);
+            b.Property(e => e.LatestExceptionCode).HasMaxLength(128);
+            b.Property(e => e.LatestExceptionMessage).HasMaxLength(2048);
+            b.HasIndex(e => e.Status);
+            b.HasIndex(e => e.PatientId);
+            b.HasIndex(e => e.RequiresAttention);
+            b.HasIndex(e => e.BookedAt);
         });
 
         modelBuilder.Entity<AgentDecision>(b =>

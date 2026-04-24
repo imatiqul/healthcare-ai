@@ -83,6 +83,7 @@ const ProblemListPanelPage = lazy(() => import('encounters/ProblemListPanel').th
 const ImmunizationPanelPage = lazy(() => import('encounters/ImmunizationPanel').then(m => ({ default: m.ImmunizationPanel }))); // Phase 30
 const PractitionerManagerPage = lazy(() => import('./pages/PractitionerManager')); // Phase 30
 const BusinessKpiDashboardPage = lazy(() => import('./pages/BusinessKpiDashboard')); // Phase 31
+const WorkflowOperationsWorkbenchPage = lazy(() => import('./pages/WorkflowOperationsWorkbench'));
 const PlatformHealthPanelPage  = lazy(() => import('./pages/PlatformHealthPanel'));  // Phase 31
 
 function Loading() {
@@ -257,6 +258,11 @@ export default function App() {
                 <Route path="/business" element={
                   <MfeErrorBoundary name="Business KPIs">
                     <BusinessKpiDashboardPage />
+                  </MfeErrorBoundary>
+                } />
+                <Route path="/workflow-ops" element={
+                  <MfeErrorBoundary name="Workflow Operations Workbench">
+                    <WorkflowOperationsWorkbenchPage />
                   </MfeErrorBoundary>
                 } />
                 <Route path="/voice" element={

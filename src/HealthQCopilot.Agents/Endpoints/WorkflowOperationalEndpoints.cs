@@ -1,0 +1,226 @@
+using HealthQCopilot.Agents.Infrastructure;
+using HealthQCopilot.Agents.Services;
+using HealthQCopilot.Domain.Agents;
+using HealthQCopilot.Infrastructure.Validation;
+using Microsoft.EntityFrameworkCore;
+
+namespace HealthQCopilot.Agents.Endpoints;
+
+public static class WorkflowOperationalEndpoints
+{
+    public static IEndpointRouteBuilder MapWorkflowOperationalEndpoints(this IEndpointRouteBuilder app)
+    {
+        var group = app.MapGroup("/api/v1/agents/workflows")
+            .WithTags("Agents")
+            .WithAutoValidation();
+
+        group.MapGet("/summary", async (
+            AgentDbContext db,
+            CancellationToken ct) =>
+        {
+            var workflows = db.TriageWorkflows.AsNoTracking();
+            var reviewDurations = await workflows
+                .Where(item => item.ApprovedAt != null)
+                .Select(item => new { item.CreatedAt, item.ApprovedAt })
+                .ToListAsync(ct);
+
+            var completedWorkflowCount = await workflows.CountAsync(item => item.Status == WorkflowStatus.Completed, ct);
+            var automationCompleteCount = await workflows.CountAsync(item =>
+                item.Status == WorkflowStatus.Completed
+                && item.EncounterStatus == WorkflowStepStatus.Completed
+                && item.RevenueStatus == WorkflowStepStatus.Completed,
+                ct);
+
+            return Results.Ok(new WorkflowSummaryMetricsResponse(
+                Total: await workflows.CountAsync(ct),
+                AwaitingHumanReview: await workflows.CountAsync(item => item.Status == WorkflowStatus.AwaitingHumanReview, ct),
+                AttentionRequired: await workflows.CountAsync(item => item.RequiresAttention, ct),
+                BookedToday: await workflows.CountAsync(item => item.BookedAt != null && item.BookedAt >= DateTime.UtcNow.Date, ct),
+                WaitlistFallbacks: await workflows.CountAsync(item => item.WaitlistQueuedAt != null && item.WaitlistQueuedAt >= DateTime.UtcNow.Date.AddDays(-7), ct),
+                ReviewOverdue: await workflows.CountAsync(item => item.Status == WorkflowStatus.AwaitingHumanReview && item.HumanReviewDueAt != null && item.HumanReviewDueAt < DateTime.UtcNow, ct),
+                AverageReviewMinutes: reviewDurations.Count == 0
+                    ? null
+                    : Math.Round(reviewDurations.Average(item => (item.ApprovedAt!.Value - item.CreatedAt).TotalMinutes), 1),
+                AutomationCompletionRate: completedWorkflowCount == 0
+                    ? null
+                    : Math.Round((double)automationCompleteCount / completedWorkflowCount, 3),
+                AutoBooked: await workflows.CountAsync(item => item.BookedAt != null && item.ApprovedAt == null, ct),
+                ManualBooked: await workflows.CountAsync(item => item.BookedAt != null && item.ApprovedAt != null, ct)
+            ));
+        });
+
+        group.MapGet("/", async (
+            AgentDbContext db,
+            string? status,
+            bool? attentionOnly,
+            int? top,
+            CancellationToken ct) =>
+        {
+            var query = db.TriageWorkflows.AsNoTracking().AsQueryable();
+
+            if (!string.IsNullOrWhiteSpace(status) && Enum.TryParse<WorkflowStatus>(status, true, out var workflowStatus))
+                query = query.Where(item => item.Status == workflowStatus);
+
+            if (attentionOnly == true)
+                query = query.Where(item => item.RequiresAttention);
+
+            var take = Math.Clamp(top ?? 50, 1, 200);
+            var workflows = await query
+                .OrderByDescending(item => item.LastActivityAt)
+                .Take(take)
+                .ToListAsync(ct);
+
+            var workflowIds = workflows.Select(item => item.Id).ToList();
+            var escalations = workflowIds.Count == 0
+                ? new Dictionary<Guid, EscalationQueueItem>()
+                : await db.EscalationQueue.AsNoTracking()
+                    .Where(item => workflowIds.Contains(item.WorkflowId))
+                    .ToDictionaryAsync(item => item.WorkflowId, ct);
+
+            return Results.Ok(workflows.Select(item =>
+                ToWorkflowSummary(item, escalations.GetValueOrDefault(item.Id))));
+        });
+
+        group.MapGet("/{id:guid}", async (
+            Guid id,
+            AgentDbContext db,
+            CancellationToken ct) =>
+        {
+            var workflow = await db.TriageWorkflows.AsNoTracking().FirstOrDefaultAsync(item => item.Id == id, ct);
+            if (workflow is null) return Results.NotFound();
+
+            var escalation = await db.EscalationQueue.AsNoTracking().FirstOrDefaultAsync(item => item.WorkflowId == id, ct);
+            return Results.Ok(ToWorkflowSummary(workflow, escalation));
+        });
+
+        group.MapPost("/{id:guid}/reserve", async (
+            Guid id,
+            WorkflowReserveRequest request,
+            AgentDbContext db,
+            CancellationToken ct) =>
+        {
+            var workflow = await db.TriageWorkflows.FindAsync([id], ct);
+            if (workflow is null) return Results.NotFound();
+
+            workflow.UpdatePatientContext(request.PatientId ?? workflow.PatientId, request.PatientName);
+            workflow.BeginScheduling(request.SlotId, request.PractitionerId);
+            await db.SaveChangesAsync(ct);
+            return Results.Ok(ToWorkflowSummary(workflow));
+        });
+
+        group.MapPost("/{id:guid}/book", async (
+            Guid id,
+            WorkflowBookRequest request,
+            AgentDbContext db,
+            WorkflowDispatcher dispatcher,
+            CancellationToken ct) =>
+        {
+            var workflow = await db.TriageWorkflows.FindAsync([id], ct);
+            if (workflow is null) return Results.NotFound();
+
+            workflow.UpdatePatientContext(request.PatientId, request.PatientName);
+            workflow.MarkBooked(request.BookingId, request.SlotId, request.PractitionerId);
+            await db.SaveChangesAsync(ct);
+
+            _ = Task.Run(() => dispatcher.DispatchBookingConfirmationAsync(workflow.Id, workflow.PatientId, request.BookingId, CancellationToken.None), CancellationToken.None);
+            return Results.Ok(ToWorkflowSummary(workflow));
+        });
+
+        group.MapPost("/{id:guid}/waitlist", async (
+            Guid id,
+            WorkflowWaitlistRequest request,
+            AgentDbContext db,
+            CancellationToken ct) =>
+        {
+            var workflow = await db.TriageWorkflows.FindAsync([id], ct);
+            if (workflow is null) return Results.NotFound();
+
+            workflow.UpdatePatientContext(request.PatientId, request.PatientName);
+            workflow.MarkWaitlistFallback(request.PractitionerId,
+                $"Patient was routed to waitlist with priority {(request.Priority ?? 3)}.");
+            await db.SaveChangesAsync(ct);
+            return Results.Ok(ToWorkflowSummary(workflow));
+        });
+
+        return app;
+    }
+
+    public static WorkflowSummaryResponse ToWorkflowSummary(TriageWorkflow workflow, EscalationQueueItem? escalation = null)
+        => new(
+            Id: workflow.Id,
+            SessionId: workflow.SessionId,
+            PatientId: workflow.PatientId,
+            PatientName: workflow.PatientName,
+            Status: workflow.Status.ToString(),
+            TriageLevel: workflow.AssignedLevel?.ToString(),
+            AgentReasoning: workflow.AgentReasoning,
+            CreatedAt: workflow.CreatedAt,
+            CompletedAt: workflow.CompletedAt,
+            LastActivityAt: workflow.LastActivityAt,
+            ApprovedAt: workflow.ApprovedAt,
+            ApprovedBy: workflow.ApprovedBy,
+            HumanReviewDueAt: workflow.HumanReviewDueAt,
+            ReviewOverdue: workflow.IsHumanReviewOverdue(DateTime.UtcNow),
+            RequiresAttention: workflow.RequiresAttention,
+            LatestExceptionCode: workflow.LatestExceptionCode,
+            LatestExceptionMessage: workflow.LatestExceptionMessage,
+            EncounterStatus: workflow.EncounterStatus.ToString(),
+            RevenueStatus: workflow.RevenueStatus.ToString(),
+            SchedulingStatus: workflow.SchedulingStatus.ToString(),
+            NotificationStatus: workflow.NotificationStatus.ToString(),
+            CurrentPractitionerId: workflow.CurrentPractitionerId,
+            CurrentSlotId: workflow.CurrentSlotId,
+            BookingId: workflow.BookingId,
+            BookedAt: workflow.BookedAt,
+            WaitlistQueuedAt: workflow.WaitlistQueuedAt,
+            EscalationStatus: escalation?.Status.ToString(),
+            EscalationAssignee: escalation?.ClaimedBy,
+            EscalationClaimedAt: escalation?.ClaimedAt);
+}
+
+public sealed record WorkflowReserveRequest(string SlotId, string? PatientId, string? PractitionerId, string? PatientName = null);
+public sealed record WorkflowBookRequest(string SlotId, string PatientId, string? PractitionerId, string? BookingId, string? PatientName = null);
+public sealed record WorkflowWaitlistRequest(string PatientId, string? PractitionerId, int? Priority, string? PatientName = null);
+
+public sealed record WorkflowSummaryResponse(
+    Guid Id,
+    string SessionId,
+    string PatientId,
+    string? PatientName,
+    string Status,
+    string? TriageLevel,
+    string? AgentReasoning,
+    DateTime CreatedAt,
+    DateTime? CompletedAt,
+    DateTime LastActivityAt,
+    DateTime? ApprovedAt,
+    string? ApprovedBy,
+    DateTime? HumanReviewDueAt,
+    bool ReviewOverdue,
+    bool RequiresAttention,
+    string? LatestExceptionCode,
+    string? LatestExceptionMessage,
+    string EncounterStatus,
+    string RevenueStatus,
+    string SchedulingStatus,
+    string NotificationStatus,
+    string? CurrentPractitionerId,
+    string? CurrentSlotId,
+    string? BookingId,
+    DateTime? BookedAt,
+    DateTime? WaitlistQueuedAt,
+    string? EscalationStatus,
+    string? EscalationAssignee,
+    DateTime? EscalationClaimedAt);
+
+public sealed record WorkflowSummaryMetricsResponse(
+    int Total,
+    int AwaitingHumanReview,
+    int AttentionRequired,
+    int BookedToday,
+    int WaitlistFallbacks,
+    int ReviewOverdue,
+    double? AverageReviewMinutes,
+    double? AutomationCompletionRate,
+    int AutoBooked,
+    int ManualBooked);

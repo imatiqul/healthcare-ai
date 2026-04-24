@@ -12,6 +12,7 @@ import InputLabel from '@mui/material/InputLabel';
 import { Card, CardHeader, CardTitle, CardContent, Button, Input } from '@healthcare/design-system';
 import Alert from '@mui/material/Alert';
 import { getActiveWorkflowHandoff } from '@healthcare/mfe-events';
+import { syncWorkflowWaitlist } from '../lib/workflowSync';
 
 const API_BASE = import.meta.env.VITE_API_BASE_URL || '';
 
@@ -108,6 +109,14 @@ export function WaitlistPanel() {
         signal: AbortSignal.timeout(10_000),
       });
       if (res.ok) {
+        if (activeWorkflow?.workflowId && patientId.trim()) {
+          await syncWorkflowWaitlist(activeWorkflow, {
+            patientId: patientId.trim(),
+            patientName: activeWorkflow.patientName,
+            practitionerId: practitionerId.trim(),
+            priority,
+          });
+        }
         setPatientId('');
         setPractitionerId('');
         setPriority(3);
@@ -131,6 +140,14 @@ export function WaitlistPanel() {
         preferredDateTo: preferredTo || undefined,
       };
       setEntries(prev => [newEntry, ...prev]);
+      if (activeWorkflow?.workflowId && patientId.trim()) {
+        await syncWorkflowWaitlist(activeWorkflow, {
+          patientId: patientId.trim(),
+          patientName: activeWorkflow.patientName,
+          practitionerId: practitionerId.trim(),
+          priority,
+        });
+      }
       setPatientId('');
       setPractitionerId('');
       setPriority(3);

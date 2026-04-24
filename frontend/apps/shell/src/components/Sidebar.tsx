@@ -27,6 +27,7 @@ import MedicalInformationIcon from '@mui/icons-material/MedicalInformation';
 import PersonIcon from '@mui/icons-material/Person';
 import AdminPanelSettingsIcon from '@mui/icons-material/AdminPanelSettings';
 import BarChartIcon from '@mui/icons-material/BarChart';
+import AccessTimeIcon from '@mui/icons-material/AccessTime';
 import MonitorHeartIcon from '@mui/icons-material/MonitorHeart';
 import AccountBalanceIcon from '@mui/icons-material/AccountBalance';
 import ManageAccountsIcon from '@mui/icons-material/ManageAccounts';
@@ -178,6 +179,7 @@ const navGroups: NavGroup[] = [
     groupKey: 'nav.group.business',
     items: [
       { href: '/business',          labelKey: 'nav.business',    label: 'Business KPIs',     icon: <BarChartIcon /> },
+      { href: '/workflow-ops',      labelKey: 'nav.workflowops', label: 'Workflow Ops',      icon: <AccessTimeIcon /> },
     ],
   },
   {

@@ -37,6 +37,7 @@ public static class AgentEndpoints
 
         group.MapPost("/triage/{id:guid}/approve", async (
             Guid id,
+            ApproveTriageRequest? request,
             AgentDbContext db,
             WorkflowDispatcher dispatcher,
             CancellationToken ct) =>
@@ -45,10 +46,10 @@ public static class AgentEndpoints
             if (workflow is null) return Results.NotFound();
             if (workflow.Status != WorkflowStatus.AwaitingHumanReview)
                 return Results.BadRequest(new { error = "Workflow is not awaiting human review" });
-            workflow.ApproveEscalation();
+            workflow.ApproveEscalation(request?.ApprovedBy, request?.ClinicianNote);
             await db.SaveChangesAsync(ct);
             // Dispatch cross-service actions (scheduling, FHIR, notifications) after human approval
-            _ = Task.Run(() => dispatcher.DispatchAsync(workflow, workflow.SessionId, CancellationToken.None), CancellationToken.None);
+            _ = Task.Run(() => dispatcher.DispatchAsync(workflow, workflow.PatientId, CancellationToken.None), CancellationToken.None);
             return Results.Ok(new { workflow.Id, Status = workflow.Status.ToString(), AssignedLevel = workflow.AssignedLevel?.ToString() });
         });
 
@@ -241,6 +242,7 @@ public static class AgentEndpoints
 }
 
 public record StartTriageRequest(Guid SessionId, string TranscriptText, string? PatientId);
+public sealed record ApproveTriageRequest(string? ApprovedBy = null, string? ClinicianNote = null);
 public record RejectTriageRequest(string Reason);
 public record CodeEncounterRequest(Guid WorkflowId, string EncounterTranscript, string? Payer);
 

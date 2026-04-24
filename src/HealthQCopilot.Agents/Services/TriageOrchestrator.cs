@@ -54,7 +54,7 @@ public sealed class TriageOrchestrator
 
     public async Task<TriageWorkflow> RunTriageAsync(Guid sessionId, string transcriptText, string patientId, CancellationToken ct)
     {
-        var workflow = TriageWorkflow.Create(Guid.NewGuid(), sessionId.ToString(), transcriptText);
+        var workflow = TriageWorkflow.Create(Guid.NewGuid(), sessionId.ToString(), transcriptText, patientId);
         _db.TriageWorkflows.Add(workflow);
 
         // Track guard verdict across all code paths (true = safe or rule-based fallback)

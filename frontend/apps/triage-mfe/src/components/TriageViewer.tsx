@@ -108,6 +108,19 @@ interface TriageWorkflow {
   confidenceScore?: number; // 0-100
   agentReasoning?: string;
   createdAt: string;
+  lastActivityAt?: string;
+  humanReviewDueAt?: string;
+  reviewOverdue?: boolean;
+  requiresAttention?: boolean;
+  latestExceptionCode?: string;
+  latestExceptionMessage?: string;
+  encounterStatus?: string;
+  revenueStatus?: string;
+  schedulingStatus?: string;
+  notificationStatus?: string;
+  bookedAt?: string;
+  waitlistQueuedAt?: string;
+  approvedBy?: string;
 }
 
 function pickStringField(record: Record<string, unknown>, keys: string[]): string | undefined {
@@ -185,6 +198,18 @@ function normalizeWorkflow(raw: unknown, index: number): TriageWorkflow | null {
     ? confidenceRaw
     : undefined;
 
+  const reviewOverdue = typeof record.reviewOverdue === 'boolean'
+    ? record.reviewOverdue
+    : typeof record.ReviewOverdue === 'boolean'
+    ? record.ReviewOverdue
+    : undefined;
+
+  const requiresAttention = typeof record.requiresAttention === 'boolean'
+    ? record.requiresAttention
+    : typeof record.RequiresAttention === 'boolean'
+    ? record.RequiresAttention
+    : undefined;
+
   return {
     id,
     sessionId,
@@ -195,6 +220,19 @@ function normalizeWorkflow(raw: unknown, index: number): TriageWorkflow | null {
     confidenceScore,
     agentReasoning: pickStringField(record, ['agentReasoning', 'AgentReasoning', 'reasoning', 'Reasoning']),
     createdAt,
+    lastActivityAt: pickStringField(record, ['lastActivityAt', 'LastActivityAt']),
+    humanReviewDueAt: pickStringField(record, ['humanReviewDueAt', 'HumanReviewDueAt']),
+    reviewOverdue,
+    requiresAttention,
+    latestExceptionCode: pickStringField(record, ['latestExceptionCode', 'LatestExceptionCode']),
+    latestExceptionMessage: pickStringField(record, ['latestExceptionMessage', 'LatestExceptionMessage']),
+    encounterStatus: pickStringField(record, ['encounterStatus', 'EncounterStatus']),
+    revenueStatus: pickStringField(record, ['revenueStatus', 'RevenueStatus']),
+    schedulingStatus: pickStringField(record, ['schedulingStatus', 'SchedulingStatus']),
+    notificationStatus: pickStringField(record, ['notificationStatus', 'NotificationStatus']),
+    bookedAt: pickStringField(record, ['bookedAt', 'BookedAt']),
+    waitlistQueuedAt: pickStringField(record, ['waitlistQueuedAt', 'WaitlistQueuedAt']),
+    approvedBy: pickStringField(record, ['approvedBy', 'ApprovedBy']),
   };
 }
 
@@ -222,7 +260,23 @@ function workflowFromHandoff(record: WorkflowHandoffRecord): TriageWorkflow {
     confidenceScore: record.confidenceScore,
     agentReasoning: record.reasoning,
     createdAt: record.createdAt,
+    lastActivityAt: record.updatedAt,
   };
+}
+
+function getOperationalChipColor(status?: string): 'default' | 'success' | 'warning' | 'error' {
+  switch (status) {
+    case 'Completed': return 'success';
+    case 'InProgress':
+    case 'Pending': return 'warning';
+    case 'Failed':
+    case 'NeedsAttention': return 'error';
+    default: return 'default';
+  }
+}
+
+function humanizeStepLabel(label: string): string {
+  return label.replace(/Status$/i, '').replace(/([a-z])([A-Z])/g, '$1 $2');
 }
 
 function persistedStatus(status: string): 'Processing' | 'AwaitingHumanReview' | 'Completed' {
@@ -333,7 +387,7 @@ export function TriageViewer() {
     const controller = new AbortController();
     abortRef.current = controller;
     try {
-      const res = await fetch(`${API_BASE}/api/v1/agents/triage`, { signal: controller.signal });
+      const res = await fetch(`${API_BASE}/api/v1/agents/workflows?top=50`, { signal: controller.signal });
       if (!res.ok) {
         // Backend not deployed (404) or gateway error — back off to 30 s
         if (pollDelayRef.current !== 30_000) schedulePoll(30_000);
@@ -600,6 +654,11 @@ export function TriageViewer() {
               {wf.agentReasoning && (
                 <StreamingReasoningText text={wf.agentReasoning} />
               )}
+              {wf.requiresAttention && wf.latestExceptionMessage && (
+                <Alert severity={wf.reviewOverdue ? 'error' : 'warning'} sx={{ mt: 1 }}>
+                  {wf.latestExceptionMessage}
+                </Alert>
+              )}
               {wf.confidenceScore !== undefined && (
                 <Stack direction="row" spacing={1} alignItems="center" sx={{ mt: 1 }}>
                   <Typography variant="caption" color="text.secondary" sx={{ flexShrink: 0 }}>
@@ -616,6 +675,33 @@ export function TriageViewer() {
                   </Typography>
                 </Stack>
               )}
+              <Stack direction="row" spacing={0.75} useFlexGap flexWrap="wrap" sx={{ mt: 1 }}>
+                {([
+                  ['Encounter Status', wf.encounterStatus],
+                  ['Revenue Status', wf.revenueStatus],
+                  ['Scheduling Status', wf.schedulingStatus],
+                  ['Notification Status', wf.notificationStatus],
+                ] as const)
+                  .filter(([, value]) => value && value !== 'NotStarted')
+                  .map(([label, value]) => (
+                    <Chip
+                      key={`${wf.id}-${label}`}
+                      size="small"
+                      color={getOperationalChipColor(value)}
+                      variant={value === 'Completed' ? 'filled' : 'outlined'}
+                      label={`${humanizeStepLabel(label)}: ${value}`}
+                    />
+                  ))}
+                {wf.reviewOverdue && (
+                  <Chip size="small" color="error" label="Review overdue" />
+                )}
+                {wf.bookedAt && (
+                  <Chip size="small" color="success" variant="outlined" label="Booked" />
+                )}
+                {wf.waitlistQueuedAt && (
+                  <Chip size="small" color="warning" variant="outlined" label="Waitlist follow-up" />
+                )}
+              </Stack>
               {wf.status === 'AwaitingHumanReview' && (
                 <Button size="sm" sx={{ mt: 1 }} onClick={(e: React.MouseEvent) => {
                   e.stopPropagation();

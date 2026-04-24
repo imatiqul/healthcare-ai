@@ -157,6 +157,7 @@ app.MapControllers();
 app.MapSubscribeHandler();
 app.MapDefaultEndpoints();
 app.MapAgentEndpoints();
+app.MapWorkflowOperationalEndpoints();
 app.MapGuideEndpoints();
 app.MapDemoEndpoints();
 app.MapModelGovernanceEndpoints();

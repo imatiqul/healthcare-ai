@@ -18,6 +18,7 @@ import {
   selectShellTab,
   upsertWorkflowHandoff,
 } from '@healthcare/mfe-events';
+import { syncWorkflowReserve } from '../lib/workflowSync';
 
 const API_BASE = import.meta.env.VITE_API_BASE_URL || '';
 
@@ -106,6 +107,12 @@ export function SlotCalendar() {
       });
       setActiveWorkflow(updated.workflowId);
       setWorkflowContext(updated);
+      void syncWorkflowReserve(updated, {
+        slotId,
+        patientId: updated.patientId,
+        patientName: updated.patientName,
+        practitionerId,
+      });
     }
 
     // Demo slots resolve locally — no backend needed

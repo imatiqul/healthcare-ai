@@ -62,6 +62,18 @@ interface ModelRegistryEntry {
   isActive: boolean;
 }
 interface Campaign { id: string; status: string }
+interface WorkflowSummaryMetrics {
+  total: number;
+  awaitingHumanReview: number;
+  attentionRequired: number;
+  bookedToday: number;
+  waitlistFallbacks: number;
+  reviewOverdue: number;
+  averageReviewMinutes: number | null;
+  automationCompletionRate: number | null;
+  autoBooked: number;
+  manualBooked: number;
+}
 
 interface KpiData {
   tenantCount: number | null;
@@ -72,6 +84,7 @@ interface KpiData {
   demoSessions: DemoSession[] | null;
   models: ModelRegistryEntry[] | null;
   campaigns: Campaign[] | null;
+  workflowSummary: WorkflowSummaryMetrics | null;
   loadedAt: Date;
 }
 
@@ -234,6 +247,18 @@ const DEMO_KPI: KpiData = {
     { id: 'cardiac-followup',   status: 'Active' },
     { id: 'wellness-q1',        status: 'Completed' },
   ],
+  workflowSummary: {
+    total: 214,
+    awaitingHumanReview: 6,
+    attentionRequired: 11,
+    bookedToday: 18,
+    waitlistFallbacks: 4,
+    reviewOverdue: 2,
+    averageReviewMinutes: 17.5,
+    automationCompletionRate: 0.83,
+    autoBooked: 12,
+    manualBooked: 6,
+  },
   loadedAt: new Date(),
 };
 
@@ -250,7 +275,7 @@ export default function BusinessKpiDashboard() {
 
     const since30d = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString();
 
-    const [tenants, users, feedback, denials, delivery, demo, models, campaigns] =
+    const [tenants, users, feedback, denials, delivery, demo, models, campaigns, workflowSummary] =
       await Promise.allSettled([
         safeFetch<TenantsResponse>('/api/v1/tenants?page=1&pageSize=1'),
         safeFetch<UsersResponse>('/api/v1/identity/users?pageSize=1'),
@@ -260,6 +285,7 @@ export default function BusinessKpiDashboard() {
         safeFetch<DemoSession[]>('/api/v1/agents/demo/sessions'),
         safeFetch<ModelRegistryEntry[]>('/api/v1/agents/governance/history'),
         safeFetch<Campaign[]>('/api/v1/notifications/campaigns'),
+        safeFetch<WorkflowSummaryMetrics>('/api/v1/agents/workflows/summary'),
       ]);
 
     const loaded: KpiData = {
@@ -271,6 +297,7 @@ export default function BusinessKpiDashboard() {
       demoSessions: demo.status === 'fulfilled'    ? demo.value     : null,
       models:       models.status === 'fulfilled'  ? models.value   : null,
       campaigns:    campaigns.status === 'fulfilled' ? campaigns.value : null,
+      workflowSummary: workflowSummary.status === 'fulfilled' ? workflowSummary.value : null,
       loadedAt: new Date(),
     };
 
@@ -279,7 +306,8 @@ export default function BusinessKpiDashboard() {
       loaded.tenantCount === null && loaded.userCount === null &&
       loaded.feedback === null && loaded.denials === null &&
       loaded.delivery === null && loaded.demoSessions === null &&
-      loaded.models === null && loaded.campaigns === null;
+      loaded.models === null && loaded.campaigns === null &&
+      loaded.workflowSummary === null;
 
     setKpi(allNull ? { ...DEMO_KPI, loadedAt: new Date() } : loaded);
     setLoading(false);
@@ -301,6 +329,9 @@ export default function BusinessKpiDashboard() {
     : null;
   const deliveryRatePct = kpi?.delivery?.deliveryRate != null
     ? Math.round(kpi.delivery.deliveryRate * 100)
+    : null;
+  const automationRatePct = kpi?.workflowSummary?.automationCompletionRate != null
+    ? Math.round(kpi.workflowSummary.automationCompletionRate * 100)
     : null;
 
   return (
@@ -374,6 +405,72 @@ export default function BusinessKpiDashboard() {
             subtitle="models in production registry"
             accent="#7b1fa2"
             icon={<PsychologyIcon />}
+            loading={loading}
+          />
+        </Grid>
+      </Grid>
+
+      {/* ── Clinical Workflow Operations ────────────────────────────────── */}
+      <SectionHeader title="Clinical Workflow Operations" accent="#1565c0" />
+      <Grid container spacing={2}>
+        <Grid item xs={12} sm={6} md={4}>
+          <KpiCard
+            title="Awaiting Human Review"
+            value={fmtNum(kpi?.workflowSummary?.awaitingHumanReview)}
+            subtitle={kpi?.workflowSummary ? `${fmtNum(kpi.workflowSummary.reviewOverdue)} overdue` : 'urgent workflows waiting'}
+            accent={kpi?.workflowSummary?.reviewOverdue ? '#d32f2f' : '#1565c0'}
+            icon={<MonitorHeartIcon />}
+            loading={loading}
+          />
+        </Grid>
+        <Grid item xs={12} sm={6} md={4}>
+          <KpiCard
+            title="Attention Required"
+            value={fmtNum(kpi?.workflowSummary?.attentionRequired)}
+            subtitle="active workflow exceptions"
+            accent={kpi?.workflowSummary?.attentionRequired ? '#ed6c02' : '#2e7d32'}
+            icon={<SecurityIcon />}
+            loading={loading}
+          />
+        </Grid>
+        <Grid item xs={12} sm={6} md={4}>
+          <KpiCard
+            title="Booked Today"
+            value={fmtNum(kpi?.workflowSummary?.bookedToday)}
+            subtitle={kpi?.workflowSummary ? `${fmtNum(kpi.workflowSummary.autoBooked)} auto / ${fmtNum(kpi.workflowSummary.manualBooked)} manual` : 'workflow completions'}
+            accent="#2e7d32"
+            icon={<AssessmentIcon />}
+            loading={loading}
+          />
+        </Grid>
+        <Grid item xs={12} sm={6} md={4}>
+          <KpiCard
+            title="Waitlist Fallbacks"
+            value={fmtNum(kpi?.workflowSummary?.waitlistFallbacks)}
+            subtitle="7-day operational follow-up"
+            accent={kpi?.workflowSummary?.waitlistFallbacks ? '#ef6c00' : '#757575'}
+            icon={<NotificationsActiveIcon />}
+            loading={loading}
+          />
+        </Grid>
+        <Grid item xs={12} sm={6} md={4}>
+          <KpiCard
+            title="Average Review Time"
+            value={kpi?.workflowSummary?.averageReviewMinutes != null ? `${kpi.workflowSummary.averageReviewMinutes.toFixed(1)}m` : '—'}
+            subtitle="clinician approval turnaround"
+            accent="#6a1b9a"
+            icon={<PsychologyIcon />}
+            loading={loading}
+          />
+        </Grid>
+        <Grid item xs={12} sm={6} md={4}>
+          <KpiCard
+            title="Closed-Loop Automation"
+            value={automationRatePct !== null ? `${automationRatePct}%` : '—'}
+            subtitle="encounter + revenue completion"
+            accent={automationRatePct !== null && automationRatePct >= 80 ? '#2e7d32' : automationRatePct !== null && automationRatePct >= 60 ? '#ed6c02' : '#d32f2f'}
+            icon={<AssessmentIcon />}
+            progress={automationRatePct ?? undefined}
             loading={loading}
           />
         </Grid>
@@ -511,6 +608,20 @@ export default function BusinessKpiDashboard() {
               label={`${kpi.denials.nearDeadlineCount} denials near deadline`}
               size="small"
               color="error"
+            />
+          )}
+          {kpi.workflowSummary?.reviewOverdue != null && kpi.workflowSummary.reviewOverdue > 0 && (
+            <Chip
+              label={`${kpi.workflowSummary.reviewOverdue} workflow reviews overdue`}
+              size="small"
+              color="error"
+            />
+          )}
+          {kpi.workflowSummary?.waitlistFallbacks != null && kpi.workflowSummary.waitlistFallbacks > 0 && (
+            <Chip
+              label={`${kpi.workflowSummary.waitlistFallbacks} waitlist fallbacks this week`}
+              size="small"
+              color="warning"
             />
           )}
           {deliveryRatePct !== null && deliveryRatePct < 80 && (

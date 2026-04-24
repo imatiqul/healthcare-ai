@@ -13,6 +13,7 @@ const DELIVERY_RESP   = { total: 500, delivered: 475, failed: 15, pending: 10, d
 const DEMO_RESP       = [{ sessionId: 's1', status: 'Completed', npsScore: 8.5 }, { sessionId: 's2', status: 'InProgress', npsScore: 7 }];
 const MODELS_RESP     = [{ id: 'm1', isActive: true }, { id: 'm2', isActive: false }];
 const CAMPAIGNS_RESP  = [{ id: 'c1', status: 'Active' }, { id: 'c2', status: 'Draft' }];
+const WORKFLOW_RESP   = { total: 18, awaitingHumanReview: 3, attentionRequired: 4, bookedToday: 7, waitlistFallbacks: 2, reviewOverdue: 1, averageReviewMinutes: 14.2, automationCompletionRate: 0.81, autoBooked: 4, manualBooked: 3 };
 
 function urlOf(url: string) {
   // Extract last path segment for matching
@@ -24,6 +25,7 @@ function urlOf(url: string) {
     : url.includes('/demo/sessions') ? DEMO_RESP
     : url.includes('/governance/history') ? MODELS_RESP
     : url.includes('/campaigns') ? CAMPAIGNS_RESP
+    : url.includes('/agents/workflows/summary') ? WORKFLOW_RESP
     : null;
 }
 
@@ -49,6 +51,12 @@ describe('BusinessKpiDashboard', () => {
     expect(screen.getByText('Platform Overview')).toBeInTheDocument();
   });
 
+  it('shows Clinical Workflow Operations section', async () => {
+    render(<BusinessKpiDashboard />);
+    await waitFor(() => screen.getByText('Clinical Workflow Operations'));
+    expect(screen.getByText('Clinical Workflow Operations')).toBeInTheDocument();
+  });
+
   it('displays tenant count from API', async () => {
     render(<BusinessKpiDashboard />);
     await waitFor(() => screen.getByText('5'));
@@ -69,8 +77,9 @@ describe('BusinessKpiDashboard', () => {
 
   it('shows open claim denials count', async () => {
     render(<BusinessKpiDashboard />);
-    await waitFor(() => screen.getByText('7'));
-    expect(screen.getByText('7')).toBeInTheDocument();
+    await waitFor(() => screen.getByText('Open Claim Denials'));
+    expect(screen.getByText('requires action')).toBeInTheDocument();
+    expect(screen.getAllByText('7').length).toBeGreaterThan(0);
   });
 
   it('shows Engagement section with delivery rate', async () => {
