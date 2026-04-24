@@ -1,6 +1,6 @@
-# HealthQ Copilot - Cloud Native Healthcare Platform
+# Azure AI Cloud Healthcare (HealthQ Copilot)
 
-HealthQ Copilot is a distributed healthcare platform built with .NET microservices, React/Vite micro frontends, and AI-assisted triage workflows.
+Azure AI Cloud Healthcare, delivered here as HealthQ Copilot, is a distributed healthcare platform built with .NET microservices, React/Vite micro frontends, and AI-assisted triage workflows.
 
 This repository now uses role-specific documentation so each stakeholder can get to the right context quickly.
 
@@ -38,7 +38,7 @@ healthcare-ai/
 |- frontend/             # Turborepo monorepo (8 MFEs + shared packages)
 |- infra/                # Bicep, Helm, ArgoCD, Dapr, K8s policies
 |- tests/                # Unit and integration test projects
-|- docs/                 # Deployment, compliance, stakeholder guides
+|- docs/                 # Stakeholder guides, diagrams, exports, compliance
 `- .github/workflows/    # CI/CD and quality gates
 ```
 
@@ -89,9 +89,16 @@ pnpm test:e2e
 | `.github/workflows/cloud-e2e-tests.yml` | Post-deploy smoke and full cloud E2E validation |
 | `.github/workflows/rollback.yml` | Manual rollback workflow |
 
+## Demo Diagrams and Visual Assets
+
+- [Diagram Library](docs/diagrams/README.md) for technical, investor-friendly, and LinkedIn carousel Mermaid source files.
+- [SVG Exports](docs/diagrams/exports/svg) for deck-friendly vector assets.
+- [PNG Exports](docs/diagrams/exports/png) for social posts, docs, and slide embeds.
+
 ## Additional Documentation
 
 - [Stakeholder Documentation Hub](docs/stakeholders/README.md)
+- [Diagrams Index](docs/diagrams/README.md)
 - [Helm Notes](infra/helm/README.md)
 - [Compliance Documentation](docs/compliance)
 - [Workflow Catalog](.github/workflows)
