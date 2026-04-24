@@ -50,6 +50,15 @@ public class EscalationQueueItem : AggregateRoot<Guid>
         ClaimedAt = DateTime.UtcNow;
     }
 
+    public void Release()
+    {
+        if (Status != EscalationStatus.Claimed)
+            throw new InvalidOperationException("Only claimed escalations can be released.");
+        Status = EscalationStatus.Open;
+        ClaimedBy = null;
+        ClaimedAt = null;
+    }
+
     public void Resolve(string note)
     {
         if (Status == EscalationStatus.Resolved)

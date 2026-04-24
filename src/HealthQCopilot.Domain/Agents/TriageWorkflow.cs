@@ -262,6 +262,43 @@ public class TriageWorkflow : AggregateRoot<Guid>
         MarkAttention("SCHEDULING_FAILED", message);
     }
 
+    public void RetryEncounterDispatch()
+    {
+        if (EncounterStatus != WorkflowStepStatus.Failed) return;
+        EncounterStatus = WorkflowStepStatus.Pending;
+        ClearExceptionIfMatches("ENCOUNTER_DISPATCH_FAILED");
+        Touch();
+    }
+
+    public void RetryRevenueDispatch()
+    {
+        if (RevenueStatus != WorkflowStepStatus.Failed) return;
+        RevenueStatus = WorkflowStepStatus.Pending;
+        ClearExceptionIfMatches("REVENUE_DISPATCH_FAILED");
+        Touch();
+    }
+
+    public void RetryNotificationDispatch()
+    {
+        if (NotificationStatus != WorkflowStepStatus.Failed) return;
+        NotificationStatus = WorkflowStepStatus.Pending;
+        ClearExceptionIfMatches("NOTIFICATION_DISPATCH_FAILED");
+        Touch();
+    }
+
+    public void RequeueScheduling()
+    {
+        if (SchedulingStatus != WorkflowStepStatus.Failed && SchedulingStatus != WorkflowStepStatus.NeedsAttention)
+            return;
+        SchedulingStatus = WorkflowStepStatus.Pending;
+        WaitlistQueuedAt = null;
+        CurrentSlotId = null;
+        if (LatestExceptionCode is "SCHEDULING_FAILED" or "WAITLIST_FALLBACK")
+            ClearException();
+        else
+            Touch();
+    }
+
     public bool IsHumanReviewOverdue(DateTime nowUtc)
         => Status == WorkflowStatus.AwaitingHumanReview
            && HumanReviewDueAt is not null

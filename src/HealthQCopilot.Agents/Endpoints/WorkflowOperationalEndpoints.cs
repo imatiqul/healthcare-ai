@@ -142,6 +142,129 @@ public static class WorkflowOperationalEndpoints
             return Results.Ok(ToWorkflowSummary(workflow));
         });
 
+        // ── Operator write actions ─────────────────────────────────────────────
+
+        group.MapPost("/{id:guid}/approve", async (
+            Guid id,
+            WorkflowApproveRequest? request,
+            AgentDbContext db,
+            WorkflowDispatcher dispatcher,
+            CancellationToken ct) =>
+        {
+            var workflow = await db.TriageWorkflows.FindAsync([id], ct);
+            if (workflow is null) return Results.NotFound();
+
+            workflow.ApproveEscalation(request?.ApprovedBy ?? "supervisor", request?.ApprovalNote);
+
+            var escalation = await db.EscalationQueue.FirstOrDefaultAsync(item => item.WorkflowId == id, ct);
+            if (escalation is not null && escalation.Status != EscalationStatus.Resolved)
+                escalation.Resolve(request?.ApprovalNote ?? "Approved via workbench.");
+
+            await db.SaveChangesAsync(ct);
+
+            // Fire-and-forget scheduling dispatch now that escalation is cleared
+            _ = Task.Run(() => dispatcher.DispatchPostApprovalAsync(workflow, CancellationToken.None), CancellationToken.None);
+
+            return Results.Ok(ToWorkflowSummary(workflow, escalation));
+        });
+
+        group.MapPost("/{id:guid}/escalation/claim", async (
+            Guid id,
+            WorkflowEscalationClaimRequest request,
+            AgentDbContext db,
+            CancellationToken ct) =>
+        {
+            var escalation = await db.EscalationQueue.FirstOrDefaultAsync(item => item.WorkflowId == id, ct);
+            if (escalation is null) return Results.NotFound();
+
+            try { escalation.Claim(request.ClaimedBy); }
+            catch (InvalidOperationException ex) { return Results.Conflict(ex.Message); }
+
+            await db.SaveChangesAsync(ct);
+
+            var workflow = await db.TriageWorkflows.AsNoTracking().FirstOrDefaultAsync(item => item.Id == id, ct);
+            return workflow is null ? Results.NotFound() : Results.Ok(ToWorkflowSummary(workflow, escalation));
+        });
+
+        group.MapPost("/{id:guid}/escalation/release", async (
+            Guid id,
+            AgentDbContext db,
+            CancellationToken ct) =>
+        {
+            var escalation = await db.EscalationQueue.FirstOrDefaultAsync(item => item.WorkflowId == id, ct);
+            if (escalation is null) return Results.NotFound();
+
+            try { escalation.Release(); }
+            catch (InvalidOperationException ex) { return Results.Conflict(ex.Message); }
+
+            await db.SaveChangesAsync(ct);
+
+            var workflow = await db.TriageWorkflows.AsNoTracking().FirstOrDefaultAsync(item => item.Id == id, ct);
+            return workflow is null ? Results.NotFound() : Results.Ok(ToWorkflowSummary(workflow, escalation));
+        });
+
+        group.MapPost("/{id:guid}/retry/{step}", async (
+            Guid id,
+            string step,
+            AgentDbContext db,
+            WorkflowDispatcher dispatcher,
+            CancellationToken ct) =>
+        {
+            var workflow = await db.TriageWorkflows.FindAsync([id], ct);
+            if (workflow is null) return Results.NotFound();
+
+            switch (step.ToLowerInvariant())
+            {
+                case "encounter":
+                    workflow.RetryEncounterDispatch();
+                    await db.SaveChangesAsync(ct);
+                    _ = Task.Run(() => dispatcher.RetryEncounterDispatchAsync(workflow, CancellationToken.None), CancellationToken.None);
+                    break;
+
+                case "revenue":
+                    workflow.RetryRevenueDispatch();
+                    await db.SaveChangesAsync(ct);
+                    _ = Task.Run(() => dispatcher.RetryRevenueDispatchAsync(workflow, CancellationToken.None), CancellationToken.None);
+                    break;
+
+                case "notification":
+                    workflow.RetryNotificationDispatch();
+                    await db.SaveChangesAsync(ct);
+                    _ = Task.Run(() => dispatcher.RetryNotificationAsync(workflow, CancellationToken.None), CancellationToken.None);
+                    break;
+
+                case "scheduling":
+                    workflow.RequeueScheduling();
+                    await db.SaveChangesAsync(ct);
+                    _ = Task.Run(() => dispatcher.RetrySchedulingAsync(workflow, CancellationToken.None), CancellationToken.None);
+                    break;
+
+                default:
+                    return Results.BadRequest($"Unknown step '{step}'. Valid steps: encounter, revenue, notification, scheduling.");
+            }
+
+            var escalation = await db.EscalationQueue.AsNoTracking().FirstOrDefaultAsync(item => item.WorkflowId == id, ct);
+            return Results.Ok(ToWorkflowSummary(workflow, escalation));
+        });
+
+        group.MapPost("/{id:guid}/requeue-scheduling", async (
+            Guid id,
+            AgentDbContext db,
+            WorkflowDispatcher dispatcher,
+            CancellationToken ct) =>
+        {
+            var workflow = await db.TriageWorkflows.FindAsync([id], ct);
+            if (workflow is null) return Results.NotFound();
+
+            workflow.RequeueScheduling();
+            await db.SaveChangesAsync(ct);
+
+            _ = Task.Run(() => dispatcher.RetrySchedulingAsync(workflow, CancellationToken.None), CancellationToken.None);
+
+            var escalation = await db.EscalationQueue.AsNoTracking().FirstOrDefaultAsync(item => item.WorkflowId == id, ct);
+            return Results.Ok(ToWorkflowSummary(workflow, escalation));
+        });
+
         return app;
     }
 
@@ -181,6 +304,8 @@ public static class WorkflowOperationalEndpoints
 public sealed record WorkflowReserveRequest(string SlotId, string? PatientId, string? PractitionerId, string? PatientName = null);
 public sealed record WorkflowBookRequest(string SlotId, string PatientId, string? PractitionerId, string? BookingId, string? PatientName = null);
 public sealed record WorkflowWaitlistRequest(string PatientId, string? PractitionerId, int? Priority, string? PatientName = null);
+public sealed record WorkflowApproveRequest(string? ApprovedBy, string? ApprovalNote);
+public sealed record WorkflowEscalationClaimRequest(string ClaimedBy);
 
 public sealed record WorkflowSummaryResponse(
     Guid Id,

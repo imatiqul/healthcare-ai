@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import Box from '@mui/material/Box';
 import Stack from '@mui/material/Stack';
@@ -12,6 +12,11 @@ import IconButton from '@mui/material/IconButton';
 import LinearProgress from '@mui/material/LinearProgress';
 import Tooltip from '@mui/material/Tooltip';
 import Divider from '@mui/material/Divider';
+import Dialog from '@mui/material/Dialog';
+import DialogTitle from '@mui/material/DialogTitle';
+import DialogContent from '@mui/material/DialogContent';
+import DialogActions from '@mui/material/DialogActions';
+import TextField from '@mui/material/TextField';
 import RefreshIcon from '@mui/icons-material/Refresh';
 import WarningAmberIcon from '@mui/icons-material/WarningAmber';
 import AssignmentTurnedInIcon from '@mui/icons-material/AssignmentTurnedIn';
@@ -19,6 +24,11 @@ import CalendarMonthIcon from '@mui/icons-material/CalendarMonth';
 import EventBusyIcon from '@mui/icons-material/EventBusy';
 import InsightsIcon from '@mui/icons-material/Insights';
 import OpenInNewIcon from '@mui/icons-material/OpenInNew';
+import CheckCircleOutlineIcon from '@mui/icons-material/CheckCircleOutline';
+import PersonAddIcon from '@mui/icons-material/PersonAdd';
+import PersonOffIcon from '@mui/icons-material/PersonOff';
+import ReplayIcon from '@mui/icons-material/Replay';
+import EventAvailableIcon from '@mui/icons-material/EventAvailable';
 import { Card, CardContent, CardHeader, CardTitle } from '@healthcare/design-system';
 import { selectShellTab, setActiveWorkflow } from '@healthcare/mfe-events';
 
@@ -136,6 +146,56 @@ const DEMO_WORKFLOWS: WorkflowRecord[] = [
     currentPractitionerId: 'prac-101',
   },
 ];
+
+type ActionStep = 'encounter' | 'revenue' | 'notification' | 'scheduling';
+
+interface ApproveDialogState {
+  workflowId: string;
+  patientName?: string;
+}
+
+function ApproveDialog({
+  state,
+  onConfirm,
+  onClose,
+}: {
+  state: ApproveDialogState;
+  onConfirm: (workflowId: string, note: string) => void;
+  onClose: () => void;
+}) {
+  const [note, setNote] = useState('');
+  return (
+    <Dialog open onClose={onClose} maxWidth="xs" fullWidth>
+      <DialogTitle>Approve Escalation Review</DialogTitle>
+      <DialogContent>
+        <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
+          Approve the escalation review for <strong>{state.patientName ?? state.workflowId}</strong>.
+          Scheduling will be triggered automatically after approval.
+        </Typography>
+        <TextField
+          label="Approval note (optional)"
+          value={note}
+          onChange={(e) => setNote(e.target.value)}
+          multiline
+          minRows={2}
+          fullWidth
+          size="small"
+        />
+      </DialogContent>
+      <DialogActions>
+        <Button onClick={onClose}>Cancel</Button>
+        <Button
+          variant="contained"
+          color="success"
+          startIcon={<CheckCircleOutlineIcon />}
+          onClick={() => onConfirm(state.workflowId, note)}
+        >
+          Approve
+        </Button>
+      </DialogActions>
+    </Dialog>
+  );
+}
 
 function asString(value: unknown): string | undefined {
   return typeof value === 'string' && value.trim() ? value.trim() : undefined;
@@ -318,6 +378,9 @@ export default function WorkflowOperationsWorkbench() {
   const [error, setError] = useState('');
   const [filter, setFilter] = useState<WorkflowFilter>('Attention');
   const [usingDemo, setUsingDemo] = useState(false);
+  const [actionInFlight, setActionInFlight] = useState<Set<string>>(new Set());
+  const [actionError, setActionError] = useState('');
+  const [approveDialog, setApproveDialog] = useState<ApproveDialogState | null>(null);
 
   const loadWorkbench = useCallback(async () => {
     setLoading(true);
@@ -366,6 +429,92 @@ export default function WorkflowOperationsWorkbench() {
     [filter, workflows],
   );
 
+  // ── Operator action helpers ──────────────────────────────────────────────
+
+  const executeAction = useCallback(async (
+    workflowId: string,
+    key: string,
+    url: string,
+    body?: unknown,
+  ) => {
+    if (usingDemo) {
+      setActionError('Operator actions are unavailable in demo mode.');
+      return;
+    }
+    setActionInFlight((prev) => new Set(prev).add(key));
+    setActionError('');
+    try {
+      const response = await fetch(`${API_BASE}${url}`, {
+        method: 'POST',
+        headers: body ? { 'Content-Type': 'application/json' } : {},
+        body: body ? JSON.stringify(body) : null,
+        signal: AbortSignal.timeout(10_000),
+      });
+      if (!response.ok) {
+        const text = await response.text().catch(() => '');
+        setActionError(text || `Action failed (${response.status}).`);
+        return;
+      }
+      // Optimistically update the single workflow record from the response
+      const updated = (await response.json()) as unknown;
+      const normalized = normalizeWorkflow(updated);
+      if (normalized) {
+        setWorkflows((prev) => prev.map((item) => item.id === workflowId ? normalized : item));
+      }
+    } catch {
+      setActionError('The action could not be completed. Check your connection and try again.');
+    } finally {
+      setActionInFlight((prev) => {
+        const next = new Set(prev);
+        next.delete(key);
+        return next;
+      });
+    }
+  }, [usingDemo]);
+
+  const handleApprove = useCallback((workflowId: string, note: string) => {
+    setApproveDialog(null);
+    void executeAction(
+      workflowId,
+      `${workflowId}:approve`,
+      `/api/v1/agents/workflows/${workflowId}/approve`,
+      { approvedBy: 'supervisor', approvalNote: note || undefined },
+    );
+  }, [executeAction]);
+
+  const handleClaimEscalation = useCallback((workflowId: string) => {
+    void executeAction(
+      workflowId,
+      `${workflowId}:claim`,
+      `/api/v1/agents/workflows/${workflowId}/escalation/claim`,
+      { claimedBy: 'supervisor' },
+    );
+  }, [executeAction]);
+
+  const handleReleaseEscalation = useCallback((workflowId: string) => {
+    void executeAction(
+      workflowId,
+      `${workflowId}:release`,
+      `/api/v1/agents/workflows/${workflowId}/escalation/release`,
+    );
+  }, [executeAction]);
+
+  const handleRetryStep = useCallback((workflowId: string, step: ActionStep) => {
+    void executeAction(
+      workflowId,
+      `${workflowId}:retry-${step}`,
+      `/api/v1/agents/workflows/${workflowId}/retry/${step}`,
+    );
+  }, [executeAction]);
+
+  const handleRequeueScheduling = useCallback((workflowId: string) => {
+    void executeAction(
+      workflowId,
+      `${workflowId}:requeue`,
+      `/api/v1/agents/workflows/${workflowId}/requeue-scheduling`,
+    );
+  }, [executeAction]);
+
   const openWorkflow = useCallback((workflow: WorkflowRecord, destination: 'triage' | 'scheduling') => {
     setActiveWorkflow(workflow.id);
 
@@ -408,6 +557,7 @@ export default function WorkflowOperationsWorkbench() {
 
       {loading && <LinearProgress sx={{ mb: 2 }} />}
       {error && <Alert severity={usingDemo ? 'warning' : 'error'} sx={{ mb: 2 }}>{error}</Alert>}
+      {actionError && <Alert severity="error" onClose={() => setActionError('')} sx={{ mb: 2 }}>{actionError}</Alert>}
 
       <Grid container spacing={2.5}>
         <Grid item xs={12} sm={6} lg={3}>
@@ -529,12 +679,124 @@ export default function WorkflowOperationsWorkbench() {
                         </Typography>
                       )}
                       <Divider />
+
+                      {/* Primary navigation actions */}
                       <Button variant="contained" endIcon={<OpenInNewIcon />} onClick={() => openWorkflow(workflow, 'triage')}>
                         Review in Triage
                       </Button>
                       <Button variant="outlined" onClick={() => openWorkflow(workflow, 'scheduling')}>
                         Open Scheduling
                       </Button>
+
+                      {/* Operator write actions */}
+                      {workflow.status === 'AwaitingHumanReview' && (
+                        <Tooltip title="Approve escalation and trigger scheduling">
+                          <span>
+                            <Button
+                              variant="contained"
+                              color="success"
+                              size="small"
+                              fullWidth
+                              startIcon={<CheckCircleOutlineIcon />}
+                              disabled={actionInFlight.has(`${workflow.id}:approve`)}
+                              onClick={() => setApproveDialog({ workflowId: workflow.id, patientName: workflow.patientName })}
+                            >
+                              {actionInFlight.has(`${workflow.id}:approve`) ? 'Approving…' : 'Approve'}
+                            </Button>
+                          </span>
+                        </Tooltip>
+                      )}
+
+                      {workflow.escalationStatus === 'Open' && (
+                        <Tooltip title="Claim this escalation to indicate you are reviewing it">
+                          <span>
+                            <Button
+                              variant="outlined"
+                              color="info"
+                              size="small"
+                              fullWidth
+                              startIcon={<PersonAddIcon />}
+                              disabled={actionInFlight.has(`${workflow.id}:claim`)}
+                              onClick={() => handleClaimEscalation(workflow.id)}
+                            >
+                              {actionInFlight.has(`${workflow.id}:claim`) ? 'Claiming…' : 'Claim'}
+                            </Button>
+                          </span>
+                        </Tooltip>
+                      )}
+
+                      {workflow.escalationStatus === 'Claimed' && (
+                        <Tooltip title="Release your claim so another supervisor can pick it up">
+                          <span>
+                            <Button
+                              variant="outlined"
+                              size="small"
+                              fullWidth
+                              startIcon={<PersonOffIcon />}
+                              disabled={actionInFlight.has(`${workflow.id}:release`)}
+                              onClick={() => handleReleaseEscalation(workflow.id)}
+                            >
+                              {actionInFlight.has(`${workflow.id}:release`) ? 'Releasing…' : 'Release Claim'}
+                            </Button>
+                          </span>
+                        </Tooltip>
+                      )}
+
+                      {workflow.encounterStatus === 'Failed' && (
+                        <Button
+                          variant="outlined"
+                          color="warning"
+                          size="small"
+                          fullWidth
+                          startIcon={<ReplayIcon />}
+                          disabled={actionInFlight.has(`${workflow.id}:retry-encounter`)}
+                          onClick={() => handleRetryStep(workflow.id, 'encounter')}
+                        >
+                          {actionInFlight.has(`${workflow.id}:retry-encounter`) ? 'Retrying…' : 'Retry Encounter'}
+                        </Button>
+                      )}
+
+                      {workflow.revenueStatus === 'Failed' && (
+                        <Button
+                          variant="outlined"
+                          color="warning"
+                          size="small"
+                          fullWidth
+                          startIcon={<ReplayIcon />}
+                          disabled={actionInFlight.has(`${workflow.id}:retry-revenue`)}
+                          onClick={() => handleRetryStep(workflow.id, 'revenue')}
+                        >
+                          {actionInFlight.has(`${workflow.id}:retry-revenue`) ? 'Retrying…' : 'Retry Revenue'}
+                        </Button>
+                      )}
+
+                      {workflow.notificationStatus === 'Failed' && (
+                        <Button
+                          variant="outlined"
+                          color="warning"
+                          size="small"
+                          fullWidth
+                          startIcon={<ReplayIcon />}
+                          disabled={actionInFlight.has(`${workflow.id}:retry-notification`)}
+                          onClick={() => handleRetryStep(workflow.id, 'notification')}
+                        >
+                          {actionInFlight.has(`${workflow.id}:retry-notification`) ? 'Retrying…' : 'Retry Notification'}
+                        </Button>
+                      )}
+
+                      {(workflow.schedulingStatus === 'Failed' || workflow.schedulingStatus === 'NeedsAttention') && (
+                        <Button
+                          variant="outlined"
+                          color="warning"
+                          size="small"
+                          fullWidth
+                          startIcon={<EventAvailableIcon />}
+                          disabled={actionInFlight.has(`${workflow.id}:requeue`)}
+                          onClick={() => handleRequeueScheduling(workflow.id)}
+                        >
+                          {actionInFlight.has(`${workflow.id}:requeue`) ? 'Requeueing…' : 'Requeue Scheduling'}
+                        </Button>
+                      )}
                     </Stack>
                   </Stack>
                 </Paper>
@@ -543,6 +805,14 @@ export default function WorkflowOperationsWorkbench() {
           )}
         </CardContent>
       </Card>
+
+      {approveDialog && (
+        <ApproveDialog
+          state={approveDialog}
+          onConfirm={handleApprove}
+          onClose={() => setApproveDialog(null)}
+        />
+      )}
     </Box>
   );
 }

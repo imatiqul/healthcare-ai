@@ -37,6 +37,28 @@ public sealed class WorkflowDispatcher
         }
     }
 
+    /// <summary>Retries a failed encounter dispatch for an existing workflow.</summary>
+    public Task RetryEncounterDispatchAsync(TriageWorkflow workflow, CancellationToken ct)
+        => DispatchFhirEncounterAsync(workflow, workflow.PatientId, ct);
+
+    /// <summary>Retries a failed revenue coding dispatch for an existing workflow.</summary>
+    public Task RetryRevenueDispatchAsync(TriageWorkflow workflow, CancellationToken ct)
+        => DispatchRevenueCodingJobAsync(workflow, workflow.PatientId, ct);
+
+    /// <summary>Retries a failed notification dispatch — booking confirmation if booked, otherwise escalation alert.</summary>
+    public Task RetryNotificationAsync(TriageWorkflow workflow, CancellationToken ct)
+        => workflow.BookingId is not null
+            ? DispatchBookingConfirmationAsync(workflow.Id, workflow.PatientId, workflow.BookingId, ct)
+            : DispatchEscalationNotificationAsync(workflow, ct);
+
+    /// <summary>Triggers auto-scheduling for a workflow after approval or explicit requeue.</summary>
+    public Task DispatchPostApprovalAsync(TriageWorkflow workflow, CancellationToken ct)
+        => DispatchAutoScheduleAsync(workflow, ct);
+
+    /// <summary>Re-runs auto-scheduling for a workflow whose scheduling step failed or was waitlisted.</summary>
+    public Task RetrySchedulingAsync(TriageWorkflow workflow, CancellationToken ct)
+        => DispatchAutoScheduleAsync(workflow, ct);
+
     public async Task DispatchBookingConfirmationAsync(Guid workflowId, string patientId, string? bookingId, CancellationToken ct)
     {
         await UpdateWorkflowAsync(workflowId, workflow => workflow.BeginNotificationDispatch(), ct);
