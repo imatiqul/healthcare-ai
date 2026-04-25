@@ -20,5 +20,6 @@
     <ProjectReference Include="..\..\src\HealthQCopilot.Agents\HealthQCopilot.Agents.csproj" />
     <ProjectReference Include="..\..\src\HealthQCopilot.Scheduling\HealthQCopilot.Scheduling.csproj" />
     <ProjectReference Include="..\..\src\HealthQCopilot.Voice\HealthQCopilot.Voice.csproj" />
+    <ProjectReference Include="..\..\src\HealthQCopilot.RevenueCycle\HealthQCopilot.RevenueCycle.csproj" />
   </ItemGroup>
 </Project>
