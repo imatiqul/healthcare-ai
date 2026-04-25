@@ -8,6 +8,21 @@ namespace HealthQCopilot.Infrastructure.Messaging;
 public static class ServiceBusExtensions
 {
     /// <summary>
+    /// Registers the domain event dispatcher (MediatR-based) and the generic
+    /// EF Core unit of work for the given DbContext.
+    /// Call after AddMediatR() so IPublisher is already registered.
+    /// </summary>
+    public static IServiceCollection AddDomainEvents<TContext>(this IServiceCollection services)
+        where TContext : Microsoft.EntityFrameworkCore.DbContext
+    {
+        services.AddScoped<DomainEventDispatcher>();
+        services.AddScoped<HealthQCopilot.Domain.Primitives.IUnitOfWork,
+            EfUnitOfWork<TContext>>();
+        return services;
+    }
+
+
+    /// <summary>
     /// Registers the outbox relay and Service Bus sender when a "ServiceBus" connection string is configured.
     /// When absent, the outbox relay is skipped, allowing the service to start without Service Bus.
     /// </summary>
