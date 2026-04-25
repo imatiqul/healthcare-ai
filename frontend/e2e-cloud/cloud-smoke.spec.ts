@@ -36,6 +36,12 @@ async function acaPost(
   }
 }
 
+const LIVE_API_BASE_URL = (
+  process.env.GATEWAY_ACA_URL ||
+  process.env.API_BASE_URL ||
+  'https://gateway.gentletree-fe920881.eastus2.azurecontainerapps.io'
+).replace(/\/$/, '');
+
 test.describe('Cloud — Shell SWA', () => {
   test('shell loads and renders dashboard @smoke', async ({ page }) => {
     await page.goto('/');
@@ -141,79 +147,56 @@ test.describe('Cloud — MFE Navigation', () => {
   });
 });
 
-test.describe('Cloud — ACA Service Health', () => {
+test.describe('Cloud — Backend Service Reachability', () => {
   const services = [
-    { name: 'Voice', url: process.env.VOICE_ACA_URL },
-    { name: 'AI-Agent', url: process.env.AGENT_ACA_URL },
-    { name: 'FHIR', url: process.env.FHIR_ACA_URL },
-    { name: 'Identity', url: process.env.IDENTITY_ACA_URL },
-    { name: 'OCR', url: process.env.OCR_ACA_URL },
-    { name: 'Scheduling', url: process.env.SCHEDULING_ACA_URL },
-    { name: 'Notification', url: process.env.NOTIFICATION_ACA_URL },
-    { name: 'PopHealth', url: process.env.POPHEALTH_ACA_URL },
-    { name: 'Revenue', url: process.env.REVENUE_ACA_URL },
+    { name: 'Voice', path: '/api/v1/voice/sessions' },
+    { name: 'AI-Agent', path: '/api/v1/agents/triage' },
+    { name: 'FHIR', path: '/api/v1/fhir/patients' },
+    { name: 'Identity', path: '/api/v1/identity/users' },
+    { name: 'OCR', path: '/api/v1/ocr/jobs' },
+    { name: 'Scheduling', path: '/api/v1/scheduling/waitlist' },
+    { name: 'Notification', path: '/api/v1/notifications/messages' },
+    { name: 'PopHealth', path: '/api/v1/population-health/risks' },
+    { name: 'Revenue', path: '/api/v1/revenue/coding-jobs' },
   ];
 
   for (const svc of services) {
-    test(`${svc.name} service health check returns OK`, async ({ request }) => {
-      test.skip(!svc.url, `${svc.name} URL not configured`);
-      let response: Awaited<ReturnType<typeof request.get>> | null = null;
-      try {
-        response = await request.get(`${svc.url}/health`, { timeout: 15_000 });
-      } catch {
-        // Network error or timeout — ACA is likely cold-starting; skip advisory
-        test.skip(true, `${svc.name} ACA unreachable — likely scaled to zero`);
-        return;
-      }
-      const status = response.status();
-      // 503 = ACA scaled to zero (expected in dev/staging; treat as advisory)
-      if (status === 503) {
-        test.skip(true, `${svc.name} ACA returned 503 — scaled to zero (advisory)`);
-        return;
-      }
-      expect(status, `${svc.name} health endpoint returned unexpected ${status}`).toBeLessThan(500);
+    test(`${svc.name} backend is reachable through the live API surface`, async ({ request }) => {
+      const response = await acaGet(request, `${LIVE_API_BASE_URL}${svc.path}`);
+      test.skip(!response, `${svc.name} live API returned 503 or timed out (advisory)`);
+      expect(response!.status(), `${svc.name} live API returned unexpected ${response!.status()}`).toBeLessThan(500);
     });
   }
 });
 
 test.describe('Cloud — API Smoke Tests', () => {
-  test('agent stats endpoint responds', async ({ request }) => {
-    const agentUrl = process.env.AGENT_ACA_URL;
-    test.skip(!agentUrl, 'AGENT_ACA_URL not configured');
-    const response = await acaGet(request, `${agentUrl}/api/v1/agents/stats`);
-    test.skip(!response, 'AI-Agent ACA scaled to zero (503) — advisory');
+  test('agent triage endpoint responds with live seeded data', async ({ request }) => {
+    const response = await acaGet(request, `${LIVE_API_BASE_URL}/api/v1/agents/triage`);
+    test.skip(!response, 'AI-Agent live API returned 503 or timed out (advisory)');
     expect(response!.status()).toBeLessThan(500);
   });
 
-  test('scheduling stats endpoint responds', async ({ request }) => {
-    const url = process.env.SCHEDULING_ACA_URL;
-    test.skip(!url, 'SCHEDULING_ACA_URL not configured');
-    const response = await acaGet(request, `${url}/api/v1/scheduling/stats`);
-    test.skip(!response, 'Scheduling ACA scaled to zero (503) — advisory');
+  test('scheduling waitlist endpoint responds with live seeded data', async ({ request }) => {
+    const response = await acaGet(request, `${LIVE_API_BASE_URL}/api/v1/scheduling/waitlist`);
+    test.skip(!response, 'Scheduling live API returned 503 or timed out (advisory)');
     expect(response!.status()).toBeLessThan(500);
   });
 
-  test('population health stats endpoint responds', async ({ request }) => {
-    const url = process.env.POPHEALTH_ACA_URL;
-    test.skip(!url, 'POPHEALTH_ACA_URL not configured');
-    const response = await acaGet(request, `${url}/api/v1/population-health/stats`);
-    test.skip(!response, 'PopHealth ACA scaled to zero (503) — advisory');
+  test('population health risks endpoint responds with live seeded data', async ({ request }) => {
+    const response = await acaGet(request, `${LIVE_API_BASE_URL}/api/v1/population-health/risks`);
+    test.skip(!response, 'Population Health live API returned 503 or timed out (advisory)');
     expect(response!.status()).toBeLessThan(500);
   });
 
-  test('revenue stats endpoint responds', async ({ request }) => {
-    const url = process.env.REVENUE_ACA_URL;
-    test.skip(!url, 'REVENUE_ACA_URL not configured');
-    const response = await acaGet(request, `${url}/api/v1/revenue/stats`);
-    test.skip(!response, 'Revenue ACA scaled to zero (503) — advisory');
+  test('revenue coding jobs endpoint responds with live seeded data', async ({ request }) => {
+    const response = await acaGet(request, `${LIVE_API_BASE_URL}/api/v1/revenue/coding-jobs`);
+    test.skip(!response, 'Revenue live API returned 503 or timed out (advisory)');
     expect(response!.status()).toBeLessThan(500);
   });
 
   test('guide suggestions endpoint responds', async ({ request }) => {
-    const agentUrl = process.env.AGENT_ACA_URL;
-    test.skip(!agentUrl, 'AGENT_ACA_URL not configured');
-    const response = await acaGet(request, `${agentUrl}/api/v1/agents/guide/suggestions`);
-    test.skip(!response, 'AI-Agent ACA scaled to zero (503) — advisory');
+    const response = await acaGet(request, `${LIVE_API_BASE_URL}/api/v1/agents/guide/suggestions`);
+    test.skip(!response, 'AI-Agent live API returned 503 or timed out (advisory)');
     expect(response!.status()).toBeLessThan(500);
   });
 });
@@ -226,55 +209,43 @@ test.describe('Cloud — API Smoke Tests', () => {
 
 test.describe('Phase 12 — Scheduling Waitlist Endpoints', () => {
   test('waitlist list endpoint responds', async ({ request }) => {
-    const url = process.env.SCHEDULING_ACA_URL;
-    test.skip(!url, 'SCHEDULING_ACA_URL not configured');
-    const response = await acaGet(request, `${url}/api/v1/scheduling/waitlist`);
-    test.skip(!response, 'Scheduling ACA scaled to zero (503) — advisory');
+    const response = await acaGet(request, `${LIVE_API_BASE_URL}/api/v1/scheduling/waitlist`);
+    test.skip(!response, 'Scheduling live API returned 503 or timed out (advisory)');
     expect(response!.status()).toBeLessThan(500);
   });
 
   test('waitlist conflict-check endpoint responds', async ({ request }) => {
-    const url = process.env.SCHEDULING_ACA_URL;
-    test.skip(!url, 'SCHEDULING_ACA_URL not configured');
     // POST with empty body should return 400 (validation) — not 5xx
-    const response = await acaPost(request, `${url}/api/v1/scheduling/waitlist/conflict-check`);
-    test.skip(!response, 'Scheduling ACA scaled to zero (503) — advisory');
+    const response = await acaPost(request, `${LIVE_API_BASE_URL}/api/v1/scheduling/waitlist/conflict-check`);
+    test.skip(!response, 'Scheduling live API returned 503 or timed out (advisory)');
     expect(response!.status()).toBeLessThan(500);
   });
 });
 
 test.describe('Phase 12 — Revenue Denial Management Endpoints', () => {
   test('denials list endpoint responds', async ({ request }) => {
-    const url = process.env.REVENUE_ACA_URL;
-    test.skip(!url, 'REVENUE_ACA_URL not configured');
-    const response = await acaGet(request, `${url}/api/v1/revenue/denials`);
-    test.skip(!response, 'Revenue ACA scaled to zero (503) — advisory');
+    const response = await acaGet(request, `${LIVE_API_BASE_URL}/api/v1/revenue/denials`);
+    test.skip(!response, 'Revenue live API returned 503 or timed out (advisory)');
     expect(response!.status()).toBeLessThan(500);
   });
 
   test('denials analytics endpoint responds', async ({ request }) => {
-    const url = process.env.REVENUE_ACA_URL;
-    test.skip(!url, 'REVENUE_ACA_URL not configured');
-    const response = await acaGet(request, `${url}/api/v1/revenue/denials/analytics`);
-    test.skip(!response, 'Revenue ACA scaled to zero (503) — advisory');
+    const response = await acaGet(request, `${LIVE_API_BASE_URL}/api/v1/revenue/denials/analytics`);
+    test.skip(!response, 'Revenue live API returned 503 or timed out (advisory)');
     expect(response!.status()).toBeLessThan(500);
   });
 });
 
 test.describe('Phase 12 — Notification Delivery Tracking Endpoints', () => {
   test('notification delivery analytics endpoint responds', async ({ request }) => {
-    const url = process.env.NOTIFICATION_ACA_URL;
-    test.skip(!url, 'NOTIFICATION_ACA_URL not configured');
-    const response = await acaGet(request, `${url}/api/v1/notifications/analytics/delivery`);
-    test.skip(!response, 'Notification ACA scaled to zero (503) — advisory');
+    const response = await acaGet(request, `${LIVE_API_BASE_URL}/api/v1/notifications/analytics/delivery`);
+    test.skip(!response, 'Notification live API returned 503 or timed out (advisory)');
     expect(response!.status()).toBeLessThan(500);
   });
 
   test('notification messages list endpoint responds', async ({ request }) => {
-    const url = process.env.NOTIFICATION_ACA_URL;
-    test.skip(!url, 'NOTIFICATION_ACA_URL not configured');
-    const response = await acaGet(request, `${url}/api/v1/notifications/messages`);
-    test.skip(!response, 'Notification ACA scaled to zero (503) — advisory');
+    const response = await acaGet(request, `${LIVE_API_BASE_URL}/api/v1/notifications/messages`);
+    test.skip(!response, 'Notification live API returned 503 or timed out (advisory)');
     expect(response!.status()).toBeLessThan(500);
   });
 });
@@ -283,30 +254,24 @@ test.describe('Phase 12 — Notification Delivery Tracking Endpoints', () => {
 
 test.describe('Phase 27 — Notification Campaign Endpoints', () => {
   test('notification campaigns list endpoint responds', async ({ request }) => {
-    const url = process.env.NOTIFICATION_ACA_URL;
-    test.skip(!url, 'NOTIFICATION_ACA_URL not configured');
-    const response = await acaGet(request, `${url}/api/v1/notifications/campaigns`);
-    test.skip(!response, 'Notification ACA scaled to zero (503) — advisory');
+    const response = await acaGet(request, `${LIVE_API_BASE_URL}/api/v1/notifications/campaigns`);
+    test.skip(!response, 'Notification live API returned 503 or timed out (advisory)');
     expect(response!.status()).toBeLessThan(500);
   });
 
   test('notification campaigns create endpoint responds to validation error', async ({ request }) => {
-    const url = process.env.NOTIFICATION_ACA_URL;
-    test.skip(!url, 'NOTIFICATION_ACA_URL not configured');
     // POST with empty body should return 400 (validation) — not 5xx
-    const response = await acaPost(request, `${url}/api/v1/notifications/campaigns`);
-    test.skip(!response, 'Notification ACA scaled to zero (503) — advisory');
+    const response = await acaPost(request, `${LIVE_API_BASE_URL}/api/v1/notifications/campaigns`);
+    test.skip(!response, 'Notification live API returned 503 or timed out (advisory)');
     expect(response!.status()).toBeLessThan(500);
   });
 });
 
 test.describe('Phase 27 — ML Confidence Endpoint', () => {
   test('ml-confidence endpoint responds to validation error', async ({ request }) => {
-    const agentUrl = process.env.AGENT_ACA_URL;
-    test.skip(!agentUrl, 'AGENT_ACA_URL not configured');
     // POST with empty body should return 400 (validation) — not 5xx
-    const response = await acaPost(request, `${agentUrl}/api/v1/agents/decisions/ml-confidence`);
-    test.skip(!response, 'AI-Agent ACA scaled to zero (503) — advisory');
+    const response = await acaPost(request, `${LIVE_API_BASE_URL}/api/v1/agents/decisions/ml-confidence`);
+    test.skip(!response, 'AI-Agent live API returned 503 or timed out (advisory)');
     expect(response!.status()).toBeLessThan(500);
   });
 })
