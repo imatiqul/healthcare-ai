@@ -228,7 +228,11 @@ test.describe('Workflow Handoff — Cloud @regression', () => {
     await page.goto('/triage');
     await expect(page.getByText(activeWorkflow.patientName, { exact: true })).toBeVisible({ timeout: 20_000 });
 
-    await page.getByRole('button', { name: /review.*approve/i }).click();
+    const activeWorkflowCard = page
+      .getByText(activeWorkflow.patientName, { exact: true })
+      .locator('xpath=ancestor::*[.//button[normalize-space()="Review & Approve"]][1]');
+
+    await activeWorkflowCard.getByRole('button', { name: /review.*approve/i }).click();
     await page.getByLabel(/clinical justification note/i).fill('Escalation reviewed and approved for scheduling.');
     await page.getByRole('button', { name: /approve.*continue/i }).click();
 
