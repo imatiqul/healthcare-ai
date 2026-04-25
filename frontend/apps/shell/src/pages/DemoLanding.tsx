@@ -149,6 +149,9 @@ export default function DemoLanding() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ clientName, company, email: email || null }),
       });
+      // 5xx (including 503 scale-to-zero) → treat as backend unavailable → local fallback mode.
+      // 4xx (bad request / auth) → show error to user, do not launch demo.
+      if (res.status >= 500) throw new Error('backend-unavailable');
       if (!res.ok) { setError('Could not start the demo. Please try again.'); setLoading(false); return; }
       const data: DemoStartResponse = await res.json();
       // Store demo state and navigate to main app in demo mode
