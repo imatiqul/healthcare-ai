@@ -18,7 +18,7 @@ public class PatientRisk : AggregateRoot<Guid>
     public static PatientRisk Create(
         string patientId, RiskLevel level, double score, string modelVersion, List<string> factors)
     {
-        return new PatientRisk
+        var risk = new PatientRisk
         {
             Id = Guid.NewGuid(),
             PatientId = patientId,
@@ -28,5 +28,16 @@ public class PatientRisk : AggregateRoot<Guid>
             RiskFactors = factors,
             AssessedAt = DateTime.UtcNow
         };
+        risk.RaiseDomainEvent(new PatientRiskAssessed(risk.Id, patientId, level, score, modelVersion));
+        return risk;
     }
 }
+
+// ── Domain Events ─────────────────────────────────────────────────────────────
+
+public sealed record PatientRiskAssessed(
+    Guid RiskId,
+    string PatientId,
+    RiskLevel Level,
+    double RiskScore,
+    string ModelVersion) : DomainEvent;

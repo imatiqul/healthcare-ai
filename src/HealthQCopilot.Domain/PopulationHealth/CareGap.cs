@@ -4,7 +4,7 @@ namespace HealthQCopilot.Domain.PopulationHealth;
 
 public enum CareGapStatus { Open, Addressed, Closed }
 
-public class CareGap : Entity<Guid>
+public class CareGap : AggregateRoot<Guid>
 {
     public string PatientId { get; private set; } = string.Empty;
     public string MeasureId { get; private set; } = string.Empty;
@@ -17,7 +17,7 @@ public class CareGap : Entity<Guid>
 
     public static CareGap Create(string patientId, string measureId, string description)
     {
-        return new CareGap
+        var gap = new CareGap
         {
             Id = Guid.NewGuid(),
             PatientId = patientId,
@@ -25,8 +25,38 @@ public class CareGap : Entity<Guid>
             Description = description,
             IdentifiedAt = DateTime.UtcNow
         };
+        gap.RaiseDomainEvent(new CareGapIdentified(gap.Id, patientId, measureId, description));
+        return gap;
     }
 
-    public void Address() => Status = CareGapStatus.Addressed;
-    public void Close() { Status = CareGapStatus.Closed; ResolvedAt = DateTime.UtcNow; }
+    public void Address()
+    {
+        Status = CareGapStatus.Addressed;
+        RaiseDomainEvent(new CareGapAddressed(Id, PatientId, MeasureId));
+    }
+
+    public void Close()
+    {
+        Status = CareGapStatus.Closed;
+        ResolvedAt = DateTime.UtcNow;
+        RaiseDomainEvent(new CareGapClosed(Id, PatientId, MeasureId));
+    }
 }
+
+// ── Domain Events ─────────────────────────────────────────────────────────────
+
+public sealed record CareGapIdentified(
+    Guid CareGapId,
+    string PatientId,
+    string MeasureId,
+    string Description) : DomainEvent;
+
+public sealed record CareGapAddressed(
+    Guid CareGapId,
+    string PatientId,
+    string MeasureId) : DomainEvent;
+
+public sealed record CareGapClosed(
+    Guid CareGapId,
+    string PatientId,
+    string MeasureId) : DomainEvent;

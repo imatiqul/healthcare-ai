@@ -32,8 +32,34 @@ public class OutreachCampaign : AggregateRoot<Guid>
     {
         Status = CampaignStatus.Active;
         ScheduledAt = scheduledAt;
+        RaiseDomainEvent(new CampaignActivated(Id, Name, Type, scheduledAt));
     }
 
-    public void Complete() => Status = CampaignStatus.Completed;
-    public void Cancel() => Status = CampaignStatus.Cancelled;
+    public void Complete()
+    {
+        Status = CampaignStatus.Completed;
+        RaiseDomainEvent(new CampaignCompleted(Id, Name));
+    }
+
+    public void Cancel()
+    {
+        Status = CampaignStatus.Cancelled;
+        RaiseDomainEvent(new CampaignCancelled(Id, Name));
+    }
 }
+
+// ── Domain Events ─────────────────────────────────────────────────────────────
+
+public sealed record CampaignActivated(
+    Guid CampaignId,
+    string Name,
+    CampaignType Type,
+    DateTime ScheduledAt) : DomainEvent;
+
+public sealed record CampaignCompleted(
+    Guid CampaignId,
+    string Name) : DomainEvent;
+
+public sealed record CampaignCancelled(
+    Guid CampaignId,
+    string Name) : DomainEvent;
