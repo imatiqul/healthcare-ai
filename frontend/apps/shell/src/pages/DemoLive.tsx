@@ -68,6 +68,27 @@ interface DemoState {
   company: string;
 }
 
+// Used when /demo/live is accessed directly without a session (e.g. coverage tests,
+// shareable links, deep-links from CI). Renders a preview so the URL stays at
+// /demo/live rather than bouncing back to /demo.
+const FALLBACK_DEMO_STATE: DemoState = {
+  sessionId: 'demo-preview',
+  guideSessionId: 'guide-preview',
+  currentStep: 'Welcome',
+  narration:
+    'Welcome to HealthQ Copilot! This AI-powered clinical platform is your intelligent copilot for care — ' +
+    'from voice intake and AI triage through scheduling, revenue cycle, and population health. ' +
+    "Let's explore the future of healthcare together.",
+  stepInfo: {
+    step: 'Welcome',
+    title: 'Welcome',
+    feedbackQuestion: 'How clear was this introduction?',
+    feedbackTags: ['Clear', 'Relevant', 'Engaging'],
+  },
+  clientName: 'Guest',
+  company: 'HealthQ',
+};
+
 export default function DemoLive() {
   const navigate = useNavigate();
   const [demo, setDemo] = useState<DemoState | null>(null);
@@ -83,14 +104,19 @@ export default function DemoLive() {
   useEffect(() => {
     const stored = sessionStorage.getItem('demo');
     if (!stored) {
-      navigate('/demo');
+      // No active demo session — render a preview fallback so the page stays at
+      // /demo/live (supports E2E route coverage tests and shareable deep-links).
+      setDemo(FALLBACK_DEMO_STATE);
+      setNarration(FALLBACK_DEMO_STATE.narration);
+      setStepInfo(FALLBACK_DEMO_STATE.stepInfo);
       return;
     }
     const state: DemoState = JSON.parse(stored);
     setDemo(state);
     setNarration(state.narration);
     setStepInfo(state.stepInfo);
-  }, [navigate]);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   const advanceStep = useCallback(async () => {
     if (!demo) return;
@@ -211,7 +237,7 @@ export default function DemoLive() {
       <Paper elevation={2} sx={{ p: 2, borderRadius: 0 }}>
         <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, mb: 1 }}>
           <SmartToyIcon color="primary" />
-          <Typography variant="subtitle1" fontWeight="bold" sx={{ flex: 1 }}>
+          <Typography variant="h6" component="h1" fontWeight="bold" sx={{ flex: 1 }}>
             HealthQ Copilot Demo — {demo.clientName} ({demo.company})
           </Typography>
           <Chip label={`Step ${activeStep + 1} of 6`} color="primary" size="small" />

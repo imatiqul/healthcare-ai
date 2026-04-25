@@ -51,9 +51,12 @@ beforeEach(() => {
 });
 
 describe('DemoLive', () => {
-  it('redirects to /demo when no session is stored', () => {
+  it('renders a fallback preview when no session is stored (no redirect)', async () => {
     render(<DemoLive />);
-    expect(mockNavigate).toHaveBeenCalledWith('/demo');
+    await waitFor(() => {
+      expect(screen.getByRole('heading', { level: 1 })).toBeInTheDocument();
+    });
+    expect(mockNavigate).not.toHaveBeenCalled();
   });
 
   it('renders the stepper with step labels when session is present', async () => {
