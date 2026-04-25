@@ -7,8 +7,10 @@ using HealthQCopilot.Domain.Agents;
 using HealthQCopilot.Infrastructure.AI;
 using HealthQCopilot.Infrastructure.Messaging;
 using HealthQCopilot.Infrastructure.RealTime;
+using HealthQCopilot.ServiceDefaults.Features;
 using Microsoft.AspNetCore.Http;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.FeatureManagement;
 using Microsoft.SemanticKernel;
 using Microsoft.SemanticKernel.ChatCompletion;
 
@@ -27,6 +29,7 @@ public sealed class TriageOrchestrator
     private readonly ILlmUsageTracker _usageTracker;
     private readonly ConfidenceRouter _confidenceRouter;
     private readonly IHttpContextAccessor _httpContextAccessor;
+    private readonly IFeatureManager _features;
     private readonly ILogger<TriageOrchestrator> _logger;
 
     public TriageOrchestrator(Kernel kernel, AgentDbContext db, WorkflowDispatcher dispatcher,
@@ -35,6 +38,7 @@ public sealed class TriageOrchestrator
                                ILlmUsageTracker usageTracker,
                                ConfidenceRouter confidenceRouter,
                                IHttpContextAccessor httpContextAccessor,
+                               IFeatureManager features,
                                ILogger<TriageOrchestrator> logger,
                                IRagContextProvider? rag = null)
     {
@@ -48,6 +52,7 @@ public sealed class TriageOrchestrator
         _usageTracker = usageTracker;
         _confidenceRouter = confidenceRouter;
         _httpContextAccessor = httpContextAccessor;
+        _features = features;
         _rag = rag;
         _logger = logger;
     }
@@ -64,7 +69,8 @@ public sealed class TriageOrchestrator
         await StreamAiThinkingAsync(sessionId.ToString(), transcriptText, ct);
 
         // ── Retrieve relevant clinical protocols from Qdrant to enrich the triage call ──
-        var ragContext = _rag is not null
+        var ragEnabled = await _features.IsEnabledAsync(HealthQFeatures.RagRetrieval);
+        var ragContext = ragEnabled && _rag is not null
             ? await _rag.GetRelevantContextAsync(transcriptText, topK: 3, ct: ct)
             : string.Empty;
 
@@ -91,7 +97,10 @@ public sealed class TriageOrchestrator
             if (result is not null)
             {
                 // ── Hallucination guard before accepting the AI result ─────────
-                var guardVerdict = await _guard.EvaluateAsync(result.Reasoning ?? string.Empty, ct);
+                var guardEnabled = await _features.IsEnabledAsync(HealthQFeatures.HallucinationGuard);
+                var guardVerdict = guardEnabled
+                    ? await _guard.EvaluateAsync(result.Reasoning ?? string.Empty, ct)
+                    : new GuardVerdict(GuardOutcome.Safe, []);
                 guardApproved = guardVerdict.IsSafe;
 
                 if (guardVerdict.IsSafe)

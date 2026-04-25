@@ -66,6 +66,10 @@ builder.Services.AddSingleton<DemoPlugin>();
 builder.Services.AddSingleton<ClinicalCoderPlugin>();
 builder.Services.AddSingleton<PriorAuthPlugin>();
 builder.Services.AddSingleton<CareGapPlugin>();
+// Phase 3 — Microservice API plugins (Patient / Clinical / Scheduling)
+builder.Services.AddSingleton<PatientPlugin>();
+builder.Services.AddSingleton<ClinicalPlugin>();
+builder.Services.AddSingleton<SchedulingPlugin>();
 // WorkflowDispatcher: dispatches cross-service calls via APIM after triage completes
 var apiBase = builder.Configuration["Services:ApiBase"] ?? "https://healthq-copilot-apim.azure-api.net";
 builder.Services.AddHttpClient<WorkflowDispatcher>(client =>
@@ -74,6 +78,31 @@ builder.Services.AddHttpClient<WorkflowDispatcher>(client =>
     client.Timeout = TimeSpan.FromSeconds(15);
 }).AddServiceResilienceHandler();
 builder.Services.AddScoped<WorkflowDispatcher>();
+// Named HTTP clients for SK microservice API plugins — resolved via Aspire service discovery
+builder.Services.AddHttpClient("fhir-service", client =>
+{
+    client.BaseAddress = new Uri(
+        builder.Configuration.GetConnectionString("fhir-service")
+        ?? builder.Configuration["Services:Fhir"]
+        ?? "http://fhir-service");
+    client.Timeout = TimeSpan.FromSeconds(10);
+});
+builder.Services.AddHttpClient("pophealth-service", client =>
+{
+    client.BaseAddress = new Uri(
+        builder.Configuration.GetConnectionString("pophealth-service")
+        ?? builder.Configuration["Services:PopHealth"]
+        ?? "http://pophealth-service");
+    client.Timeout = TimeSpan.FromSeconds(10);
+});
+builder.Services.AddHttpClient("scheduling-service", client =>
+{
+    client.BaseAddress = new Uri(
+        builder.Configuration.GetConnectionString("scheduling-service")
+        ?? builder.Configuration["Services:Scheduling"]
+        ?? "http://scheduling-service");
+    client.Timeout = TimeSpan.FromSeconds(10);
+});
 // DaprClient for publishing events to pub/sub
 builder.Services.AddDaprClient();
 // Register Semantic Kernel plugins
@@ -87,6 +116,10 @@ builder.Services.AddSingleton(sp =>
     collection.AddFromObject(sp.GetRequiredService<ClinicalCoderPlugin>(), "ClinicalCoder");
     collection.AddFromObject(sp.GetRequiredService<PriorAuthPlugin>(), "PriorAuth");
     collection.AddFromObject(sp.GetRequiredService<CareGapPlugin>(), "CareGap");
+    // Phase 3 — Microservice API plugins
+    collection.AddFromObject(sp.GetRequiredService<PatientPlugin>(), "Patient");
+    collection.AddFromObject(sp.GetRequiredService<ClinicalPlugin>(), "Clinical");
+    collection.AddFromObject(sp.GetRequiredService<SchedulingPlugin>(), "Scheduling");
     return collection;
 });
 
