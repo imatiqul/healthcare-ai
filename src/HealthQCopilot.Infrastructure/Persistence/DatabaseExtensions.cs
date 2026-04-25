@@ -157,10 +157,8 @@ public static class DatabaseExtensions
                     "Migration '{MigrationId}' skipped (objects already exist). " +
                     "Baselining in __EFMigrationsHistory.", migrationId);
 
-                await db.Database.ExecuteSqlRawAsync(
-                    "INSERT INTO \"__EFMigrationsHistory\" (\"MigrationId\", \"ProductVersion\") " +
-                    $"VALUES ('{migrationId}', '{efVersion}') " +
-                    "ON CONFLICT (\"MigrationId\") DO NOTHING");
+                await db.Database.ExecuteSqlAsync(
+                    $"INSERT INTO \"__EFMigrationsHistory\" (\"MigrationId\", \"ProductVersion\") VALUES ({migrationId}, {efVersion}) ON CONFLICT (\"MigrationId\") DO NOTHING");
             }
         }
     }

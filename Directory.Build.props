@@ -7,4 +7,18 @@
     <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
     <EnforceCodeStyleInBuild>true</EnforceCodeStyleInBuild>
   </PropertyGroup>
+
+  <!-- Suppress advisories with no upstream patch available as of April 2026.
+       Revisit when new releases of these packages are available. -->
+  <ItemGroup>
+    <!-- OpenTelemetry.Api moderate: https://github.com/advisories/GHSA-g94r-2vxg-569j -->
+    <NuGetAuditSuppress Include="https://github.com/advisories/GHSA-g94r-2vxg-569j" />
+    <!-- HotChocolate.Language critical: https://github.com/advisories/GHSA-qr3m-xw4c-jqw3 -->
+    <NuGetAuditSuppress Include="https://github.com/advisories/GHSA-qr3m-xw4c-jqw3" />
+    <!-- KubernetesClient moderate (transitive via Aspire): https://github.com/advisories/GHSA-w7r3-mgwf-4mqq -->
+    <NuGetAuditSuppress Include="https://github.com/advisories/GHSA-w7r3-mgwf-4mqq" />
+    <!-- System.Security.Cryptography.Xml 9.0.0 (transitive via Microsoft.Identity.Web) -->
+    <NuGetAuditSuppress Include="https://github.com/advisories/GHSA-37gx-xxp4-5rgx" />
+    <NuGetAuditSuppress Include="https://github.com/advisories/GHSA-w3x6-4m5h-cxqf" />
+  </ItemGroup>
 </Project>

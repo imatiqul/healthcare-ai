@@ -79,9 +79,21 @@ var revenueService = builder.AddProject<Projects.HealthQCopilot_RevenueCycle>("r
     .WithExternalHttpEndpoints();
 
 // ──────────────────────────────────────────────
-// API Gateway (YARP reverse proxy)
+// BFF — GraphQL aggregation layer
 // ──────────────────────────────────────────────
-var gateway = builder.AddProject<Projects.HealthQCopilot_Gateway>("api-gateway")
+var bff = builder.AddProject<Projects.HealthQCopilot_BFF>("bff")
+    .WithReference(pophealthService)
+    .WithReference(agentService)
+    .WithReference(revenueService)
+    .WithReference(schedulingService)
+    .WithReference(fhirService)
+    .WithReference(redis)
+    .WithExternalHttpEndpoints();
+
+// ──────────────────────────────────────────────
+// Gateway — YARP reverse proxy
+// ──────────────────────────────────────────────
+builder.AddProject<Projects.HealthQCopilot_Gateway>("gateway")
     .WithReference(identityService)
     .WithReference(voiceService)
     .WithReference(agentService)
@@ -91,24 +103,35 @@ var gateway = builder.AddProject<Projects.HealthQCopilot_Gateway>("api-gateway")
     .WithReference(notificationService)
     .WithReference(pophealthService)
     .WithReference(revenueService)
-    .WithHttpEndpoint(port: 5000, name: "gateway")
+    .WithReference(bff)
     .WithExternalHttpEndpoints();
-// ── GraphQL Backend-for-Frontend ─────────────────────────────────────────
-var bff = builder.AddProject<Projects.HealthQCopilot_BFF>("bff")
-    .WithReference(pophealthService)
-    .WithReference(agentService)
-    .WithReference(revenueService)
-    .WithReference(schedulingService)
-    .WithReference(fhirService)
-    .WithHttpEndpoint(port: 5010, name: "graphql")
-    .WithExternalHttpEndpoints();
+
 // ──────────────────────────────────────────────
-// Frontend (Vite apps via pnpm)
+// Azure Service Bus Emulator (local dev)
 // ──────────────────────────────────────────────
-var frontend = builder.AddNpmApp("frontend-shell", "../../frontend", "dev")
+var sqlServiceBus = builder.AddContainer("sql-servicebus", "mcr.microsoft.com/mssql/server", "2022-latest")
+    .WithEnvironment("ACCEPT_EULA", "Y")
+    .WithEnvironment("SA_PASSWORD", "ServiceBus!Dev123")
+    .WithEndpoint(port: 1433, targetPort: 1433);
+
+builder.AddContainer("servicebus-emulator", "mcr.microsoft.com/azure-messaging/servicebus-emulator", "latest")
+    .WithEnvironment("ACCEPT_EULA", "Y")
+    .WithEndpoint(port: 5672, targetPort: 5672, name: "amqp")
+    .WithEndpoint(port: 5300, targetPort: 5300, name: "mgmt")
+    .WaitFor(sqlServiceBus);
+
+// ──────────────────────────────────────────────
+// Dapr placement service
+// ──────────────────────────────────────────────
+builder.AddContainer("dapr-placement", "daprio/dapr", "1.14")
+    .WithArgs("./placement", "--port", "50006")
+    .WithEndpoint(port: 50006, targetPort: 50006);
+
+// ──────────────────────────────────────────────
+// Frontend shell (Vite dev server)
+// ──────────────────────────────────────────────
+builder.AddNpmApp("shell", "../../frontend/apps/shell")
     .WithHttpEndpoint(port: 3000, env: "PORT")
-    .WithExternalHttpEndpoints()
-    .WithReference(gateway)
-    .WithReference(bff);
+    .WithExternalHttpEndpoints();
 
 builder.Build().Run();
