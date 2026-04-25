@@ -10,7 +10,7 @@ namespace HealthQCopilot.Agents.Services;
 /// Dispatches cross-service workflow events via HTTP after triage completes.
 /// Calls downstream services (Revenue, Notifications, Scheduling) through the APIM gateway.
 /// </summary>
-public sealed class WorkflowDispatcher
+public sealed class WorkflowDispatcher : IWorkflowDispatcher
 {
     private readonly HttpClient _http;
     private readonly ILogger<WorkflowDispatcher> _logger;
