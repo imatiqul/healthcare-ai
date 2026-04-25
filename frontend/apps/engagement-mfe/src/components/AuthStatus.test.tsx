@@ -1,6 +1,7 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
+import { AuthStatus } from './AuthStatus';
 
 const mockLoginRedirect = vi.fn(() => Promise.resolve());
 const mockLogoutRedirect = vi.fn(() => Promise.resolve());
@@ -12,8 +13,7 @@ vi.mock('@azure/msal-react', () => ({
   useIsAuthenticated: () => mockUseIsAuthenticated(),
 }));
 
-beforeEach(async () => {
-  vi.restoreAllMocks();
+beforeEach(() => {
   mockLoginRedirect.mockClear();
   mockLogoutRedirect.mockClear();
   mockUseMsal.mockReturnValue({
@@ -24,14 +24,12 @@ beforeEach(async () => {
 });
 
 describe('AuthStatus — unauthenticated', () => {
-  it('renders a Sign in button when not authenticated', async () => {
-    const { AuthStatus } = await import('./AuthStatus');
+  it('renders a Sign in button when not authenticated', () => {
     render(<AuthStatus />);
     expect(screen.getByRole('button', { name: /Sign in/i })).toBeInTheDocument();
   });
 
   it('calls loginRedirect when Sign in is clicked', async () => {
-    const { AuthStatus } = await import('./AuthStatus');
     const user = userEvent.setup({ delay: null });
     render(<AuthStatus />);
     await user.click(screen.getByRole('button', { name: /Sign in/i }));
@@ -48,20 +46,17 @@ describe('AuthStatus — authenticated', () => {
     mockUseIsAuthenticated.mockReturnValue(true);
   });
 
-  it('shows user display name when authenticated', async () => {
-    const { AuthStatus } = await import('./AuthStatus');
+  it('shows user display name when authenticated', () => {
     render(<AuthStatus />);
     expect(screen.getByText('Jane Patient')).toBeInTheDocument();
   });
 
-  it('shows Sign out button when authenticated', async () => {
-    const { AuthStatus } = await import('./AuthStatus');
+  it('shows Sign out button when authenticated', () => {
     render(<AuthStatus />);
     expect(screen.getByRole('button', { name: /Sign out/i })).toBeInTheDocument();
   });
 
   it('calls logoutRedirect when Sign out is clicked', async () => {
-    const { AuthStatus } = await import('./AuthStatus');
     const user = userEvent.setup({ delay: null });
     render(<AuthStatus />);
     await user.click(screen.getByRole('button', { name: /Sign out/i }));
