@@ -3,6 +3,7 @@
   { "id": "sidebar-notifications", "name": "Navigate to Notifications from sidebar", "module": "shell", "kind": "sidebar-nav", "fromRoute": "/", "targetRoute": "/notifications" },
   { "id": "sidebar-alerts", "name": "Navigate to Clinical Alerts from sidebar", "module": "shell", "kind": "sidebar-nav", "fromRoute": "/", "targetRoute": "/alerts" },
   { "id": "sidebar-business", "name": "Navigate to Business KPIs from sidebar", "module": "shell", "kind": "sidebar-nav", "fromRoute": "/", "targetRoute": "/business" },
+  { "id": "sidebar-workflow-ops", "name": "Navigate to Workflow Ops from sidebar", "module": "shell", "kind": "sidebar-nav", "fromRoute": "/", "targetRoute": "/workflow-ops" },
   { "id": "sidebar-voice", "name": "Navigate to Voice Sessions from sidebar", "module": "voice", "kind": "sidebar-nav", "fromRoute": "/", "targetRoute": "/voice" },
   { "id": "sidebar-triage", "name": "Navigate to Triage from sidebar", "module": "triage", "kind": "sidebar-nav", "fromRoute": "/", "targetRoute": "/triage" },
   { "id": "sidebar-encounters", "name": "Navigate to Encounters from sidebar", "module": "encounters", "kind": "sidebar-nav", "fromRoute": "/", "targetRoute": "/encounters" },

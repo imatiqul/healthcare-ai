@@ -2,6 +2,7 @@
   { "name": "Dashboard", "route": "/" },
   { "name": "Notification Center", "route": "/notifications" },
   { "name": "Business KPIs", "route": "/business" },
+  { "name": "Workflow Operations", "route": "/workflow-ops" },
   { "name": "Voice Sessions", "route": "/voice" },
   { "name": "Triage", "route": "/triage" },
   { "name": "Scheduling", "route": "/scheduling" },
