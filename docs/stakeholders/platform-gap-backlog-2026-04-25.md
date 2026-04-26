@@ -40,6 +40,12 @@ This backlog captures the highest-impact platform gaps identified during the lat
   - Build, unit tests, and integration tests completed successfully for targeted services.
   - Deployment blocked at `Azure login (OIDC)` with `AADSTS700213` (no matching federated identity record for current repo subject).
   - Cloud E2E run `24947167417` is waiting in `Deployment Sync Gate` because required deploy workflows for the SHA are not ready.
+  - Latest Cloud E2E run `24947212074` completed with failure in `Full E2E Suite`.
+  - Current failing probes are still `404/405` on gateway-facing APIs:
+    - `/api/v1/revenue/denials/`
+    - `/api/v1/revenue/denials/analytics`
+    - `/api/v1/notifications/analytics/delivery`
+    - `/api/v1/agents/decisions/ml-confidence`
 
 ## Acceptance Criteria
 
