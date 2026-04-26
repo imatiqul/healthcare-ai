@@ -32,10 +32,10 @@ public sealed class PriorAuthApprovedHandler(
             topicName: "priorauth.result",
             data: new
             {
-                AuthId     = evt.AuthId,
-                PatientId  = evt.PatientId,
-                Outcome    = "Approved",
-                Reason     = (string?)null,
+                AuthId = evt.AuthId,
+                PatientId = evt.PatientId,
+                Outcome = "Approved",
+                Reason = (string?)null,
                 OccurredAt = evt.OccurredAt
             },
             cancellationToken: ct);
@@ -62,10 +62,10 @@ public sealed class PriorAuthDeniedHandler(
             topicName: "priorauth.result",
             data: new
             {
-                AuthId     = evt.AuthId,
-                PatientId  = evt.PatientId,
-                Outcome    = "Denied",
-                Reason     = evt.Reason,
+                AuthId = evt.AuthId,
+                PatientId = evt.PatientId,
+                Outcome = "Denied",
+                Reason = evt.Reason,
                 OccurredAt = evt.OccurredAt
             },
             cancellationToken: ct);

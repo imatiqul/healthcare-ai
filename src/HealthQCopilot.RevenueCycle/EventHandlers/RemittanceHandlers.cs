@@ -28,9 +28,9 @@ public sealed class RemittanceReceivedHandler(
             data: new
             {
                 RemittanceId = evt.RemittanceId,
-                PayerName    = evt.PayerName,
-                TotalCents   = evt.TotalCents,
-                OccurredAt   = evt.OccurredAt
+                PayerName = evt.PayerName,
+                TotalCents = evt.TotalCents,
+                OccurredAt = evt.OccurredAt
             },
             cancellationToken: ct);
 
@@ -64,8 +64,8 @@ public sealed class RemittancePostedHandler(
             data: new
             {
                 RemittanceId = evt.RemittanceId,
-                TotalCents   = evt.TotalCents,
-                OccurredAt   = evt.OccurredAt
+                TotalCents = evt.TotalCents,
+                OccurredAt = evt.OccurredAt
             },
             cancellationToken: ct);
 

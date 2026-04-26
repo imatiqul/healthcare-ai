@@ -27,9 +27,9 @@ public sealed class ClaimSubmittedHandler(
             topicName: "claim.submitted",
             data: new
             {
-                ClaimId    = evt.ClaimId,
-                PatientId  = evt.PatientId,
-                Payer      = evt.Payer,
+                ClaimId = evt.ClaimId,
+                PatientId = evt.PatientId,
+                Payer = evt.Payer,
                 OccurredAt = evt.OccurredAt
             },
             cancellationToken: ct);
@@ -62,8 +62,8 @@ public sealed class ClaimRejectedHandler(
             topicName: "claim.rejected",
             data: new
             {
-                ClaimId    = evt.ClaimId,
-                Reason     = evt.Reason,
+                ClaimId = evt.ClaimId,
+                Reason = evt.Reason,
                 OccurredAt = evt.OccurredAt
             },
             cancellationToken: ct);

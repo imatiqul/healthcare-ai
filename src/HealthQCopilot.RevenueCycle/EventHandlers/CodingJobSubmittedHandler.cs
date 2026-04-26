@@ -33,8 +33,8 @@ public sealed class CodingJobSubmittedHandler(
             topicName: "coding-job.submitted",
             data: new
             {
-                JobId      = evt.JobId,
-                Codes      = evt.Codes,
+                JobId = evt.JobId,
+                Codes = evt.Codes,
                 OccurredAt = evt.OccurredAt
             },
             cancellationToken: ct);
