@@ -247,7 +247,7 @@ test.describe('Phase 12 — Scheduling Waitlist Endpoints', () => {
 
 test.describe('Phase 12 — Revenue Denial Management Endpoints', () => {
   test('denials list endpoint responds', async ({ request }) => {
-    const response = await acaGet(request, `${LIVE_API_BASE_URL}/api/v1/revenue/denials`);
+    const response = await acaGet(request, `${LIVE_API_BASE_URL}/api/v1/revenue/denials/`);
     test.skip(!response, 'Revenue live API returned 503 or timed out (advisory)');
     expectLiveApiSurface(response!, 'Revenue denials endpoint');
   });
@@ -334,7 +334,7 @@ test.describe('Phase 41 — Clinical Alerts API Endpoints', () => {
 
   test('break-glass sessions endpoint is reachable', async ({ request }) => {
     test.skip(!GATEWAY, 'GATEWAY_ACA_URL not configured');
-    const res = await acaGet(request, `${GATEWAY}/api/v1/identity/break-glass`);
+    const res = await acaGet(request, `${GATEWAY}/api/v1/identity/break-glass/`);
     test.skip(!res, 'Gateway ACA scaled to zero (503) — advisory');
     expectLiveApiSurface(res!, 'Break-glass sessions endpoint');
   });
@@ -348,7 +348,7 @@ test.describe('Phase 41 — Clinical Alerts API Endpoints', () => {
 
   test('denials endpoint is reachable', async ({ request }) => {
     test.skip(!GATEWAY, 'GATEWAY_ACA_URL not configured');
-    const res = await acaGet(request, `${GATEWAY}/api/v1/revenue/denials`);
+    const res = await acaGet(request, `${GATEWAY}/api/v1/revenue/denials/`);
     test.skip(!res, 'Gateway ACA scaled to zero (503) — advisory');
     expectLiveApiSurface(res!, 'Revenue denials endpoint');
   });
@@ -359,7 +359,8 @@ test.describe('Phase 41 — Reports Export API Endpoints', () => {
 
   test('audit log export endpoint is reachable', async ({ request }) => {
     test.skip(!GATEWAY, 'GATEWAY_ACA_URL not configured');
-    const res = await acaGet(request, `${GATEWAY}/api/v1/identity/audit-log`);
+    // Identity audit endpoints are exposed under /api/v1/admin/audit/* in current contracts.
+    const res = await acaGet(request, `${GATEWAY}/api/v1/admin/audit/summary`);
     test.skip(!res, 'Gateway ACA scaled to zero (503) — advisory');
     expectLiveApiSurface(res!, 'Audit log export endpoint');
   });
@@ -373,7 +374,8 @@ test.describe('Phase 41 — Reports Export API Endpoints', () => {
 
   test('practitioners list endpoint is reachable', async ({ request }) => {
     test.skip(!GATEWAY, 'GATEWAY_ACA_URL not configured');
-    const res = await acaGet(request, `${GATEWAY}/api/v1/identity/practitioners`);
+    // Practitioner management endpoints are exposed by Scheduling service.
+    const res = await acaGet(request, `${GATEWAY}/api/v1/scheduling/practitioners/`);
     test.skip(!res, 'Gateway ACA scaled to zero (503) — advisory');
     expectLiveApiSurface(res!, 'Practitioners list endpoint');
   });

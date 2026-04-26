@@ -10,6 +10,11 @@ on:
         required: false
         default: 'all'
         type: string
+      skip_format_check:
+        description: 'Set true to bypass dotnet format verification for manual emergency redeploys'
+        required: false
+        default: false
+        type: boolean
 
 permissions:
   id-token: write
@@ -58,6 +63,7 @@ jobs:
     runs-on: ubuntu-latest
     outputs:
       normalized_services: ${{ steps.validate.outputs.normalized_services }}
+      skip_format_check: ${{ steps.validate.outputs.skip_format_check }}
     steps:
       - name: Validate manual service selection
         id: validate
@@ -65,6 +71,7 @@ jobs:
         run: |
           if [ "${{ github.event_name }}" != "workflow_dispatch" ]; then
             echo "normalized_services=all" >> "$GITHUB_OUTPUT"
+            echo "skip_format_check=false" >> "$GITHUB_OUTPUT"
             exit 0
           fi
 
@@ -87,7 +94,15 @@ jobs:
             esac
           done
 
+          RAW_SKIP_FORMAT="${{ github.event.inputs.skip_format_check }}"
+          if [ "$RAW_SKIP_FORMAT" = "true" ]; then
+            SKIP_FORMAT_CHECK="true"
+          else
+            SKIP_FORMAT_CHECK="false"
+          fi
+
           echo "normalized_services=$NORMALIZED" >> "$GITHUB_OUTPUT"
+          echo "skip_format_check=$SKIP_FORMAT_CHECK" >> "$GITHUB_OUTPUT"
 
   test-and-build:
     needs: [detect-changes, validate-dispatch-inputs]
@@ -156,11 +171,20 @@ jobs:
         with:
           dotnet-version: '10.0.x'
 
-      - name: Build + format check
+      - name: Build
         if: (matrix.changed == 'true' || github.event_name == 'workflow_dispatch') && steps.service-selection.outputs.selected == 'true'
         run: |
           dotnet build src/${{ matrix.project }} --configuration Release
+
+      - name: Format check
+        if: (matrix.changed == 'true' || github.event_name == 'workflow_dispatch') && steps.service-selection.outputs.selected == 'true' && !(github.event_name == 'workflow_dispatch' && needs.validate-dispatch-inputs.outputs.skip_format_check == 'true')
+        run: |
           dotnet format src/${{ matrix.project }} --verify-no-changes
+
+      - name: Format check bypass notice
+        if: (matrix.changed == 'true' || github.event_name == 'workflow_dispatch') && steps.service-selection.outputs.selected == 'true' && github.event_name == 'workflow_dispatch' && needs.validate-dispatch-inputs.outputs.skip_format_check == 'true'
+        run: |
+          echo "::warning::Skipping dotnet format verification for manual workflow_dispatch run (skip_format_check=true)."
 
       - name: Unit tests
         if: (matrix.changed == 'true' || github.event_name == 'workflow_dispatch') && steps.service-selection.outputs.selected == 'true'

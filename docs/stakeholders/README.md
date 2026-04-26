@@ -16,6 +16,8 @@ Use this hub to jump directly to the guide that matches your role.
 | Platform manager | [Platform Manager Guide](platform-managers.md) | Delivery flow, quality indicators, compliance tracking |
 | Solutions architect | [Solutions Architect Guide](solutions-architects.md) | Architecture decisions, boundaries, deployment topology |
 
+Platform execution backlog: [Platform Gap Backlog — April 25, 2026](platform-gap-backlog-2026-04-25.md)
+
 ## Fast Entry Paths
 
 | If you need to... | Start Here | Then Continue With |
