@@ -1,7 +1,7 @@
 services:
   identity:
     image:
-      tag: c38197603542527a2e9e88420310ff6ae955c040
+      tag: ecdaa4edd2cdfa8a943f2aa56cdc13f98cefc90e
   ocr:
     image:
       tag: 8be2951bc047ce9019b6a0cc0af8bc2b21ffb60e
