@@ -4,6 +4,12 @@ on:
   push:
     branches: [main]
   workflow_dispatch:
+    inputs:
+      services:
+        description: 'Comma-separated service ids to redeploy on manual runs, or all'
+        required: false
+        default: 'all'
+        type: string
 
 permissions:
   id-token: write
@@ -85,7 +91,13 @@ jobs:
           - service: gateway
             project: HealthQCopilot.Gateway
             changed: ${{ needs.detect-changes.outputs.gateway }}
-    if: always()
+    if: >
+      always() &&
+      (
+        github.event_name != 'workflow_dispatch' ||
+        inputs.services == 'all' ||
+        contains(format(',{0},', inputs.services), format(',{0},', matrix.service))
+      )
     steps:
       - uses: actions/checkout@v4
         if: matrix.changed == 'true' || github.event_name == 'workflow_dispatch'
