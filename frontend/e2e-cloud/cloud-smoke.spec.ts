@@ -36,6 +36,19 @@ async function acaPost(
   }
 }
 
+function expectLiveApiSurface(response: APIResponse, description: string): void {
+  const status = response.status();
+  expect(
+    status,
+    `${description} route is missing or uses the wrong HTTP method (${status})`,
+  ).not.toBe(404);
+  expect(
+    status,
+    `${description} route is missing or uses the wrong HTTP method (${status})`,
+  ).not.toBe(405);
+  expect(status, `${description} returned unexpected ${status}`).toBeLessThan(500);
+}
+
 const LIVE_API_BASE_URL = (
   process.env.GATEWAY_ACA_URL ||
   process.env.API_BASE_URL ||
@@ -164,7 +177,7 @@ test.describe('Cloud — Backend Service Reachability', () => {
     { name: 'FHIR', path: '/api/v1/fhir/patients' },
     { name: 'Identity', path: '/api/v1/identity/users' },
     { name: 'OCR', path: '/api/v1/ocr/jobs' },
-    { name: 'Scheduling', path: '/api/v1/scheduling/waitlist' },
+    { name: 'Scheduling', path: '/api/v1/scheduling/slots' },
     { name: 'Notification', path: '/api/v1/notifications/messages' },
     { name: 'PopHealth', path: '/api/v1/population-health/risks' },
     { name: 'Revenue', path: '/api/v1/revenue/coding-jobs' },
@@ -174,7 +187,7 @@ test.describe('Cloud — Backend Service Reachability', () => {
     test(`${svc.name} backend is reachable through the live API surface`, async ({ request }) => {
       const response = await acaGet(request, `${LIVE_API_BASE_URL}${svc.path}`);
       test.skip(!response, `${svc.name} live API returned 503 or timed out (advisory)`);
-      expect(response!.status(), `${svc.name} live API returned unexpected ${response!.status()}`).toBeLessThan(500);
+      expectLiveApiSurface(response!, `${svc.name} live API`);
     });
   }
 });
@@ -183,31 +196,31 @@ test.describe('Cloud — API Smoke Tests', () => {
   test('agent triage endpoint responds with live seeded data', async ({ request }) => {
     const response = await acaGet(request, `${LIVE_API_BASE_URL}/api/v1/agents/triage`);
     test.skip(!response, 'AI-Agent live API returned 503 or timed out (advisory)');
-    expect(response!.status()).toBeLessThan(500);
+    expectLiveApiSurface(response!, 'AI-Agent triage endpoint');
   });
 
-  test('scheduling waitlist endpoint responds with live seeded data', async ({ request }) => {
-    const response = await acaGet(request, `${LIVE_API_BASE_URL}/api/v1/scheduling/waitlist`);
+  test('scheduling slots endpoint responds with live seeded data', async ({ request }) => {
+    const response = await acaGet(request, `${LIVE_API_BASE_URL}/api/v1/scheduling/slots`);
     test.skip(!response, 'Scheduling live API returned 503 or timed out (advisory)');
-    expect(response!.status()).toBeLessThan(500);
+    expectLiveApiSurface(response!, 'Scheduling slots endpoint');
   });
 
   test('population health risks endpoint responds with live seeded data', async ({ request }) => {
     const response = await acaGet(request, `${LIVE_API_BASE_URL}/api/v1/population-health/risks`);
     test.skip(!response, 'Population Health live API returned 503 or timed out (advisory)');
-    expect(response!.status()).toBeLessThan(500);
+    expectLiveApiSurface(response!, 'Population health risks endpoint');
   });
 
   test('revenue coding jobs endpoint responds with live seeded data', async ({ request }) => {
     const response = await acaGet(request, `${LIVE_API_BASE_URL}/api/v1/revenue/coding-jobs`);
     test.skip(!response, 'Revenue live API returned 503 or timed out (advisory)');
-    expect(response!.status()).toBeLessThan(500);
+    expectLiveApiSurface(response!, 'Revenue coding jobs endpoint');
   });
 
   test('guide suggestions endpoint responds', async ({ request }) => {
     const response = await acaGet(request, `${LIVE_API_BASE_URL}/api/v1/agents/guide/suggestions`);
     test.skip(!response, 'AI-Agent live API returned 503 or timed out (advisory)');
-    expect(response!.status()).toBeLessThan(500);
+    expectLiveApiSurface(response!, 'Guide suggestions endpoint');
   });
 });
 
@@ -218,17 +231,17 @@ test.describe('Cloud — API Smoke Tests', () => {
 //   • Notification delivery tracking + appointment reminder analytics
 
 test.describe('Phase 12 — Scheduling Waitlist Endpoints', () => {
-  test('waitlist list endpoint responds', async ({ request }) => {
-    const response = await acaGet(request, `${LIVE_API_BASE_URL}/api/v1/scheduling/waitlist`);
+  test('scheduling slots endpoint responds', async ({ request }) => {
+    const response = await acaGet(request, `${LIVE_API_BASE_URL}/api/v1/scheduling/slots`);
     test.skip(!response, 'Scheduling live API returned 503 or timed out (advisory)');
-    expect(response!.status()).toBeLessThan(500);
+    expectLiveApiSurface(response!, 'Scheduling slots endpoint');
   });
 
   test('waitlist conflict-check endpoint responds', async ({ request }) => {
     // POST with empty body should return 400 (validation) — not 5xx
     const response = await acaPost(request, `${LIVE_API_BASE_URL}/api/v1/scheduling/waitlist/conflict-check`);
     test.skip(!response, 'Scheduling live API returned 503 or timed out (advisory)');
-    expect(response!.status()).toBeLessThan(500);
+    expectLiveApiSurface(response!, 'Waitlist conflict-check endpoint');
   });
 });
 
@@ -236,13 +249,13 @@ test.describe('Phase 12 — Revenue Denial Management Endpoints', () => {
   test('denials list endpoint responds', async ({ request }) => {
     const response = await acaGet(request, `${LIVE_API_BASE_URL}/api/v1/revenue/denials`);
     test.skip(!response, 'Revenue live API returned 503 or timed out (advisory)');
-    expect(response!.status()).toBeLessThan(500);
+    expectLiveApiSurface(response!, 'Revenue denials endpoint');
   });
 
   test('denials analytics endpoint responds', async ({ request }) => {
     const response = await acaGet(request, `${LIVE_API_BASE_URL}/api/v1/revenue/denials/analytics`);
     test.skip(!response, 'Revenue live API returned 503 or timed out (advisory)');
-    expect(response!.status()).toBeLessThan(500);
+    expectLiveApiSurface(response!, 'Revenue denials analytics endpoint');
   });
 });
 
@@ -250,13 +263,13 @@ test.describe('Phase 12 — Notification Delivery Tracking Endpoints', () => {
   test('notification delivery analytics endpoint responds', async ({ request }) => {
     const response = await acaGet(request, `${LIVE_API_BASE_URL}/api/v1/notifications/analytics/delivery`);
     test.skip(!response, 'Notification live API returned 503 or timed out (advisory)');
-    expect(response!.status()).toBeLessThan(500);
+    expectLiveApiSurface(response!, 'Notification delivery analytics endpoint');
   });
 
   test('notification messages list endpoint responds', async ({ request }) => {
     const response = await acaGet(request, `${LIVE_API_BASE_URL}/api/v1/notifications/messages`);
     test.skip(!response, 'Notification live API returned 503 or timed out (advisory)');
-    expect(response!.status()).toBeLessThan(500);
+    expectLiveApiSurface(response!, 'Notification messages endpoint');
   });
 });
 
@@ -266,14 +279,14 @@ test.describe('Phase 27 — Notification Campaign Endpoints', () => {
   test('notification campaigns list endpoint responds', async ({ request }) => {
     const response = await acaGet(request, `${LIVE_API_BASE_URL}/api/v1/notifications/campaigns`);
     test.skip(!response, 'Notification live API returned 503 or timed out (advisory)');
-    expect(response!.status()).toBeLessThan(500);
+    expectLiveApiSurface(response!, 'Notification campaigns endpoint');
   });
 
   test('notification campaigns create endpoint responds to validation error', async ({ request }) => {
     // POST with empty body should return 400 (validation) — not 5xx
     const response = await acaPost(request, `${LIVE_API_BASE_URL}/api/v1/notifications/campaigns`);
     test.skip(!response, 'Notification live API returned 503 or timed out (advisory)');
-    expect(response!.status()).toBeLessThan(500);
+    expectLiveApiSurface(response!, 'Notification campaigns create endpoint');
   });
 });
 
@@ -282,7 +295,7 @@ test.describe('Phase 27 — ML Confidence Endpoint', () => {
     // POST with empty body should return 400 (validation) — not 5xx
     const response = await acaPost(request, `${LIVE_API_BASE_URL}/api/v1/agents/decisions/ml-confidence`);
     test.skip(!response, 'AI-Agent live API returned 503 or timed out (advisory)');
-    expect(response!.status()).toBeLessThan(500);
+    expectLiveApiSurface(response!, 'ML confidence endpoint');
   });
 })
 
@@ -316,28 +329,28 @@ test.describe('Phase 41 — Clinical Alerts API Endpoints', () => {
     test.skip(!GATEWAY, 'GATEWAY_ACA_URL not configured');
     const res = await acaGet(request, `${GATEWAY}/api/v1/population-health/risks`);
     test.skip(!res, 'Gateway ACA scaled to zero (503) — advisory');
-    expect(res!.status()).toBeLessThan(500);
+    expectLiveApiSurface(res!, 'Risk patients endpoint');
   });
 
   test('break-glass sessions endpoint is reachable', async ({ request }) => {
     test.skip(!GATEWAY, 'GATEWAY_ACA_URL not configured');
     const res = await acaGet(request, `${GATEWAY}/api/v1/identity/break-glass`);
     test.skip(!res, 'Gateway ACA scaled to zero (503) — advisory');
-    expect(res!.status()).toBeLessThan(500);
+    expectLiveApiSurface(res!, 'Break-glass sessions endpoint');
   });
 
-  test('waitlist endpoint is reachable', async ({ request }) => {
+  test('scheduling slots endpoint is reachable', async ({ request }) => {
     test.skip(!GATEWAY, 'GATEWAY_ACA_URL not configured');
-    const res = await acaGet(request, `${GATEWAY}/api/v1/scheduling/waitlist`);
+    const res = await acaGet(request, `${GATEWAY}/api/v1/scheduling/slots`);
     test.skip(!res, 'Gateway ACA scaled to zero (503) — advisory');
-    expect(res!.status()).toBeLessThan(500);
+    expectLiveApiSurface(res!, 'Scheduling slots endpoint');
   });
 
   test('denials endpoint is reachable', async ({ request }) => {
     test.skip(!GATEWAY, 'GATEWAY_ACA_URL not configured');
     const res = await acaGet(request, `${GATEWAY}/api/v1/revenue/denials`);
     test.skip(!res, 'Gateway ACA scaled to zero (503) — advisory');
-    expect(res!.status()).toBeLessThan(500);
+    expectLiveApiSurface(res!, 'Revenue denials endpoint');
   });
 });
 
@@ -348,21 +361,21 @@ test.describe('Phase 41 — Reports Export API Endpoints', () => {
     test.skip(!GATEWAY, 'GATEWAY_ACA_URL not configured');
     const res = await acaGet(request, `${GATEWAY}/api/v1/identity/audit-log`);
     test.skip(!res, 'Gateway ACA scaled to zero (503) — advisory');
-    expect(res!.status()).toBeLessThan(500);
+    expectLiveApiSurface(res!, 'Audit log export endpoint');
   });
 
   test('denial analytics endpoint is reachable', async ({ request }) => {
     test.skip(!GATEWAY, 'GATEWAY_ACA_URL not configured');
     const res = await acaGet(request, `${GATEWAY}/api/v1/revenue/denials/analytics`);
     test.skip(!res, 'Gateway ACA scaled to zero (503) — advisory');
-    expect(res!.status()).toBeLessThan(500);
+    expectLiveApiSurface(res!, 'Revenue denials analytics endpoint');
   });
 
   test('practitioners list endpoint is reachable', async ({ request }) => {
     test.skip(!GATEWAY, 'GATEWAY_ACA_URL not configured');
     const res = await acaGet(request, `${GATEWAY}/api/v1/identity/practitioners`);
     test.skip(!res, 'Gateway ACA scaled to zero (503) — advisory');
-    expect(res!.status()).toBeLessThan(500);
+    expectLiveApiSurface(res!, 'Practitioners list endpoint');
   });
 });
 

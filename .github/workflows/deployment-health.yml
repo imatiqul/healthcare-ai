@@ -197,7 +197,6 @@ jobs:
             [identity/users]="/api/v1/identity/users"
             [ocr/jobs]="/api/v1/ocr/jobs"
             [scheduling/slots]="/api/v1/scheduling/slots"
-            [scheduling/waitlist]="/api/v1/scheduling/waitlist"
             [notification/messages]="/api/v1/notifications/messages"
             [pop-health/risks]="/api/v1/population-health/risks"
             [revenue/coding-jobs]="/api/v1/revenue/coding-jobs"
@@ -215,8 +214,9 @@ jobs:
             STATUS=$(curl -s -o /dev/null -w "%{http_code}" \
               --max-time 10 --retry 1 --retry-delay 2 \
               "${GATEWAY}${SVC_PATH}" 2>/dev/null) || STATUS="000"
-            # 000 = connection error; 5xx = server error → both indicate service is down
-            if [ "$STATUS" = "000" ] || [ "$STATUS" -ge 500 ]; then
+            # 000 = connection error; 404/405 = missing route or wrong method;
+            # 5xx = server error. All three indicate the public API surface is unhealthy.
+            if [ "$STATUS" = "000" ] || [ "$STATUS" = "404" ] || [ "$STATUS" = "405" ] || [ "$STATUS" -ge 500 ]; then
               echo "| $KEY | ${STATUS:-000} | ❌ |" >> $GITHUB_STEP_SUMMARY
               FAIL=1
             else

@@ -402,9 +402,9 @@ jobs:
             STATUS=$(curl -s -o /dev/null -w "%{http_code}" \
               --max-time 15 --retry 2 --retry-delay 3 \
               "${{ env.GATEWAY_URL }}${SVC_PATH}")
-            # 2xx = OK, 401/403 = service up (auth required), 404 = route not found
-            # Only 5xx or connection errors indicate the service is down
-            if [ "$STATUS" -ge 500 ]; then
+            # 2xx = OK, 400/401/403 can still prove the routed service is alive.
+            # 404/405 = missing route or wrong method; 5xx/connection errors = service down.
+            if [ "$STATUS" = "404" ] || [ "$STATUS" = "405" ] || [ "$STATUS" -ge 500 ]; then
               echo "❌ $SVC ($SVC_PATH) → HTTP $STATUS"
               FAIL=1
             else
@@ -414,7 +414,7 @@ jobs:
 
           # Phase 12 — new endpoint smoke checks
           declare -A PHASE12_PATHS=(
-            [scheduling-waitlist]="/api/v1/scheduling/waitlist"
+            [scheduling-slots]="/api/v1/scheduling/slots"
             [revenue-denials]="/api/v1/revenue/denials"
             [notifications-delivery]="/api/v1/notifications/messages"
             [notifications-analytics]="/api/v1/notifications/analytics/delivery"
@@ -424,7 +424,7 @@ jobs:
             STATUS=$(curl -s -o /dev/null -w "%{http_code}" \
               --max-time 15 --retry 2 --retry-delay 3 \
               "${{ env.GATEWAY_URL }}${SVC_PATH}")
-            if [ "$STATUS" -ge 500 ]; then
+            if [ "$STATUS" = "404" ] || [ "$STATUS" = "405" ] || [ "$STATUS" -ge 500 ]; then
               echo "❌ Phase-12 $ENDPOINT ($SVC_PATH) → HTTP $STATUS"
               FAIL=1
             else
