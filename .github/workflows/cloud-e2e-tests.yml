@@ -94,6 +94,7 @@ jobs:
               const rows = [];
               let ready = true;
               let hardFailure = false;
+              let terminalNoDeploy = false;
 
               for (const workflow of requiredWorkflows) {
                 const runs = data.workflow_runs
@@ -103,7 +104,7 @@ jobs:
                 const run = runs[0];
                 const status = run?.status ?? (workflow.optionalIfMissing ? 'not-triggered' : 'missing');
                 const conclusion = run?.conclusion ?? (workflow.optionalIfMissing ? 'not-required' : 'pending');
-                const gateState =
+                let gateState =
                   !run && workflow.optionalIfMissing
                     ? 'not-required'
                     : status === 'completed' && conclusion === 'success'
@@ -111,6 +112,27 @@ jobs:
                     : status === 'completed'
                       ? 'failed'
                       : 'waiting';
+
+                if (run && workflow.name === 'Microservice CI/CD' && status === 'completed' && conclusion === 'success') {
+                  const jobsResponse = await github.rest.actions.listJobsForWorkflowRun({
+                    owner,
+                    repo,
+                    run_id: run.id,
+                    per_page: 100,
+                  });
+                  const postDeploySmoke = jobsResponse.data.jobs.find((job) => job.name === 'post-deploy-smoke');
+
+                  if (postDeploySmoke?.conclusion === 'success') {
+                    gateState = 'ready';
+                  } else if (postDeploySmoke?.conclusion === 'skipped') {
+                    gateState = 'not-deployed';
+                    terminalNoDeploy = true;
+                  } else if (!postDeploySmoke || postDeploySmoke.status !== 'completed') {
+                    gateState = 'waiting';
+                  } else if (postDeploySmoke.conclusion === 'failure') {
+                    gateState = 'failed';
+                  }
+                }
 
                 rows.push([
                   { data: workflow.name, header: false },
@@ -128,12 +150,12 @@ jobs:
                 }
               }
 
-              return { ready, rows, hardFailure };
+              return { ready, rows, hardFailure, terminalNoDeploy };
             }
 
             let gateResult = await evaluateGate();
 
-            for (let attempt = 1; !gateResult.ready && !gateResult.hardFailure && attempt < maxAttempts; attempt += 1) {
+            for (let attempt = 1; !gateResult.ready && !gateResult.hardFailure && !gateResult.terminalNoDeploy && attempt < maxAttempts; attempt += 1) {
               core.info(`Deployment sync gate waiting for required workflows on ${headSha}; retrying in ${pollIntervalMs / 1000}s (${attempt}/${maxAttempts - 1}).`);
               await new Promise((resolve) => setTimeout(resolve, pollIntervalMs));
               gateResult = await evaluateGate();
@@ -156,6 +178,10 @@ jobs:
             if (gateResult.hardFailure) {
               core.setFailed(`Cloud E2E gate blocked: required deploy workflow(s) failed for SHA ${headSha}.`);
               return 'false';
+            }
+
+            if (gateResult.terminalNoDeploy) {
+              core.notice(`Cloud E2E sync found no deploy execution for SHA ${headSha} (post-deploy-smoke skipped). Full cloud E2E will be skipped for this trigger.`);
             }
 
             if (!gateResult.ready) {

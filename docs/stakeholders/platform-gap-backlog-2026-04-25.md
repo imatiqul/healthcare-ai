@@ -8,6 +8,7 @@ This backlog captures the highest-impact platform gaps identified during the lat
 
 - Microservice CI/CD reliability recovered after workflow hardening.
 - Manual redeploy now includes OIDC preflight fail-fast to reduce repeated matrix failures when federation is misconfigured.
+- Cloud E2E deployment sync now distinguishes hard deploy failures from no-deploy triggers (post-deploy-smoke skipped) to reduce false-failure noise.
 - Cloud smoke gate passes consistently.
 - Full cloud E2E is still failing on key live API checks, indicating runtime drift and contract misalignment.
 
