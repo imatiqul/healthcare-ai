@@ -103,8 +103,8 @@ public class RevenueDbContext : OutboxDbContext
                 cl.OwnsMany(x => x.ServiceLines, sl =>
                 {
                     sl.ToTable("remittance_service_lines");
-                    sl.HasKey("Id");
                     sl.Property<Guid>("Id").ValueGeneratedOnAdd();
+                    sl.HasKey("Id");
                     sl.Property(x => x.ProcedureCode).HasMaxLength(32);
                     sl.Property(x => x.ReasonCode).HasMaxLength(8);
                 });
