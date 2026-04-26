@@ -120,7 +120,8 @@ jobs:
 
       - name: Azure login (service principal secret) preflight fallback
         id: azure-login-secret
-        if: steps.azure-login.outcome != 'success' && secrets.AZURE_CREDENTIALS != ''
+        if: steps.azure-login.outcome != 'success'
+        continue-on-error: true
         uses: azure/login@v2
         with:
           creds: ${{ secrets.AZURE_CREDENTIALS }}
@@ -254,7 +255,8 @@ jobs:
 
       - name: Azure login (service principal secret fallback)
         id: azure-login-secret
-        if: (matrix.changed == 'true' || github.event_name == 'workflow_dispatch') && steps.service-selection.outputs.selected == 'true' && github.ref == 'refs/heads/main' && steps.azure-login.outcome != 'success' && secrets.AZURE_CREDENTIALS != ''
+        if: (matrix.changed == 'true' || github.event_name == 'workflow_dispatch') && steps.service-selection.outputs.selected == 'true' && github.ref == 'refs/heads/main' && steps.azure-login.outcome != 'success'
+        continue-on-error: true
         uses: azure/login@v2
         with:
           creds: ${{ secrets.AZURE_CREDENTIALS }}
