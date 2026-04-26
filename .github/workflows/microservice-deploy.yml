@@ -104,8 +104,29 @@ jobs:
           echo "normalized_services=$NORMALIZED" >> "$GITHUB_OUTPUT"
           echo "skip_format_check=$SKIP_FORMAT_CHECK" >> "$GITHUB_OUTPUT"
 
+  azure-login-preflight:
+    needs: [validate-dispatch-inputs]
+    if: github.event_name == 'workflow_dispatch' && github.ref == 'refs/heads/main' && needs.validate-dispatch-inputs.result == 'success'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Azure login (OIDC) preflight
+        id: azure-login
+        continue-on-error: true
+        uses: azure/login@v2
+        with:
+          client-id: ${{ secrets.AZURE_CLIENT_ID }}
+          tenant-id: ${{ secrets.AZURE_TENANT_ID }}
+          subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+
+      - name: Fail fast when OIDC preflight fails
+        if: steps.azure-login.outcome != 'success'
+        run: |
+          echo "::error::Azure OIDC preflight failed for repository '${{ github.repository }}'."
+          echo "::error::Ensure Entra federated credential subject includes 'repo:${{ github.repository }}:ref:refs/heads/main' (or a matching environment claim)."
+          exit 1
+
   test-and-build:
-    needs: [detect-changes, validate-dispatch-inputs]
+    needs: [detect-changes, validate-dispatch-inputs, azure-login-preflight]
     runs-on: ubuntu-latest
     strategy:
       fail-fast: false
@@ -141,7 +162,7 @@ jobs:
           - service: gateway
             project: HealthQCopilot.Gateway
             changed: ${{ needs.detect-changes.outputs.gateway }}
-    if: needs.detect-changes.result == 'success' && needs.validate-dispatch-inputs.result == 'success'
+    if: needs.detect-changes.result == 'success' && needs.validate-dispatch-inputs.result == 'success' && (needs.azure-login-preflight.result == 'success' || needs.azure-login-preflight.result == 'skipped')
     steps:
       - name: Resolve manual service selection
         id: service-selection

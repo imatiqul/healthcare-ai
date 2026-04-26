@@ -7,6 +7,7 @@ This backlog captures the highest-impact platform gaps identified during the lat
 ## Current Reality Snapshot
 
 - Microservice CI/CD reliability recovered after workflow hardening.
+- Manual redeploy now includes OIDC preflight fail-fast to reduce repeated matrix failures when federation is misconfigured.
 - Cloud smoke gate passes consistently.
 - Full cloud E2E is still failing on key live API checks, indicating runtime drift and contract misalignment.
 
@@ -46,6 +47,10 @@ This backlog captures the highest-impact platform gaps identified during the lat
     - `/api/v1/revenue/denials/analytics`
     - `/api/v1/notifications/analytics/delivery`
     - `/api/v1/agents/decisions/ml-confidence`
+  - Run `24947559015` launched on SHA `910dc9b` with `services=revenue,notification,identity,ai-agent,scheduling` and `skip_format_check=true`.
+  - All five targeted service jobs failed at `Azure login (OIDC)` with the same `AADSTS700213` subject mismatch: `repo:imatiqul/azure-ai-cloud-healthcare:ref:refs/heads/main`.
+  - No Azure Container Apps deployments were executed; `post-deploy-smoke` was skipped.
+  - Until Entra federated credential subject is corrected, Cloud E2E route failures remain a blocked runtime convergence issue (not a resolved test-contract issue).
 
 ## Acceptance Criteria
 
