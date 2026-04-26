@@ -118,11 +118,23 @@ jobs:
           tenant-id: ${{ secrets.AZURE_TENANT_ID }}
           subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
 
-      - name: Fail fast when OIDC preflight fails
-        if: steps.azure-login.outcome != 'success'
+      - name: Azure login (service principal secret) preflight fallback
+        id: azure-login-secret
+        if: steps.azure-login.outcome != 'success' && secrets.AZURE_CREDENTIALS != ''
+        uses: azure/login@v2
+        with:
+          creds: ${{ secrets.AZURE_CREDENTIALS }}
+
+      - name: OIDC preflight fallback notice
+        if: steps.azure-login.outcome != 'success' && steps.azure-login-secret.outcome == 'success'
+        run: |
+          echo "::warning::Azure OIDC preflight failed, but AZURE_CREDENTIALS fallback succeeded."
+
+      - name: Fail fast when preflight auth fails
+        if: steps.azure-login.outcome != 'success' && steps.azure-login-secret.outcome != 'success'
         run: |
           echo "::error::Azure OIDC preflight failed for repository '${{ github.repository }}'."
-          echo "::error::Ensure Entra federated credential subject includes 'repo:${{ github.repository }}:ref:refs/heads/main' (or a matching environment claim)."
+          echo "::error::Ensure Entra federated credential subject includes 'repo:${{ github.repository }}:ref:refs/heads/main' (or a matching environment claim), or provide AZURE_CREDENTIALS for emergency fallback."
           exit 1
 
   test-and-build:
@@ -231,12 +243,33 @@ jobs:
           exit-code: '1'
 
       - name: Azure login (OIDC)
+        id: azure-login
+        continue-on-error: true
         if: (matrix.changed == 'true' || github.event_name == 'workflow_dispatch') && steps.service-selection.outputs.selected == 'true' && github.ref == 'refs/heads/main'
         uses: azure/login@v2
         with:
           client-id: ${{ secrets.AZURE_CLIENT_ID }}
           tenant-id: ${{ secrets.AZURE_TENANT_ID }}
           subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+
+      - name: Azure login (service principal secret fallback)
+        id: azure-login-secret
+        if: (matrix.changed == 'true' || github.event_name == 'workflow_dispatch') && steps.service-selection.outputs.selected == 'true' && github.ref == 'refs/heads/main' && steps.azure-login.outcome != 'success' && secrets.AZURE_CREDENTIALS != ''
+        uses: azure/login@v2
+        with:
+          creds: ${{ secrets.AZURE_CREDENTIALS }}
+
+      - name: Azure login fallback notice
+        if: (matrix.changed == 'true' || github.event_name == 'workflow_dispatch') && steps.service-selection.outputs.selected == 'true' && github.ref == 'refs/heads/main' && steps.azure-login.outcome != 'success' && steps.azure-login-secret.outcome == 'success'
+        run: |
+          echo "::warning::Azure OIDC login failed for '${{ matrix.service }}', but AZURE_CREDENTIALS fallback succeeded."
+
+      - name: Fail when Azure auth fails
+        if: (matrix.changed == 'true' || github.event_name == 'workflow_dispatch') && steps.service-selection.outputs.selected == 'true' && github.ref == 'refs/heads/main' && steps.azure-login.outcome != 'success' && steps.azure-login-secret.outcome != 'success'
+        run: |
+          echo "::error::Azure login failed for '${{ matrix.service }}'."
+          echo "::error::Fix Entra federated credential subject for repo '${{ github.repository }}', or configure AZURE_CREDENTIALS for emergency deploy fallback."
+          exit 1
 
       # ── Docker Buildx + layer caching ──────────────────────────────────────
       - name: Set up Docker Buildx

@@ -56,6 +56,7 @@ This backlog captures the highest-impact platform gaps identified during the lat
   - Added gateway route mapping for identity admin audit APIs: `/api/v1/admin/audit/{**catch-all}` now resolves to `identity-service` in source configuration.
   - Hardened cloud smoke probes for trailing-slash route variants (`denials`, `break-glass`, `practitioners`) and added ML confidence legacy probe fallback to reduce rollout-time false negatives.
   - Validation for SHA `551b904`: `Microservice CI/CD` run `24947854391` succeeded; authoritative `Cloud E2E Tests` run `24947857842` succeeded with intentional no-deploy skips.
+  - Added optional `AZURE_CREDENTIALS` service-principal fallback in `Microservice CI/CD` manual preflight and deploy login path so emergency redeploy can proceed if OIDC federation is misconfigured.
   - Until Entra federated credential subject is corrected, Cloud E2E route failures remain a blocked runtime convergence issue (not a resolved test-contract issue).
 
 ## Acceptance Criteria
