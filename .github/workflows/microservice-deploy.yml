@@ -531,15 +531,37 @@ jobs:
         run: |
           set -e
           echo "Probing gateway health endpoint..."
-          STATUS=$(curl -s -o /dev/null -w "%{http_code}" \
-            --max-time 15 --retry 3 --retry-delay 5 \
-            "${{ env.GATEWAY_URL }}/health")
-          echo "Gateway /health → HTTP $STATUS"
-          if [ "$STATUS" != "200" ]; then
-            echo "❌ Gateway health check failed (HTTP $STATUS)"
-            exit 1
-          fi
-          echo "✅ Gateway is healthy"
+          HEALTH_URL="${{ env.GATEWAY_URL }}/health"
+          MAX_ATTEMPTS=8
+          ATTEMPT=1
+          LAST_STATUS="000"
+          LAST_EXIT=0
+
+          while [ "$ATTEMPT" -le "$MAX_ATTEMPTS" ]; do
+            if STATUS=$(curl -sS -o /dev/null -w "%{http_code}" --max-time 20 "$HEALTH_URL"); then
+              CURL_EXIT=0
+            else
+              CURL_EXIT=$?
+            fi
+
+            LAST_STATUS="$STATUS"
+            LAST_EXIT="$CURL_EXIT"
+
+            if [ "$CURL_EXIT" -eq 0 ] && [ "$STATUS" = "200" ]; then
+              echo "Gateway /health -> HTTP $STATUS (attempt $ATTEMPT/$MAX_ATTEMPTS)"
+              echo "Gateway is healthy"
+              exit 0
+            fi
+
+            echo "::warning::Gateway health probe attempt $ATTEMPT/$MAX_ATTEMPTS failed (curl_exit=$CURL_EXIT http_status=${STATUS:-none})."
+            ATTEMPT=$((ATTEMPT+1))
+            if [ "$ATTEMPT" -le "$MAX_ATTEMPTS" ]; then
+              sleep 10
+            fi
+          done
+
+          echo "::error::Gateway health check failed after $MAX_ATTEMPTS attempts (last curl_exit=$LAST_EXIT http_status=${LAST_STATUS:-none})."
+          exit 1
 
       - name: Prepare live seed data via gateway
         run: bash .github/scripts/prepare-live-seed-data.sh
