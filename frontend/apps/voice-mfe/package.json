@@ -1,4 +1,4 @@
-﻿{
+{
     "name":  "voice-mfe",
     "version":  "0.1.0",
     "private":  true,
@@ -15,8 +15,8 @@
                          "@healthcare/fhir-types":  "workspace:*",
                          "@healthcare/graphql-client":  "workspace:*",
                          "@healthcare/web-pubsub-client":  "workspace:*",
-                         "react":  "^19.0.0",
-                         "react-dom":  "^19.0.0",
+                         "react":  "^19.2.6",
+                         "react-dom":  "^19.2.6",
                          "zustand":  "^5.0.0",
                          "@healthcare/mfe-events":  "workspace:*",
         "@healthcare/auth-client": "workspace:*"
@@ -27,7 +27,7 @@
                             "@testing-library/jest-dom":  "^6.9.1",
                             "@testing-library/react":  "^16.3.2",
                             "@testing-library/user-event":  "^14.6.1",
-                            "@types/react":  "^19.0.0",
+                            "@types/react":  "^19.2.15",
                             "@types/react-dom":  "^19.0.0",
                             "@vitejs/plugin-react":  "^4.7.0",
                             "jsdom":  "^29.0.2",
